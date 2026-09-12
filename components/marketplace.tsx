@@ -1,11 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { listings, categories } from '@/lib/data'
+import { categories, type DealFilter, type Listing } from '@/lib/data'
+import { listingQueryOptions } from '@/lib/queries/listings'
 import { ListingCard } from '@/components/listing-card'
-
-type DealFilter = 'all' | 'sale' | 'rent' | 'rentToOwn'
 
 const dealFilters: { id: DealFilter; label: string }[] = [
   { id: 'all', label: 'すべて' },
@@ -14,24 +14,26 @@ const dealFilters: { id: DealFilter; label: string }[] = [
   { id: 'rentToOwn', label: 'レンタル購入可' },
 ]
 
-export function Marketplace() {
+export function Marketplace({
+  initialListings,
+}: {
+  initialListings: Listing[]
+}) {
   const [category, setCategory] = useState<string>('すべて')
   const [deal, setDeal] = useState<DealFilter>('all')
 
-  const filtered = useMemo(() => {
-    return listings.filter((l) => {
-      const matchCategory = category === 'すべて' || l.category === category
-      const matchDeal =
-        deal === 'all' ||
-        (deal === 'sale' && l.deals.includes('sale')) ||
-        (deal === 'rent' && l.deals.includes('rent')) ||
-        (deal === 'rentToOwn' && l.rentToOwn)
-      return matchCategory && matchDeal
-    })
-  }, [category, deal])
+  const query = useQuery({
+    ...listingQueryOptions({ category, deal }),
+    initialData:
+      category === 'すべて' && deal === 'all' ? initialListings : undefined,
+  })
+  const filteredListings = query.data ?? []
 
   return (
-    <section id="marketplace" className="mx-auto max-w-6xl scroll-mt-16 px-4 py-16 sm:px-6">
+    <section
+      id="marketplace"
+      className="mx-auto max-w-6xl scroll-mt-16 px-4 py-16 sm:px-6"
+    >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-balance font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
@@ -47,6 +49,7 @@ export function Marketplace() {
               key={f.id}
               type="button"
               onClick={() => setDeal(f.id)}
+              aria-pressed={deal === f.id}
               className={cn(
                 'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                 deal === f.id
@@ -66,6 +69,7 @@ export function Marketplace() {
             key={c}
             type="button"
             onClick={() => setCategory(c)}
+            aria-pressed={category === c}
             className={cn(
               'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
               category === c
@@ -78,9 +82,27 @@ export function Marketplace() {
         ))}
       </div>
 
-      {filtered.length > 0 ? (
+      {query.isPending ? (
+        <p role="status" className="mt-8 text-muted-foreground">
+          読み込み中…
+        </p>
+      ) : query.isError ? (
+        <div
+          role="alert"
+          className="mt-8 rounded-2xl border border-border bg-card p-6"
+        >
+          <p>農機具を取得できませんでした。</p>
+          <button
+            type="button"
+            onClick={() => void query.refetch()}
+            className="mt-3 font-medium text-primary"
+          >
+            再試行
+          </button>
+        </div>
+      ) : filteredListings.length > 0 ? (
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((listing) => (
+          {filteredListings.map((listing) => (
             <ListingCard key={listing.id} listing={listing} />
           ))}
         </div>

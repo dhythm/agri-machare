@@ -20,13 +20,25 @@ import {
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/badge'
-import { type Listing, formatYen } from '@/lib/data'
+import {
+  type Listing,
+  type ListingMode,
+  type ListingModeConfig,
+  formatYen,
+} from '@/lib/data'
 
-type Mode = 'buy' | 'rent' | 'rentToOwn'
+const modeIcon = { buy: ShoppingCart, rent: Calendar, rentToOwn: Repeat2 }
 
-export function ListingDetail({ listing }: { listing: Listing }) {
-  const modes = buildModes(listing)
-  const [mode, setMode] = useState<Mode>(modes[0].id)
+export function ListingDetail({
+  listing,
+  modes,
+  transportEstimate,
+}: {
+  listing: Listing
+  modes: ListingModeConfig[]
+  transportEstimate: number
+}) {
+  const [mode, setMode] = useState<ListingMode>(modes[0].id)
   const active = modes.find((m) => m.id === mode) ?? modes[0]
 
   return (
@@ -52,24 +64,48 @@ export function ListingDetail({ listing }: { listing: Listing }) {
             />
             <div className="absolute left-4 top-4 flex flex-wrap gap-1.5">
               {listing.deals.includes('sale') && (
-                <Badge className="bg-primary text-primary-foreground shadow-sm">販売</Badge>
+                <Badge className="bg-primary text-primary-foreground shadow-sm">
+                  販売
+                </Badge>
               )}
               {listing.deals.includes('rent') && (
-                <Badge className="bg-accent text-accent-foreground shadow-sm">レンタル</Badge>
+                <Badge className="bg-accent text-accent-foreground shadow-sm">
+                  レンタル
+                </Badge>
               )}
             </div>
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Spec icon={<Calendar className="size-4" />} label="年式" value={`${listing.year}年`} />
-            <Spec icon={<Gauge className="size-4" />} label="稼働時間" value={`${listing.hours}h`} />
-            <Spec icon={<Wrench className="size-4" />} label="状態" value={listing.condition} />
-            <Spec icon={<MapPin className="size-4" />} label="所在地" value={listing.prefecture} />
+            <Spec
+              icon={<Calendar className="size-4" />}
+              label="年式"
+              value={`${listing.year}年`}
+            />
+            <Spec
+              icon={<Gauge className="size-4" />}
+              label="稼働時間"
+              value={`${listing.hours}h`}
+            />
+            <Spec
+              icon={<Wrench className="size-4" />}
+              label="状態"
+              value={listing.condition}
+            />
+            <Spec
+              icon={<MapPin className="size-4" />}
+              label="所在地"
+              value={listing.prefecture}
+            />
           </div>
 
           <div className="mt-8">
-            <h2 className="font-display text-lg font-bold text-foreground">この農機具について</h2>
-            <p className="mt-3 leading-relaxed text-muted-foreground">{listing.summary}</p>
+            <h2 className="font-display text-lg font-bold text-foreground">
+              この農機具について
+            </h2>
+            <p className="mt-3 leading-relaxed text-muted-foreground">
+              {listing.summary}
+            </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {listing.tags.map((tag) => (
                 <Badge key={tag} variant="outline">
@@ -84,12 +120,18 @@ export function ListingDetail({ listing }: { listing: Listing }) {
               {listing.seller.name.charAt(0)}
             </span>
             <div className="flex-1">
-              <p className="font-medium text-foreground">{listing.seller.name}</p>
-              <p className="text-xs text-muted-foreground">{listing.seller.kind}</p>
+              <p className="font-medium text-foreground">
+                {listing.seller.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {listing.seller.kind}
+              </p>
             </div>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <Star className="size-4 fill-accent text-accent" />
-              <span className="font-medium text-foreground">{listing.seller.rating}</span>
+              <span className="font-medium text-foreground">
+                {listing.seller.rating}
+              </span>
               <span>({listing.seller.reviews})</span>
             </div>
           </div>
@@ -98,43 +140,54 @@ export function ListingDetail({ listing }: { listing: Listing }) {
         {/* Action panel */}
         <div className="lg:sticky lg:top-20 lg:self-start">
           <div className="rounded-3xl border border-border bg-card p-6">
-            <p className="text-xs font-medium text-muted-foreground">{listing.maker} · {listing.category}</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              {listing.maker} · {listing.category}
+            </p>
             <h1 className="mt-1 text-balance font-display text-xl font-bold leading-snug text-foreground">
               {listing.name}
             </h1>
 
             <div className="mt-5 flex flex-col gap-2">
-              {modes.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setMode(m.id)}
-                  className={cn(
-                    'flex items-start gap-3 rounded-2xl border p-4 text-left transition-all',
-                    mode === m.id
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
-                      : 'border-border hover:border-primary/40',
-                  )}
-                >
-                  <span
+              {modes.map((m) => {
+                const Icon = modeIcon[m.id]
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setMode(m.id)}
                     className={cn(
-                      'mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg',
-                      mode === m.id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-primary',
+                      'flex items-start gap-3 rounded-2xl border p-4 text-left transition-all',
+                      mode === m.id
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                        : 'border-border hover:border-primary/40',
                     )}
                   >
-                    {m.icon}
-                  </span>
-                  <span className="flex-1">
-                    <span className="flex items-baseline justify-between gap-2">
-                      <span className="font-medium text-foreground">{m.title}</span>
-                      <span className="font-display font-bold text-foreground">{m.price}</span>
+                    <span
+                      className={cn(
+                        'mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg',
+                        mode === m.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary text-primary',
+                      )}
+                    >
+                      <Icon className="size-4" />
                     </span>
-                    <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                      {m.desc}
+                    <span className="flex-1">
+                      <span className="flex items-baseline justify-between gap-2">
+                        <span className="font-medium text-foreground">
+                          {m.title}
+                        </span>
+                        <span className="font-display font-bold text-foreground">
+                          {m.price}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                        {m.desc}
+                      </span>
                     </span>
-                  </span>
-                </button>
-              ))}
+                  </button>
+                )
+              })}
             </div>
 
             {active.note && (
@@ -157,12 +210,15 @@ export function ListingDetail({ listing }: { listing: Listing }) {
               <span>
                 {listing.prefecture}
                 {listing.city}
-                発。運搬チャネルで配送を手配できます（目安 {formatYen(estimateTransport(listing))}〜）。
+                発。運搬チャネルで配送を手配できます（目安{' '}
+                {formatYen(transportEstimate)}〜）。
               </span>
             </div>
             <div className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
               <ShieldCheck className="mt-0.5 size-4 shrink-0" />
-              <span>取引はエスクロー決済で保護。受け取り確認後に出品者へ入金されます。</span>
+              <span>
+                取引はエスクロー決済で保護。受け取り確認後に出品者へ入金されます。
+              </span>
             </div>
           </div>
         </div>
@@ -171,7 +227,15 @@ export function ListingDetail({ listing }: { listing: Listing }) {
   )
 }
 
-function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Spec({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string
+}) {
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -181,61 +245,4 @@ function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; va
       <p className="mt-1.5 font-medium text-foreground">{value}</p>
     </div>
   )
-}
-
-type ModeConfig = {
-  id: Mode
-  title: string
-  price: string
-  desc: string
-  cta: string
-  icon: React.ReactNode
-  note?: string
-}
-
-function buildModes(listing: Listing): ModeConfig[] {
-  const modes: ModeConfig[] = []
-  if (listing.rentPerDay) {
-    modes.push({
-      id: 'rent',
-      title: 'レンタルする',
-      price: `${formatYen(listing.rentPerDay)}/日`,
-      desc: '繁忙期や試したい期間だけ。日単位・シーズン単位で相談できます。',
-      cta: 'レンタルを申し込む',
-      icon: <Calendar className="size-4" />,
-    })
-  }
-  if (listing.rentToOwn && listing.rentPerDay) {
-    modes.push({
-      id: 'rentToOwn',
-      title: 'レンタルして試す → 購入',
-      price: 'まず試す',
-      desc: '借りて使ってみて、良ければそのまま購入。支払ったレンタル料の一部を購入価格に充当します。',
-      cta: 'お試しレンタルを始める',
-      icon: <Repeat2 className="size-4" />,
-      note: 'レンタル料の最大50%を購入価格に充当できます。試してから決められるので、高額な買い物でも安心です。',
-    })
-  }
-  if (listing.salePrice) {
-    modes.push({
-      id: 'buy',
-      title: '購入する',
-      price: formatYen(listing.salePrice),
-      desc: '状態・整備記録を確認のうえ購入。エスクロー決済で安全に取引できます。',
-      cta: '購入手続きへ進む',
-      icon: <ShoppingCart className="size-4" />,
-    })
-  }
-  return modes
-}
-
-function estimateTransport(listing: Listing): number {
-  const base: Record<string, number> = {
-    トラクター: 30_000,
-    コンバイン: 42_000,
-    田植機: 18_000,
-    耕運機: 6_000,
-    ドローン: 4_000,
-  }
-  return base[listing.category] ?? 20_000
 }

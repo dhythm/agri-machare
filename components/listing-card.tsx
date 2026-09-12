@@ -22,8 +22,16 @@ export function ListingCard({ listing }: { listing: Listing }) {
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-          {canBuy && <Badge className="bg-primary text-primary-foreground shadow-sm">販売</Badge>}
-          {canRent && <Badge className="bg-accent text-accent-foreground shadow-sm">レンタル</Badge>}
+          {canBuy && (
+            <Badge className="bg-primary text-primary-foreground shadow-sm">
+              販売
+            </Badge>
+          )}
+          {canRent && (
+            <Badge className="bg-accent text-accent-foreground shadow-sm">
+              レンタル
+            </Badge>
+          )}
         </div>
         {listing.rentToOwn && (
           <Badge className="absolute bottom-3 left-3 bg-card/95 text-primary shadow-sm">
@@ -57,7 +65,9 @@ export function ListingCard({ listing }: { listing: Listing }) {
             {listing.rentPerDay && (
               <p className="font-display text-lg font-bold leading-none text-foreground">
                 {formatYen(listing.rentPerDay)}
-                <span className="ml-1 text-xs font-medium text-muted-foreground">/日</span>
+                <span className="ml-1 text-xs font-medium text-muted-foreground">
+                  /日
+                </span>
               </p>
             )}
             {listing.salePrice && (
@@ -68,7 +78,9 @@ export function ListingCard({ listing }: { listing: Listing }) {
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Star className="size-3.5 fill-accent text-accent" />
-            <span className="font-medium text-foreground">{listing.seller.rating}</span>
+            <span className="font-medium text-foreground">
+              {listing.seller.rating}
+            </span>
             <span>({listing.seller.reviews})</span>
           </div>
         </div>

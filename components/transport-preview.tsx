@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { Truck, Route, ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/badge'
-import { transportJobs, formatYen } from '@/lib/data'
+import { formatYen } from '@/lib/data'
+import { transportJobs } from '@/lib/server/data'
 
 export function TransportPreview() {
   const jobs = transportJobs.slice(0, 3)
@@ -40,8 +41,12 @@ export function TransportPreview() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="truncate font-medium text-foreground">{job.item}</p>
-                    <Badge variant={job.status === '募集中' ? 'default' : 'muted'}>
+                    <p className="truncate font-medium text-foreground">
+                      {job.item}
+                    </p>
+                    <Badge
+                      variant={job.status === '募集中' ? 'default' : 'muted'}
+                    >
                       {job.status}
                     </Badge>
                   </div>

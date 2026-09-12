@@ -58,9 +58,15 @@ export function RoleChannels() {
             <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
               <Icon className="size-5" />
             </span>
-            <p className="mt-5 text-xs font-medium text-accent-foreground">{kicker}</p>
-            <h3 className="mt-1 font-display text-lg font-bold text-foreground">{title}</h3>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+            <p className="mt-5 text-xs font-medium text-accent-foreground">
+              {kicker}
+            </p>
+            <h3 className="mt-1 font-display text-lg font-bold text-foreground">
+              {title}
+            </h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+              {desc}
+            </p>
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
               {action}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />

@@ -16,13 +16,22 @@ export function SiteHeader() {
         </Link>
 
         <nav className="ml-4 hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
-          <Link href="/#marketplace" className="transition-colors hover:text-foreground">
+          <Link
+            href="/#marketplace"
+            className="transition-colors hover:text-foreground"
+          >
             探す
           </Link>
-          <Link href="/#how" className="transition-colors hover:text-foreground">
+          <Link
+            href="/#how"
+            className="transition-colors hover:text-foreground"
+          >
             レンタル購入とは
           </Link>
-          <Link href="/transport" className="transition-colors hover:text-foreground">
+          <Link
+            href="/transport"
+            className="transition-colors hover:text-foreground"
+          >
             運搬を手伝う
           </Link>
         </nav>

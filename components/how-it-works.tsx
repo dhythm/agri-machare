@@ -42,9 +42,15 @@ export function HowItWorks() {
               key={step.n}
               className="relative flex flex-col rounded-2xl border border-border bg-card p-6"
             >
-              <span className="font-display text-sm font-bold text-accent-foreground">{step.n}</span>
-              <h3 className="mt-2 font-display text-lg font-bold text-foreground">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
+              <span className="font-display text-sm font-bold text-accent-foreground">
+                {step.n}
+              </span>
+              <h3 className="mt-2 font-display text-lg font-bold text-foreground">
+                {step.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {step.desc}
+              </p>
               {i < steps.length - 1 && (
                 <span
                   aria-hidden="true"

@@ -12,7 +12,11 @@ const variants: Record<NonNullable<BadgeProps['variant']>, string> = {
   outline: 'border-border text-foreground',
 }
 
-export function Badge({ className, variant = 'default', ...props }: BadgeProps) {
+export function Badge({
+  className,
+  variant = 'default',
+  ...props
+}: BadgeProps) {
   return (
     <span
       className={cn(

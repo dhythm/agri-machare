@@ -1,8 +1,16 @@
 import Link from 'next/link'
-import { ChevronLeft, Truck, Route, Scale, CalendarClock, MapPin } from 'lucide-react'
+import {
+  ChevronLeft,
+  Truck,
+  Route,
+  Scale,
+  CalendarClock,
+  MapPin,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/badge'
-import { transportJobs, formatYen } from '@/lib/data'
+import { formatYen } from '@/lib/data'
+import { transportJobs } from '@/lib/server/data'
 
 const steps = [
   '運びたい荷物・区間・希望日を出品者が登録',
@@ -39,28 +47,43 @@ export function TransportBoard() {
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-xs font-bold text-primary">
                   {i + 1}
                 </span>
-                <span className="text-sm leading-relaxed text-muted-foreground">{step}</span>
+                <span className="text-sm leading-relaxed text-muted-foreground">
+                  {step}
+                </span>
               </li>
             ))}
           </ol>
 
-          <Button className="mt-6 h-11 w-full sm:w-auto">運搬者として登録する</Button>
+          <Button className="mt-6 h-11 w-full sm:w-auto">
+            運搬者として登録する
+          </Button>
         </div>
 
         <div>
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold text-foreground">募集中の案件</h2>
-            <span className="text-sm text-muted-foreground">{transportJobs.length}件</span>
+            <h2 className="font-display text-lg font-bold text-foreground">
+              募集中の案件
+            </h2>
+            <span className="text-sm text-muted-foreground">
+              {transportJobs.length}件
+            </span>
           </div>
 
           <ul className="mt-4 flex flex-col gap-4">
             {transportJobs.map((job) => (
-              <li key={job.id} className="rounded-2xl border border-border bg-card p-5">
+              <li
+                key={job.id}
+                className="rounded-2xl border border-border bg-card p-5"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-foreground">{job.item}</h3>
-                      <Badge variant={job.status === '募集中' ? 'default' : 'muted'}>
+                      <h3 className="font-medium text-foreground">
+                        {job.item}
+                      </h3>
+                      <Badge
+                        variant={job.status === '募集中' ? 'default' : 'muted'}
+                      >
                         {job.status}
                       </Badge>
                     </div>
@@ -75,14 +98,15 @@ export function TransportBoard() {
                     <p className="font-display text-xl font-bold text-foreground">
                       {formatYen(job.reward)}
                     </p>
-                    <p className="text-xs text-muted-foreground">報酬（税込）</p>
+                    <p className="text-xs text-muted-foreground">
+                      報酬（税込）
+                    </p>
                   </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-border pt-4 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
-                    <Route className="size-3.5" />
-                    約{job.distanceKm}km
+                    <Route className="size-3.5" />約{job.distanceKm}km
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Scale className="size-3.5" />

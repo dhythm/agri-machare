@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Noto_Sans_JP, Zen_Kaku_Gothic_New } from 'next/font/google'
 import './globals.css'
+import { QueryProvider } from '@/components/query-provider'
 
 const notoSansJp = Noto_Sans_JP({
   subsets: ['latin'],
@@ -32,9 +33,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ja" className={`${notoSansJp.variable} ${zenKaku.variable} bg-background`}>
+    <html
+      lang="ja"
+      className={`${notoSansJp.variable} ${zenKaku.variable} bg-background`}
+    >
       <body className="font-sans antialiased">
-        {children}
+        <QueryProvider>{children}</QueryProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

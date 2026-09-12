@@ -5,6 +5,7 @@ import { RoleChannels } from '@/components/role-channels'
 import { HowItWorks } from '@/components/how-it-works'
 import { Marketplace } from '@/components/marketplace'
 import { TransportPreview } from '@/components/transport-preview'
+import { searchListings } from '@/lib/server/listings'
 
 export default function Page() {
   return (
@@ -14,7 +15,7 @@ export default function Page() {
         <Hero />
         <RoleChannels />
         <HowItWorks />
-        <Marketplace />
+        <Marketplace initialListings={searchListings()} />
         <TransportPreview />
       </main>
       <SiteFooter />

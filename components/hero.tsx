@@ -22,22 +22,37 @@ export function Hero() {
             1台数百万〜数千万円のトラクターやコンバイン。ローンで買う前に、まず借りて試す。気に入ればそのまま購入。地域の農家どうしで農機具をシェアできる場所です。
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <Link href="#marketplace" className={cn(buttonVariants(), 'h-11 px-5 text-sm')}>
+            <Link
+              href="#marketplace"
+              className={cn(buttonVariants(), 'h-11 px-5 text-sm')}
+            >
               農機具を探す
               <ArrowRight className="size-4" />
             </Link>
             <Link
               href="#how"
-              className={cn(buttonVariants({ variant: 'outline' }), 'h-11 px-5 text-sm')}
+              className={cn(
+                buttonVariants({ variant: 'outline' }),
+                'h-11 px-5 text-sm',
+              )}
             >
               レンタル購入のしくみ
             </Link>
           </div>
 
           <dl className="mt-10 grid w-full max-w-md grid-cols-3 gap-4 border-t border-border pt-6">
-            <Feature icon={<Repeat2 className="size-4" />} label="借りて試せる" />
-            <Feature icon={<ShieldCheck className="size-4" />} label="そのまま購入OK" />
-            <Feature icon={<Truck className="size-4" />} label="運搬もマッチング" />
+            <Feature
+              icon={<Repeat2 className="size-4" />}
+              label="借りて試せる"
+            />
+            <Feature
+              icon={<ShieldCheck className="size-4" />}
+              label="そのまま購入OK"
+            />
+            <Feature
+              icon={<Truck className="size-4" />}
+              label="運搬もマッチング"
+            />
           </dl>
         </div>
 
@@ -55,7 +70,10 @@ export function Hero() {
           <div className="absolute -bottom-4 -left-4 hidden max-w-[220px] rounded-2xl border border-border bg-card p-4 shadow-md sm:block">
             <p className="text-xs text-muted-foreground">レンタルなら</p>
             <p className="mt-1 font-display text-2xl font-bold text-foreground">
-              1日 ¥22,000<span className="ml-1 text-sm font-medium text-muted-foreground">〜</span>
+              1日 ¥22,000
+              <span className="ml-1 text-sm font-medium text-muted-foreground">
+                〜
+              </span>
             </p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               45馬力トラクターを購入前にお試し
