@@ -3,7 +3,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Listing, TransportJob } from '@/lib/data'
 import { createMemoryStore } from './memory'
 import { createPgliteStore } from './pglite'
-import type { Message, Store, Submission } from './types'
+import type { Message, Rental, Store, Submission } from './types'
 
 vi.mock('server-only', () => ({}))
 
@@ -23,6 +23,8 @@ const listing = (id: string, name: string): Listing => ({
   salePrice: 18_800_000,
   rentPerDay: 22_000,
   rentToOwn: true,
+  rentToOwnCreditRate: 50,
+  rentToOwnCreditCap: 5_000_000,
   seller: { name: '中村ファーム', kind: '農業法人', rating: 4.8, reviews: 34 },
   tags: ['キャビン付', '4WD'],
   createdAt: '2026-09-13T00:00:00.000Z',
@@ -189,6 +191,43 @@ describe.each(stores)('$name store', { timeout: 20_000 }, ({ store }) => {
     expect(await store.messages.delete('m-1')).toBe(true)
     await store.reset()
     expect(await store.messages.list()).toEqual([])
+  })
+
+  it('round-trips rentals', async () => {
+    const rental: Rental = {
+      id: 'r-1',
+      listingId: 'trc-001',
+      renterUserId: 'demo-user',
+      startDate: '2026-10-01',
+      endDate: '2026-10-07',
+      days: 7,
+      rentPerDay: 22_000,
+      rentTotal: 154_000,
+      salePrice: 18_800_000,
+      creditRate: 50,
+      creditCap: 5_000_000,
+      status: 'requested',
+      createdAt: '2026-09-13T04:00:00.000Z',
+      updatedAt: '2026-09-13T04:00:00.000Z',
+    }
+    expect(await store.rentals.create(rental)).toEqual(rental)
+    expect(
+      await store.rentals.update('r-1', {
+        status: 'converted',
+        purchasePrice: 18_723_000,
+      }),
+    ).toMatchObject({ status: 'converted', purchasePrice: 18_723_000 })
+    await store.rentals.create({
+      ...rental,
+      id: 'r-2',
+      salePrice: undefined,
+      creditCap: undefined,
+    })
+    const second = await store.rentals.get('r-2')
+    expect(second?.salePrice).toBeUndefined()
+    expect(second?.creditCap).toBeUndefined()
+    await store.reset()
+    expect(await store.rentals.list()).toEqual([])
   })
 
   it('does not let callers mutate stored data through returned objects', async () => {

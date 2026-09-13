@@ -214,6 +214,19 @@ function roundTo(value: number, unit: number): number {
   return Math.round(value / unit) * unit
 }
 
+/** Generated rent-to-own listings credit half the rent, capped at 30% of the price. */
+function rentToOwnTerms(
+  rentToOwn: boolean,
+  salePrice: number | undefined,
+): Pick<Listing, 'rentToOwn' | 'rentToOwnCreditRate' | 'rentToOwnCreditCap'> {
+  if (!rentToOwn || salePrice === undefined) return { rentToOwn }
+  return {
+    rentToOwn,
+    rentToOwnCreditRate: 50,
+    rentToOwnCreditCap: roundTo(salePrice * 0.3, 10_000),
+  }
+}
+
 export function generateListings(count: number, startId: number): Listing[] {
   const next = createSequence(20_260_913)
   const pick = <T>(values: T[]): T => values[Math.floor(next() * values.length)]
@@ -251,7 +264,7 @@ export function generateListings(count: number, startId: number): Listing[] {
       deals,
       salePrice,
       rentPerDay,
-      rentToOwn: deals.length === 2 && next() < 0.6,
+      ...rentToOwnTerms(deals.length === 2 && next() < 0.6, salePrice),
       seller: pick(sellers),
       tags,
     }

@@ -134,6 +134,8 @@ function listingFields(submission: ListingSubmission) {
     salePrice: submission.salePrice,
     rentPerDay: submission.rentPerDay,
     rentToOwn: submission.rentToOwn,
+    rentToOwnCreditRate: submission.rentToOwnCreditRate,
+    rentToOwnCreditCap: submission.rentToOwnCreditCap,
     tags: [] as string[],
   }
 }

@@ -40,6 +40,8 @@ export type ListingSubmission = {
   salePrice?: number
   rentPerDay?: number
   rentToOwn: boolean
+  rentToOwnCreditRate?: number
+  rentToOwnCreditCap?: number
   summary: string
   sellerName: string
   sellerKind: (typeof sellerKinds)[number]
@@ -116,6 +118,22 @@ export function validateListingSubmission(
       canRent,
     ),
     rentToOwn,
+    rentToOwnCreditRate: readInteger(
+      errors,
+      source,
+      'rentToOwnCreditRate',
+      '充当率',
+      { min: 1, max: 100 },
+      rentToOwn,
+    ),
+    rentToOwnCreditCap: readInteger(
+      errors,
+      source,
+      'rentToOwnCreditCap',
+      '充当上限',
+      { min: 1, max: 1_000_000_000 },
+      false,
+    ),
     summary: requireText(errors, source, 'summary', '説明', 1000),
     sellerName: requireText(errors, source, 'sellerName', '出品者名', 60),
     sellerKind: requireChoice(
@@ -129,6 +147,10 @@ export function validateListingSubmission(
   }
   if (!canSell) value.salePrice = undefined
   if (!canRent) value.rentPerDay = undefined
+  if (!rentToOwn) {
+    value.rentToOwnCreditRate = undefined
+    value.rentToOwnCreditCap = undefined
+  }
 
   return finish(errors, value)
 }
