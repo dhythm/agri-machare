@@ -7,7 +7,7 @@ const channels = [
     title: '売る・貸す',
     kicker: '出品者',
     desc: '使わない期間だけ貸したい、買い替えで手放したい。売買もレンタルも1つの出品でまとめて募集できます。',
-    href: '/#marketplace',
+    href: '/listings/new',
     action: '出品する',
   },
   {
@@ -15,7 +15,7 @@ const channels = [
     title: '借りる',
     kicker: '借り手',
     desc: '繁忙期や試したい機種だけ短期レンタル。使ってみて良ければそのまま購入に切り替えられます。',
-    href: '/#marketplace',
+    href: '/listings?deal=rent',
     action: 'レンタルを探す',
   },
   {
@@ -23,7 +23,7 @@ const channels = [
     title: '買う',
     kicker: '買い手',
     desc: '相場のわかる中古農機具を、状態・稼働時間・整備記録つきで。まず借りてから判断する買い方も。',
-    href: '/#marketplace',
+    href: '/listings?deal=sale',
     action: '販売品を探す',
   },
   {

@@ -2,10 +2,10 @@ import Link from 'next/link'
 import { Truck, Route, ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/badge'
 import { formatYen } from '@/lib/data'
-import { transportJobs } from '@/lib/server/data'
+import { getTransportJobs } from '@/lib/server/transport'
 
 export function TransportPreview() {
-  const jobs = transportJobs.slice(0, 3)
+  const jobs = getTransportJobs().slice(0, 3)
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
@@ -32,34 +32,36 @@ export function TransportPreview() {
 
           <ul className="flex flex-col gap-3">
             {jobs.map((job) => (
-              <li
-                key={job.id}
-                className="flex items-center gap-4 rounded-2xl border border-border bg-background p-4"
-              >
-                <span className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary sm:flex">
-                  <Route className="size-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate font-medium text-foreground">
-                      {job.item}
+              <li key={job.id}>
+                <Link
+                  href={`/transport/${job.id}`}
+                  className="flex items-center gap-4 rounded-2xl border border-border bg-background p-4 transition-colors hover:border-primary/40"
+                >
+                  <span className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary sm:flex">
+                    <Route className="size-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate font-medium text-foreground">
+                        {job.item}
+                      </p>
+                      <Badge
+                        variant={job.status === '募集中' ? 'default' : 'muted'}
+                      >
+                        {job.status}
+                      </Badge>
+                    </div>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {job.from} → {job.to}・{job.distanceKm}km・{job.weight}
                     </p>
-                    <Badge
-                      variant={job.status === '募集中' ? 'default' : 'muted'}
-                    >
-                      {job.status}
-                    </Badge>
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {job.from} → {job.to}・{job.distanceKm}km・{job.weight}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="font-display text-base font-bold text-foreground">
-                    {formatYen(job.reward)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">報酬</p>
-                </div>
+                  <div className="shrink-0 text-right">
+                    <p className="font-display text-base font-bold text-foreground">
+                      {formatYen(job.reward)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">報酬</p>
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>

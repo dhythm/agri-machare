@@ -22,15 +22,28 @@ export function SiteFooter() {
           <div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3">
             <FooterCol
               title="使う"
-              links={['農機具を探す', '出品する', '借りる', 'レンタル購入']}
+              links={[
+                { label: '農機具を探す', href: '/listings' },
+                { label: '出品する', href: '/listings/new' },
+                { label: '借りる', href: '/listings?deal=rent' },
+                { label: 'レンタル購入', href: '/listings?deal=rentToOwn' },
+              ]}
             />
             <FooterCol
               title="運搬"
-              links={['運搬案件を見る', '運搬者登録', '料金のめやす']}
+              links={[
+                { label: '運搬案件を見る', href: '/transport' },
+                { label: '運搬者登録', href: '/transport/register' },
+                { label: '料金のめやす', href: '/transport/pricing' },
+              ]}
             />
             <FooterCol
               title="サポート"
-              links={['はじめての方へ', 'よくある質問', 'お問い合わせ']}
+              links={[
+                { label: 'はじめての方へ', href: '/guide' },
+                { label: 'よくある質問', href: '/faq' },
+                { label: 'お問い合わせ', href: '/contact' },
+              ]}
             />
           </div>
         </div>
@@ -45,18 +58,24 @@ export function SiteFooter() {
   )
 }
 
-function FooterCol({ title, links }: { title: string; links: string[] }) {
+function FooterCol({
+  title,
+  links,
+}: {
+  title: string
+  links: { label: string; href: string }[]
+}) {
   return (
     <div>
       <h3 className="font-semibold text-foreground">{title}</h3>
       <ul className="mt-3 space-y-2">
         {links.map((link) => (
-          <li key={link}>
+          <li key={link.href}>
             <Link
-              href="#"
+              href={link.href}
               className="text-muted-foreground transition-colors hover:text-foreground"
             >
-              {link}
+              {link.label}
             </Link>
           </li>
         ))}

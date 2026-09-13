@@ -1,16 +1,11 @@
 import Link from 'next/link'
-import {
-  ChevronLeft,
-  Truck,
-  Route,
-  Scale,
-  CalendarClock,
-  MapPin,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Truck, Route, Scale, CalendarClock, MapPin } from 'lucide-react'
+import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/badge'
+import { BackLink } from '@/components/back-link'
+import { cn } from '@/lib/utils'
 import { formatYen } from '@/lib/data'
-import { transportJobs } from '@/lib/server/data'
+import { getTransportJobs } from '@/lib/server/transport'
 
 const steps = [
   '運びたい荷物・区間・希望日を出品者が登録',
@@ -19,15 +14,10 @@ const steps = [
 ]
 
 export function TransportBoard() {
+  const transportJobs = getTransportJobs()
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ChevronLeft className="size-4" />
-        トップにもどる
-      </Link>
+      <BackLink href="/" label="トップにもどる" />
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_1.6fr]">
         <div className="lg:sticky lg:top-20 lg:self-start">
@@ -54,9 +44,23 @@ export function TransportBoard() {
             ))}
           </ol>
 
-          <Button className="mt-6 h-11 w-full sm:w-auto">
-            運搬者として登録する
-          </Button>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href="/transport/register"
+              className={cn(buttonVariants(), 'h-11 px-5')}
+            >
+              運搬者として登録する
+            </Link>
+            <Link
+              href="/transport/pricing"
+              className={cn(
+                buttonVariants({ variant: 'outline' }),
+                'h-11 px-5',
+              )}
+            >
+              料金のめやす
+            </Link>
+          </div>
         </div>
 
         <div>
@@ -119,9 +123,15 @@ export function TransportBoard() {
                 </div>
 
                 <div className="mt-4 flex gap-2">
-                  <Button variant="outline" className="h-9 flex-1 sm:flex-none">
+                  <Link
+                    href={`/transport/${job.id}`}
+                    className={cn(
+                      buttonVariants({ variant: 'outline' }),
+                      'h-9 flex-1 sm:flex-none',
+                    )}
+                  >
                     この案件に応募する
-                  </Button>
+                  </Link>
                 </div>
               </li>
             ))}
