@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { TextField } from '@/components/forms/fields'
 import { Button } from '@/components/ui/button'
 
 export function AccountStatusButton({
@@ -46,15 +45,18 @@ export function AccountStatusButton({
   }
 
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+    <div className="flex items-center gap-2">
       {status === 'active' && (
-        <TextField
-          id={`note-${userId}`}
-          label="メモ"
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          className="sm:w-48"
-        />
+        <label className="flex items-center">
+          <span className="sr-only">メモ</span>
+          <input
+            id={`note-${userId}`}
+            value={note}
+            placeholder="停止理由"
+            onChange={(event) => setNote(event.target.value)}
+            className="h-8 w-36 rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
+          />
+        </label>
       )}
       <Button
         type="button"

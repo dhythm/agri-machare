@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Badge } from '@/components/badge'
-import { FormAlert, TextField } from '@/components/forms/fields'
+import { FormAlert } from '@/components/forms/fields'
 import { Button } from '@/components/ui/button'
 import { ListingStatusButton } from '@/components/listings/listing-status-button'
 import {
@@ -224,7 +224,7 @@ function QueueItem({
         : '承認済み'
 
   return (
-    <li className="rounded-2xl border border-border bg-card p-5">
+    <li className="rounded-2xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           {item.image && (
@@ -251,30 +251,39 @@ function QueueItem({
         </div>
         <code className="text-xs text-muted-foreground">{item.id}</code>
       </div>
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-        <TextField
-          id={`note-${item.id}`}
-          label="メモ"
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          className="flex-1"
-        />
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="flex flex-1 items-center">
+          <span className="sr-only">メモ</span>
+          <input
+            id={`note-${item.id}`}
+            value={note}
+            placeholder="審査メモ"
+            onChange={(event) => setNote(event.target.value)}
+            className="h-9 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
+          />
+        </label>
         <div className="flex gap-2">
-          <Button
-            type="button"
-            disabled={busy}
-            onClick={() => void onDecide(item.id, 'approved', note)}
-          >
-            承認
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={busy}
-            onClick={() => void onDecide(item.id, 'rejected', note)}
-          >
-            却下
-          </Button>
+          {item.status !== 'approved' && (
+            <Button
+              type="button"
+              size="sm"
+              disabled={busy}
+              onClick={() => void onDecide(item.id, 'approved', note)}
+            >
+              承認
+            </Button>
+          )}
+          {item.status !== 'rejected' && (
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              disabled={busy}
+              onClick={() => void onDecide(item.id, 'rejected', note)}
+            >
+              却下
+            </Button>
+          )}
           {item.withdrawn !== undefined && (
             <ListingStatusButton
               listingId={item.id}

@@ -28,7 +28,10 @@ function Table({
         <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
           <tr>
             {headers.map((header) => (
-              <th key={header} className="px-4 py-2 font-medium">
+              <th
+                key={header}
+                className="whitespace-nowrap px-4 py-2 font-medium"
+              >
                 {header}
               </th>
             ))}
@@ -38,7 +41,10 @@ function Table({
           {rows.map((row) => (
             <tr key={row.key} className="border-t border-border">
               {row.cells.map((cell, index) => (
-                <td key={index} className="px-4 py-2 align-top">
+                <td
+                  key={index}
+                  className="whitespace-nowrap px-4 py-2 align-top"
+                >
                   {cell}
                 </td>
               ))}
