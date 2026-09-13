@@ -28,6 +28,32 @@ export function conflict(error: string): Response {
   return Response.json({ error }, { status: 409 })
 }
 
+/** Map a rental service failure to its HTTP response. */
+export function rentalFailure(
+  reason:
+    | 'not_found'
+    | 'forbidden'
+    | 'conflict'
+    | 'unavailable'
+    | 'invalid'
+    | 'transition',
+): Response {
+  switch (reason) {
+    case 'not_found':
+      return notFound('レンタルが見つかりません。')
+    case 'forbidden':
+      return forbidden('このレンタルを操作する権限がありません。')
+    case 'conflict':
+      return conflict('その期間はすでに予約されています。')
+    case 'unavailable':
+      return conflict('この農機具はレンタルできません。')
+    case 'invalid':
+      return badRequest('期間の指定が正しくありません。')
+    case 'transition':
+      return conflict('現在の状態ではその操作はできません。')
+  }
+}
+
 /** Map a thread service failure to its HTTP response. */
 export function threadFailure(reason: 'not_found' | 'forbidden'): Response {
   return reason === 'not_found'

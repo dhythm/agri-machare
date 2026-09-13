@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getAccountOverview } from './account'
-import { createListing } from './listings'
+import { createListing, getListing } from './listings'
+import { requestRental } from './rentals'
 import { resetStore } from './store'
 import { acceptSubmission } from './submissions'
 import { addMessage } from './threads'
 import { createTransportJob } from './transport'
 import { listSubmissionsByUser } from './submissions'
-import { demoSeller } from '@/test/mock-auth'
+import { demoSeller, demoUser } from '@/test/mock-auth'
 
 async function getAccountOverviewSentInquiryId() {
   const mine = await listSubmissionsByUser('demo-user')
@@ -70,6 +71,10 @@ describe('getAccountOverview', () => {
       demoSeller,
       '在庫あります',
     )
+    await requestRental((await getListing('trc-001'))!, demoUser, {
+      startDate: '2026-10-01',
+      endDate: '2026-10-07',
+    })
     const mine = await createListing(listingInput, 'demo-user')
     const myJob = await createTransportJob(jobInput, 'demo-user')
 
@@ -101,6 +106,10 @@ describe('getAccountOverview', () => {
     expect(user.replyCounts).toEqual({
       [user.sentInquiries[0].submission.id]: 1,
     })
+    expect(user.rentals.asRenter.map((item) => item.rental.listingId)).toEqual([
+      'trc-001',
+    ])
+    expect(seller.rentals.asOwner).toHaveLength(1)
   })
 
   it('is empty for a user with no activity', async () => {
@@ -110,6 +119,7 @@ describe('getAccountOverview', () => {
       sentInquiries: [],
       sentApplications: [],
       replyCounts: {},
+      rentals: { asRenter: [], asOwner: [] },
     })
   })
 })

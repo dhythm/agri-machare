@@ -1,6 +1,11 @@
 import 'server-only'
 
 import type { Listing, TransportJob } from '@/lib/data'
+import {
+  listRentalsForOwner,
+  listRentalsForRenter,
+  type RentalWithListing,
+} from './rentals'
 import { getStore, type Submission } from './store'
 
 export type AccountOverview = {
@@ -10,6 +15,7 @@ export type AccountOverview = {
   sentApplications: { submission: Submission; job?: TransportJob }[]
   /** Number of replies per thread id, for threads that have any. */
   replyCounts: Record<string, number>
+  rentals: { asRenter: RentalWithListing[]; asOwner: RentalWithListing[] }
 }
 
 /**
@@ -27,12 +33,15 @@ export async function getAccountOverview(
   userId: string,
 ): Promise<AccountOverview> {
   const store = getStore()
-  const [listings, jobs, submissions, messages] = await Promise.all([
-    store.listings.list(),
-    store.transportJobs.list(),
-    store.submissions.list(),
-    store.messages.list(),
-  ])
+  const [listings, jobs, submissions, messages, asRenter, asOwner] =
+    await Promise.all([
+      store.listings.list(),
+      store.transportJobs.list(),
+      store.submissions.list(),
+      store.messages.list(),
+      listRentalsForRenter(userId),
+      listRentalsForOwner(userId),
+    ])
   const listingById = new Map(listings.map((listing) => [listing.id, listing]))
   const jobById = new Map(jobs.map((job) => [job.id, job]))
   const sent = submissions.filter((submission) => submission.userId === userId)
@@ -76,6 +85,7 @@ export async function getAccountOverview(
 
   return {
     replyCounts,
+    rentals: { asRenter, asOwner },
     listings: ownedListings,
     transportJobs: ownedJobs,
     sentInquiries: sent
