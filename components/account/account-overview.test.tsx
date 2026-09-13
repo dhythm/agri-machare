@@ -158,6 +158,51 @@ const overview: AccountOverview = {
 }
 
 describe('AccountOverviewView', () => {
+  it('links each workspace area and puts unread conversations before new requests', () => {
+    const incoming = overview.listings[0].inquiries[0]
+    render(
+      <AccountOverviewView
+        overview={{
+          ...overview,
+          listings: [
+            {
+              ...overview.listings[0],
+              inquiries: [
+                { ...incoming, id: 'new-request', status: 'new' },
+                { ...incoming, id: 'unread-reply', status: 'in_progress' },
+              ],
+            },
+          ],
+          unreadThreadIds: ['unread-reply'],
+        }}
+      />,
+    )
+    const navigation = screen.getByRole('navigation', { name: '取引メニュー' })
+    expect(
+      within(navigation).getByRole('link', { name: '出品管理' }),
+    ).toHaveAttribute('href', '#equipment')
+    expect(
+      within(navigation).getByRole('link', { name: 'レンタル管理' }),
+    ).toHaveAttribute('href', '#rentals')
+    expect(
+      within(navigation).getByRole('link', { name: '運搬管理' }),
+    ).toHaveAttribute('href', '#transport')
+    expect(
+      within(navigation).getByRole('link', { name: '送信したやり取り' }),
+    ).toHaveAttribute('href', '#sent')
+    const activity = screen.getByRole('region', {
+      name: '確認が必要なやり取り',
+    })
+    const links = within(activity).getAllByRole('link')
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/account/threads/unread-reply',
+      '/account/threads/new-request',
+    ])
+    expect(
+      screen.getByRole('link', { name: 'レンタル申込を確認する' }),
+    ).toHaveAttribute('href', '#lending')
+  })
+
   it('shows the written review instead of the form', () => {
     render(
       <AccountOverviewView
@@ -202,7 +247,7 @@ describe('AccountOverviewView', () => {
     expect(within(mine).getByText('借りたい')).toBeInTheDocument()
     expect(within(mine).getByText('山田')).toBeInTheDocument()
     expect(
-      within(mine).getByRole('link', { name: 'スレッドを開く' }),
+      within(mine).getByRole('link', { name: 'やり取りを開く' }),
     ).toHaveAttribute('href', '/account/threads/i-1')
     expect(within(mine).getByText('返信 2件')).toBeInTheDocument()
     expect(within(mine).getByText('未読')).toBeInTheDocument()
@@ -234,7 +279,7 @@ describe('AccountOverviewView', () => {
     ).toHaveAttribute('href', '/listings/trc-001')
     expect(within(sent).getByText('買いたい')).toBeInTheDocument()
     expect(
-      within(sent).getByRole('link', { name: 'スレッドを開く' }),
+      within(sent).getByRole('link', { name: 'やり取りを開く' }),
     ).toHaveAttribute('href', '/account/threads/i-2')
     expect(
       within(screen.getByRole('region', { name: '送った応募' })).getByText(

@@ -18,7 +18,6 @@ export function ContactForm() {
       <ReceiptPanel
         receipt={form.receipt}
         title="お問い合わせ"
-        description="内容を確認のうえ、ご登録のメールアドレスへ返信します。"
         links={[
           { href: '/', label: 'トップへもどる' },
           { href: '/faq', label: 'よくある質問を見る' },

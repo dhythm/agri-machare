@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Pencil } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { BackLink } from '@/components/back-link'
 import { LoginPrompt } from '@/components/auth/login-prompt'
@@ -8,7 +9,7 @@ import { canManage } from '@/lib/server/auth/access'
 import { getCurrentUser } from '@/lib/server/auth/session'
 import { getTransportJob } from '@/lib/server/transport'
 
-export const metadata: Metadata = { title: '運搬依頼を編集する | ノウキシェア' }
+export const metadata: Metadata = { title: '運搬依頼を編集する | Agri Machare' }
 
 export const dynamic = 'force-dynamic'
 
@@ -25,35 +26,40 @@ export default async function EditTransportJobPage({
 
   return (
     <PageShell>
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
         <BackLink href={`/transport/${id}`} label="案件の詳細にもどる" />
-        <div className="mt-6">
-          <PageIntro title="運搬依頼を編集する" />
-        </div>
-        <div className="mt-8">
-          {user ? (
-            <TransportJobForm
-              contact={{ name: user.name, email: user.email }}
-              edit={{
-                jobId: job.id,
-                values: {
-                  item: job.item,
-                  from: job.from,
-                  to: job.to,
-                  distanceKm: String(job.distanceKm),
-                  weight: job.weight,
-                  desiredDate: job.desiredDate,
-                  reward: String(job.reward),
-                  contactEmail: user.email,
-                },
-              }}
-            />
-          ) : (
-            <LoginPrompt
-              action="運搬依頼を編集する"
-              callbackUrl={`/transport/${id}/edit`}
-            />
-          )}
+        <div className="mt-8 grid items-start gap-8 lg:grid-cols-[280px_1fr] lg:gap-12">
+          <div className="lg:sticky lg:top-36 xl:top-24">
+            <span className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+              <Pencil className="size-5" />
+            </span>
+            <PageIntro title="運搬依頼を編集する" description={job.item} />
+          </div>
+          <div className="min-w-0 rounded-2xl border border-border bg-card p-5 sm:p-8">
+            {user ? (
+              <TransportJobForm
+                contact={{ name: user.name, email: user.email }}
+                edit={{
+                  jobId: job.id,
+                  values: {
+                    item: job.item,
+                    from: job.from,
+                    to: job.to,
+                    distanceKm: String(job.distanceKm),
+                    weight: job.weight,
+                    desiredDate: job.desiredDate,
+                    reward: String(job.reward),
+                    contactEmail: user.email,
+                  },
+                }}
+              />
+            ) : (
+              <LoginPrompt
+                action="運搬依頼を編集する"
+                callbackUrl={`/transport/${id}/edit`}
+              />
+            )}
+          </div>
         </div>
       </div>
     </PageShell>

@@ -3,20 +3,32 @@ import { AdminTabs } from './admin-tabs'
 
 export function AdminSection({
   title,
+  description,
   tabs,
   children,
 }: {
   title: string
+  description?: string
   tabs?: { href: string; label: string }[]
   children: ReactNode
 }) {
   return (
     <>
-      <h1 className="font-display text-2xl font-black tracking-tight text-foreground">
-        {title}
-      </h1>
+      <div className="mb-7">
+        <p className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-muted-foreground">
+          AGRI MACHARE / OPERATIONS
+        </p>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          {title}
+        </h1>
+        {description && (
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+        )}
+      </div>
       {tabs && (
-        <div className="mt-4">
+        <div>
           <AdminTabs items={tabs} />
         </div>
       )}

@@ -74,7 +74,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
         error={errors.password}
         onChange={(event) => setPassword(event.target.value)}
       />
-      <div>
+      <div className="[&_button]:h-12 [&_button]:w-full">
         <SubmitButton label="ログイン" isSubmitting={isSubmitting} />
       </div>
     </form>

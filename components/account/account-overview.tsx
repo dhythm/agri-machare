@@ -1,4 +1,18 @@
 import Link from 'next/link'
+import Image from 'next/image'
+import {
+  ArrowUpRight,
+  CalendarDays,
+  Clock3,
+  Inbox,
+  MessageSquare,
+  Plus,
+  Truck,
+} from 'lucide-react'
+import { AccountNavigation } from './account-navigation'
+import { AccountActivity } from './account-activity'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Badge } from '@/components/badge'
 import {
   formatYen,
@@ -58,9 +72,10 @@ function ThreadMeta({
       )}
       <Link
         href={`/account/threads/${submission.id}`}
-        className="text-xs font-medium text-primary hover:underline"
+        className="ml-auto inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-primary hover:underline"
       >
-        スレッドを開く
+        やり取りを開く
+        <ArrowUpRight className="size-3.5" aria-hidden="true" />
       </Link>
     </span>
   )
@@ -72,26 +87,45 @@ function receivedAt(submission: Submission): string {
 
 function Section({
   title,
+  id,
+  count,
+  action,
   children,
 }: {
   title: string
+  id?: string
+  count?: number
+  action?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
-    <section aria-labelledby={`section-${title}`}>
-      <h2
-        id={`section-${title}`}
-        className="font-display text-lg font-bold text-foreground"
-      >
-        {title}
-      </h2>
-      <div className="mt-4">{children}</div>
+    <section
+      id={id}
+      aria-labelledby={`section-${title}`}
+      className="min-w-0 scroll-mt-28"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex items-center gap-3 font-display text-xl font-bold tracking-tight text-foreground">
+          <span id={`section-${title}`}>{title}</span>
+          {count !== undefined && (
+            <span className="text-sm font-normal tabular-nums text-muted-foreground">
+              {count}件
+            </span>
+          )}
+        </h2>
+        {action}
+      </div>
+      <div className="mt-5">{children}</div>
     </section>
   )
 }
 
 function Empty({ label }: { label: string }) {
-  return <p className="text-sm text-muted-foreground">{label}</p>
+  return (
+    <p className="rounded-xl border border-dashed border-border bg-muted/20 px-5 py-6 text-sm text-muted-foreground">
+      {label}
+    </p>
+  )
 }
 
 function IncomingList({
@@ -103,11 +137,16 @@ function IncomingList({
   empty: string
   render: (submission: Submission) => React.ReactNode
 }) {
-  if (items.length === 0) return <Empty label={empty} />
+  if (items.length === 0)
+    return (
+      <p className="mt-4 border-t border-border pt-4 text-xs text-muted-foreground">
+        {empty}
+      </p>
+    )
   return (
-    <ul className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
+    <ul className="mt-5 flex flex-col divide-y divide-border border-t border-border">
       {items.map((submission) => (
-        <li key={submission.id} className="text-sm">
+        <li key={submission.id} className="py-4 text-sm last:pb-0">
           {render(submission)}
         </li>
       ))}
@@ -141,13 +180,13 @@ function RentalList({
       {items.map(({ rental, listing }) => (
         <li
           key={rental.id}
-          className="rounded-2xl border border-border bg-card p-4 text-sm"
+          className="rounded-2xl border border-border bg-card p-5 text-sm sm:p-6"
         >
           <div className="flex flex-wrap items-center gap-2">
             {listing ? (
               <Link
                 href={`/listings/${listing.id}`}
-                className="font-medium text-foreground hover:underline"
+                className="font-semibold text-foreground hover:text-primary hover:underline"
               >
                 {listing.name}
               </Link>
@@ -177,7 +216,7 @@ function RentalList({
               運搬を依頼する
             </Link>
           )}
-          <div className="mt-2">
+          <div className="mt-4 border-t border-border pt-4">
             <RentalActions
               rentalId={rental.id}
               status={rental.status}
@@ -208,330 +247,437 @@ export function AccountOverviewView({
 }: {
   overview: AccountOverview
 }) {
-  const replies = (submission: Submission) =>
+  const getReplyCount = (submission: Submission) =>
     overview.replyCounts[submission.id] ?? 0
   const unread = new Set(overview.unreadThreadIds)
   const summaryCards = [
-    { label: '未読のやり取り', value: overview.summary.unreadThreads },
+    {
+      label: '未読のやり取り',
+      value: overview.summary.unreadThreads,
+      href: '#activity',
+      icon: MessageSquare,
+    },
     {
       label: '未対応の問い合わせ・応募',
       value: overview.summary.openInquiries,
+      href: '#activity',
+      icon: Inbox,
     },
-    { label: '申込中のレンタル', value: overview.summary.requestedRentals },
-    { label: '審査待ちの出品', value: overview.summary.pendingListings },
+    {
+      label: '承認待ちのレンタル',
+      value: overview.summary.requestedRentals,
+      href: '#lending',
+      icon: CalendarDays,
+    },
+    {
+      label: '審査待ちの出品',
+      value: overview.summary.pendingListings,
+      href: '#equipment',
+      icon: Clock3,
+    },
   ]
   return (
-    <div className="flex flex-col gap-10">
+    <div className="space-y-8">
       <section aria-labelledby="section-summary">
         <h2 id="section-summary" className="sr-only">
           概要
         </h2>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {summaryCards.map((card) => (
-            <li
-              key={card.label}
-              className="rounded-2xl border border-border bg-card p-4"
-            >
-              <p className="text-xs text-muted-foreground">{card.label}</p>
-              <p className="mt-1 font-display text-2xl font-bold text-foreground">
-                {card.value}件
-              </p>
+        <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {summaryCards.map(({ label, value, href, icon: Icon }) => (
+            <li key={label}>
+              <Link
+                href={href}
+                className="group block h-full rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:p-5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <Icon className="size-4 text-primary" aria-hidden="true" />
+                  <ArrowUpRight
+                    className="size-3.5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </div>
+                <p className="mt-4 font-display text-3xl font-semibold tabular-nums tracking-tight text-foreground">
+                  {value}件
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                  {label}
+                </p>
+              </Link>
             </li>
           ))}
         </ul>
       </section>
-      <Section title="自分の出品">
-        {overview.listings.length === 0 ? (
-          <Empty label="まだありません" />
-        ) : (
-          <ul className="flex flex-col gap-4">
-            {overview.listings.map(({ listing, inquiries }) => (
-              <li
-                key={listing.id}
-                className="rounded-2xl border border-border bg-card p-5"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/listings/${listing.id}`}
-                      className="font-medium text-foreground hover:underline"
-                    >
-                      {listing.name}
-                    </Link>
-                    <ModerationBadge status={listing.moderationStatus} />
-                    {listing.withdrawnAt && <Badge>取り下げ中</Badge>}
-                  </div>
-                  <span className="flex items-center gap-3 text-sm text-muted-foreground">
-                    問い合わせ {inquiries.length}件
-                    <Link
-                      href={`/listings/${listing.id}/edit`}
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      編集
-                    </Link>
-                    <ListingStatusButton
-                      listingId={listing.id}
-                      withdrawn={listing.withdrawnAt !== undefined}
-                    />
-                  </span>
-                </div>
-                {listing.moderationNote && (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    運営メモ: {listing.moderationNote}
-                  </p>
-                )}
-                <IncomingList
-                  items={inquiries}
-                  empty="問い合わせはまだありません"
-                  render={(inquiry) => (
-                    <div className="flex flex-col gap-1">
-                      <div className="flex flex-col gap-1 sm:flex-row sm:gap-3">
-                        <span className="shrink-0 text-muted-foreground">
-                          {receivedAt(inquiry)}
-                        </span>
-                        <span className="shrink-0 font-medium">
-                          {text(inquiry.payload.name)}
-                        </span>
-                        <span className="text-foreground">
-                          {text(inquiry.payload.message)}
-                        </span>
-                      </div>
-                      <ThreadMeta
-                        submission={inquiry}
-                        replyCount={replies(inquiry)}
-                        unread={unread.has(inquiry.id)}
-                      />
-                    </div>
-                  )}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section title="自分の運搬依頼">
-        {overview.transportJobs.length === 0 ? (
-          <Empty label="まだありません" />
-        ) : (
-          <ul className="flex flex-col gap-4">
-            {overview.transportJobs.map(({ job, applications }) => (
-              <li
-                key={job.id}
-                className="rounded-2xl border border-border bg-card p-5"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/transport/${job.id}`}
-                      className="font-medium text-foreground hover:underline"
-                    >
-                      {job.item}
-                    </Link>
-                    <ModerationBadge status={job.moderationStatus} />
-                    <Badge variant="muted">{job.status}</Badge>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {job.from} → {job.to}・{formatYen(job.reward)}
-                  </span>
-                </div>
-                <div className="mt-3 flex items-center gap-3">
-                  <Link
-                    href={`/transport/${job.id}/edit`}
-                    className="text-xs font-medium text-primary hover:underline"
-                  >
-                    編集
-                  </Link>
-                  {job.status !== '完了' && (
-                    <CompleteJobButton jobId={job.id} />
-                  )}
-                </div>
-                <IncomingList
-                  items={applications}
-                  empty="応募はまだありません"
-                  render={(application) => (
-                    <div className="flex flex-col gap-1">
-                      <div className="flex flex-col gap-1 sm:flex-row sm:gap-3">
-                        <span className="shrink-0 text-muted-foreground">
-                          {receivedAt(application)}
-                        </span>
-                        <span className="shrink-0 font-medium">
-                          {text(application.payload.name)}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {text(application.payload.vehicle)}
-                          {text(application.payload.availableDate) &&
-                            `・${text(application.payload.availableDate)}`}
-                        </span>
-                        <span className="text-foreground">
-                          {text(application.payload.message)}
-                        </span>
-                      </div>
-                      <ThreadMeta
-                        submission={application}
-                        replyCount={replies(application)}
-                        unread={unread.has(application.id)}
-                      />
-                    </div>
-                  )}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      {overview.carrier && (
-        <Section title="運搬者プロフィール">
-          <div className="rounded-2xl border border-border bg-card p-5 text-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-foreground">
-                {overview.carrier.profile.name}
-              </span>
-              <Badge variant="muted">{overview.carrier.profile.kind}</Badge>
-              <span className="text-muted-foreground">
-                拠点 {overview.carrier.profile.prefecture}
-              </span>
+      <div className="grid items-start gap-7 lg:grid-cols-[205px_minmax(0,1fr)] lg:gap-9">
+        <AccountNavigation isCarrier={Boolean(overview.carrier)} />
+        <div className="flex min-w-0 flex-col gap-10">
+          <AccountActivity overview={overview} />
+          <Section
+            id="equipment"
+            title="自分の出品"
+            count={overview.listings.length}
+            action={
               <Link
-                href="/transport/register"
-                className="ml-auto text-xs font-medium text-primary hover:underline"
+                href="/listings/new"
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'sm' }),
+                  'gap-1.5',
+                )}
               >
-                プロフィールを編集
+                <Plus className="size-3.5" aria-hidden="true" />
+                出品する
               </Link>
-            </div>
-            <p className="mt-2 text-muted-foreground">
-              車両: {overview.carrier.profile.vehicles.join('・')}／対応地域:{' '}
-              {overview.carrier.profile.serviceAreas.join('・')}
-            </p>
-            <h3 className="mt-4 text-sm font-medium text-foreground">
-              対応地域の募集中案件
-            </h3>
-            {overview.carrier.matchingJobs.length === 0 ? (
-              <p className="mt-1 text-muted-foreground">該当なし</p>
+            }
+          >
+            {overview.listings.length === 0 ? (
+              <Empty label="まだありません" />
             ) : (
-              <ul className="mt-2 flex flex-col gap-1">
-                {overview.carrier.matchingJobs.map((job) => (
-                  <li key={job.id} className="flex flex-wrap gap-2">
-                    <Link
-                      href={`/transport/${job.id}`}
-                      className="font-medium text-foreground hover:underline"
-                    >
-                      {job.item}
-                    </Link>
-                    <span className="text-muted-foreground">
-                      {job.from} → {job.to}・{formatYen(job.reward)}
-                    </span>
+              <ul className="flex flex-col gap-4">
+                {overview.listings.map(({ listing, inquiries }) => (
+                  <li
+                    key={listing.id}
+                    className="rounded-2xl border border-border bg-card p-5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-4">
+                        <Image
+                          src={listing.image}
+                          alt=""
+                          width={72}
+                          height={72}
+                          className="size-[72px] shrink-0 rounded-xl bg-muted object-contain p-1"
+                        />
+                        <div className="min-w-0">
+                          <p className="mb-1 text-xs text-muted-foreground">
+                            {listing.maker} · {listing.category}
+                          </p>
+                          <Link
+                            href={`/listings/${listing.id}`}
+                            className="font-semibold text-foreground hover:text-primary hover:underline"
+                          >
+                            {listing.name}
+                          </Link>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <ModerationBadge
+                              status={listing.moderationStatus}
+                            />
+                            {listing.withdrawnAt && <Badge>取り下げ中</Badge>}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                        問い合わせ {inquiries.length}件
+                        <Link
+                          href={`/listings/${listing.id}/edit`}
+                          className="text-xs font-medium text-primary hover:underline"
+                        >
+                          編集
+                        </Link>
+                        <ListingStatusButton
+                          listingId={listing.id}
+                          withdrawn={listing.withdrawnAt !== undefined}
+                        />
+                      </span>
+                    </div>
+                    {listing.moderationNote && (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        運営メモ: {listing.moderationNote}
+                      </p>
+                    )}
+                    <IncomingList
+                      items={inquiries}
+                      empty="問い合わせはまだありません"
+                      render={(inquiry) => (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span className="shrink-0 text-muted-foreground">
+                              {receivedAt(inquiry)}
+                            </span>
+                            <span className="shrink-0 font-medium">
+                              {text(inquiry.payload.name)}
+                            </span>
+                            <span className="text-foreground">
+                              {text(inquiry.payload.message)}
+                            </span>
+                          </div>
+                          <ThreadMeta
+                            submission={inquiry}
+                            replyCount={getReplyCount(inquiry)}
+                            unread={unread.has(inquiry.id)}
+                          />
+                        </div>
+                      )}
+                    />
                   </li>
                 ))}
               </ul>
             )}
-          </div>
-        </Section>
-      )}
+          </Section>
 
-      <Section title="借りている農機具">
-        <RentalList
-          items={overview.rentals.asRenter}
-          party="renter"
-          reviewedSources={overview.reviewedSources}
-        />
-      </Section>
+          <Section
+            id="rentals"
+            title="借りている農機具"
+            count={overview.rentals.asRenter.length}
+          >
+            <RentalList
+              items={overview.rentals.asRenter}
+              party="renter"
+              reviewedSources={overview.reviewedSources}
+            />
+          </Section>
 
-      <Section title="貸している農機具">
-        <RentalList
-          items={overview.rentals.asOwner}
-          party="owner"
-          reviewedSources={overview.reviewedSources}
-        />
-      </Section>
+          <Section
+            id="lending"
+            title="貸している農機具"
+            count={overview.rentals.asOwner.length}
+          >
+            <RentalList
+              items={overview.rentals.asOwner}
+              party="owner"
+              reviewedSources={overview.reviewedSources}
+            />
+          </Section>
 
-      <Section title="送った問い合わせ">
-        {overview.sentInquiries.length === 0 ? (
-          <Empty label="まだありません" />
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {overview.sentInquiries.map(({ submission, listing }) => (
-              <li
-                key={submission.id}
-                className="rounded-2xl border border-border bg-card p-4 text-sm"
+          <Section
+            id="transport"
+            title="自分の運搬依頼"
+            count={overview.transportJobs.length}
+            action={
+              <Link
+                href="/transport/new"
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'sm' }),
+                  'gap-1.5',
+                )}
               >
-                <div className="flex flex-wrap items-center gap-2">
-                  {listing ? (
-                    <Link
-                      href={`/listings/${listing.id}`}
-                      className="font-medium text-foreground hover:underline"
-                    >
-                      {listing.name}
-                    </Link>
-                  ) : (
-                    <span className="text-muted-foreground">
-                      削除された農機具
-                    </span>
-                  )}
-                  <span className="text-muted-foreground">
-                    {receivedAt(submission)}
-                  </span>
-                </div>
-                <p className="mt-1 text-foreground">
-                  {text(submission.payload.message)}
-                </p>
-                <div className="mt-2">
-                  <ThreadMeta
-                    submission={submission}
-                    replyCount={replies(submission)}
-                    unread={unread.has(submission.id)}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+                <Plus className="size-3.5" aria-hidden="true" />
+                運搬を依頼
+              </Link>
+            }
+          >
+            {overview.transportJobs.length === 0 ? (
+              <Empty label="まだありません" />
+            ) : (
+              <ul className="flex flex-col gap-4">
+                {overview.transportJobs.map(({ job, applications }) => (
+                  <li
+                    key={job.id}
+                    className="rounded-2xl border border-border bg-card p-5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={`/transport/${job.id}`}
+                          className="font-semibold text-foreground hover:text-primary hover:underline"
+                        >
+                          {job.item}
+                        </Link>
+                        <ModerationBadge status={job.moderationStatus} />
+                        <Badge variant="muted">{job.status}</Badge>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {job.from} → {job.to}・{formatYen(job.reward)}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      <Link
+                        href={`/transport/${job.id}/edit`}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        編集
+                      </Link>
+                      {job.status !== '完了' && (
+                        <CompleteJobButton jobId={job.id} />
+                      )}
+                    </div>
+                    <IncomingList
+                      items={applications}
+                      empty="応募はまだありません"
+                      render={(application) => (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span className="shrink-0 text-muted-foreground">
+                              {receivedAt(application)}
+                            </span>
+                            <span className="shrink-0 font-medium">
+                              {text(application.payload.name)}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {text(application.payload.vehicle)}
+                              {text(application.payload.availableDate) &&
+                                `・${text(application.payload.availableDate)}`}
+                            </span>
+                            <span className="text-foreground">
+                              {text(application.payload.message)}
+                            </span>
+                          </div>
+                          <ThreadMeta
+                            submission={application}
+                            replyCount={getReplyCount(application)}
+                            unread={unread.has(application.id)}
+                          />
+                        </div>
+                      )}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
 
-      <Section title="送った応募">
-        {overview.sentApplications.length === 0 ? (
-          <Empty label="まだありません" />
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {overview.sentApplications.map(({ submission, job }) => (
-              <li
-                key={submission.id}
-                className="rounded-2xl border border-border bg-card p-4 text-sm"
-              >
+          {overview.carrier && (
+            <Section id="carrier" title="運搬者プロフィール">
+              <div className="rounded-2xl border border-border bg-card p-5 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
-                  {job ? (
-                    <Link
-                      href={`/transport/${job.id}`}
-                      className="font-medium text-foreground hover:underline"
-                    >
-                      {job.item}
-                    </Link>
-                  ) : (
-                    <span className="text-muted-foreground">
-                      削除された案件
-                    </span>
-                  )}
-                  {job && <Badge variant="muted">{job.status}</Badge>}
-                  <span className="text-muted-foreground">
-                    {receivedAt(submission)}
+                  <span className="font-medium text-foreground">
+                    {overview.carrier.profile.name}
                   </span>
+                  <Badge variant="muted">{overview.carrier.profile.kind}</Badge>
+                  <span className="text-muted-foreground">
+                    拠点 {overview.carrier.profile.prefecture}
+                  </span>
+                  <Link
+                    href="/transport/register"
+                    className="ml-auto text-xs font-medium text-primary hover:underline"
+                  >
+                    プロフィールを編集
+                  </Link>
                 </div>
-                <p className="mt-1 text-muted-foreground">
-                  {text(submission.payload.vehicle)}・
-                  {text(submission.payload.availableDate)}
+                <p className="mt-2 text-muted-foreground">
+                  車両: {overview.carrier.profile.vehicles.join('・')}
+                  ／対応地域: {overview.carrier.profile.serviceAreas.join('・')}
                 </p>
-                <div className="mt-2">
-                  <ThreadMeta
-                    submission={submission}
-                    replyCount={replies(submission)}
-                    unread={unread.has(submission.id)}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+                <h3 className="mt-4 text-sm font-medium text-foreground">
+                  対応地域の募集中案件
+                </h3>
+                {overview.carrier.matchingJobs.length === 0 ? (
+                  <p className="mt-1 text-muted-foreground">該当なし</p>
+                ) : (
+                  <ul className="mt-2 flex flex-col gap-1">
+                    {overview.carrier.matchingJobs.map((job) => (
+                      <li key={job.id} className="flex flex-wrap gap-2">
+                        <Link
+                          href={`/transport/${job.id}`}
+                          className="font-semibold text-foreground hover:text-primary hover:underline"
+                        >
+                          {job.item}
+                        </Link>
+                        <span className="text-muted-foreground">
+                          {job.from} → {job.to}・{formatYen(job.reward)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </Section>
+          )}
+
+          {!overview.carrier && (
+            <Link
+              href="/transport/register"
+              className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-muted/40 px-5 py-5 text-sm font-semibold text-primary"
+            >
+              <span className="flex items-center gap-3">
+                <Truck className="size-5" aria-hidden="true" />
+                運搬者として登録する
+              </span>
+              <ArrowUpRight className="size-4" aria-hidden="true" />
+            </Link>
+          )}
+
+          <Section
+            id="sent"
+            title="送った問い合わせ"
+            count={overview.sentInquiries.length}
+          >
+            {overview.sentInquiries.length === 0 ? (
+              <Empty label="まだありません" />
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {overview.sentInquiries.map(({ submission, listing }) => (
+                  <li
+                    key={submission.id}
+                    className="rounded-2xl border border-border bg-card p-5 text-sm sm:p-6"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      {listing ? (
+                        <Link
+                          href={`/listings/${listing.id}`}
+                          className="font-semibold text-foreground hover:text-primary hover:underline"
+                        >
+                          {listing.name}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          削除された農機具
+                        </span>
+                      )}
+                      <span className="text-muted-foreground">
+                        {receivedAt(submission)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-foreground">
+                      {text(submission.payload.message)}
+                    </p>
+                    <div className="mt-2">
+                      <ThreadMeta
+                        submission={submission}
+                        replyCount={getReplyCount(submission)}
+                        unread={unread.has(submission.id)}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+
+          <Section title="送った応募" count={overview.sentApplications.length}>
+            {overview.sentApplications.length === 0 ? (
+              <Empty label="まだありません" />
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {overview.sentApplications.map(({ submission, job }) => (
+                  <li
+                    key={submission.id}
+                    className="rounded-2xl border border-border bg-card p-5 text-sm sm:p-6"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      {job ? (
+                        <Link
+                          href={`/transport/${job.id}`}
+                          className="font-semibold text-foreground hover:text-primary hover:underline"
+                        >
+                          {job.item}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          削除された案件
+                        </span>
+                      )}
+                      {job && <Badge variant="muted">{job.status}</Badge>}
+                      <span className="text-muted-foreground">
+                        {receivedAt(submission)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-muted-foreground">
+                      {text(submission.payload.vehicle)}・
+                      {text(submission.payload.availableDate)}
+                    </p>
+                    <div className="mt-2">
+                      <ThreadMeta
+                        submission={submission}
+                        replyCount={getReplyCount(submission)}
+                        unread={unread.has(submission.id)}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        </div>
+      </div>
     </div>
   )
 }

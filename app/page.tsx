@@ -17,10 +17,10 @@ export default async function Page() {
   return (
     <PageShell>
       <Hero />
-      <RoleChannels />
-      <HowItWorks />
       <Marketplace initialPage={featured} />
+      <HowItWorks />
       <TransportPreview />
+      <RoleChannels />
     </PageShell>
   )
 }

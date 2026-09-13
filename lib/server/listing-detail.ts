@@ -29,7 +29,7 @@ export function buildModes(listing: Listing): ListingModeConfig[] {
       id: 'buy',
       title: '購入する',
       price: formatYen(listing.salePrice),
-      desc: '状態・整備記録を確認のうえ購入。エスクロー決済で安全に取引できます。',
+      desc: '写真・状態・稼働時間を確認し、出品者と購入条件を相談できます。',
       cta: '購入手続きへ進む',
     })
   }

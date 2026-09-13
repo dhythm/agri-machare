@@ -1,62 +1,75 @@
-import { Repeat2 } from 'lucide-react'
-import { Badge } from '@/components/badge'
+import Link from 'next/link'
+import { ArrowRight, Check, CalendarDays, Tractor, Repeat2 } from 'lucide-react'
 
 const steps = [
   {
-    n: '01',
-    title: 'まず借りて試す',
-    desc: '気になる機種を短期レンタル。自分の農地・作業に本当に合うかを、購入前に実機で確かめられます。',
+    icon: CalendarDays,
+    title: '必要な期間、借りる',
+    desc: '使う日を選んで、レンタルを申し込む。',
   },
   {
-    n: '02',
-    title: '気に入ったら購入へ',
-    desc: 'レンタル期間中でも購入に切り替え可能。出品者とチャットで条件を相談し、そのまま買い取りへ進めます。',
+    icon: Tractor,
+    title: 'いつもの畑で、確かめる',
+    desc: '操作感も、作業効率も。実際に使って判断。',
   },
   {
-    n: '03',
-    title: 'レンタル料を一部充当',
-    desc: '支払い済みのレンタル料の一部を購入価格に充当。「試したのに無駄にならない」買い方ができます。',
+    icon: Check,
+    title: '気に入ったら、その一台を',
+    desc: '出品条件に応じてレンタル料を購入価格に充当。',
   },
 ]
 
 export function HowItWorks() {
   return (
-    <section id="how" className="border-y border-border bg-secondary/40">
-      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <div className="max-w-2xl">
-          <Badge variant="accent">
-            <Repeat2 className="size-3.5" />
-            レンタル → 購入
-          </Badge>
-          <h2 className="mt-4 text-balance font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            「借りて、良ければ買う」がひとつの流れに
+    <section
+      id="how"
+      className="mx-auto max-w-[1280px] scroll-mt-32 px-5 py-12 sm:px-8 sm:py-16"
+    >
+      <div className="relative overflow-hidden rounded-2xl bg-[#eaf0df] p-7 sm:p-10 lg:grid lg:grid-cols-[1fr_1.1fr] lg:gap-16 lg:p-14">
+        <div>
+          <p className="eyebrow text-primary/70">A NEW WAY TO OWN</p>
+          <h2 className="mt-5 font-display text-3xl font-bold leading-relaxed tracking-tight text-primary sm:text-4xl">
+            大きな買い物に、
+            <br />
+            小さなお試しを。
           </h2>
-          <p className="mt-3 text-pretty leading-relaxed text-muted-foreground">
-            数百万円の買い物を勘で決めない。試用と購入を分断せず、レンタルからそのまま購入へつなげる仕組みです。
+          <p className="mt-5 max-w-sm text-sm leading-7 text-primary/75">
+            自分の畑に合うかは、使ってみてから。
+            <br />
+            レンタルから購入へ、納得できる選び方。
           </p>
+          <Link
+            href="/listings?deal=rentToOwn"
+            className="mt-7 inline-flex items-center gap-3 rounded-full bg-primary px-6 py-3.5 text-sm font-bold text-white hover:bg-primary/85"
+          >
+            レンタル購入できる農機具
+            <ArrowRight className="size-4" />
+          </Link>
+          <Link
+            href="/guide#rent-to-own"
+            className="mt-4 flex w-fit items-center gap-2 text-xs text-primary underline underline-offset-4"
+          >
+            しくみと充当条件を見る
+            <Repeat2 className="size-3" />
+          </Link>
         </div>
-
-        <ol className="mt-10 grid gap-4 md:grid-cols-3">
-          {steps.map((step, i) => (
-            <li
-              key={step.n}
-              className="relative flex flex-col rounded-2xl border border-border bg-card p-6"
-            >
-              <span className="font-display text-sm font-bold text-accent-foreground">
-                {step.n}
+        <ol className="mt-10 divide-y divide-primary/15 lg:mt-0">
+          {steps.map(({ icon: Icon, title, desc }, index) => (
+            <li key={title} className="flex gap-5 py-6 first:pt-0 last:pb-0">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-full border border-primary/20 text-primary">
+                <Icon className="size-5" />
               </span>
-              <h3 className="mt-2 font-display text-lg font-bold text-foreground">
-                {step.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {step.desc}
-              </p>
-              {i < steps.length - 1 && (
-                <span
-                  aria-hidden="true"
-                  className="absolute -right-2 top-1/2 z-10 hidden size-4 -translate-y-1/2 rotate-45 border-r border-t border-border bg-card md:block"
-                />
-              )}
+              <div>
+                <p className="text-[10px] font-bold tracking-widest text-primary/60">
+                  STEP 0{index + 1}
+                </p>
+                <h3 className="mt-1.5 text-base font-bold text-primary">
+                  {title}
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-primary/75">
+                  {desc}
+                </p>
+              </div>
             </li>
           ))}
         </ol>

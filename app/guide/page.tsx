@@ -4,7 +4,7 @@ import { Repeat2, ShoppingCart, Tag, Truck } from 'lucide-react'
 import { PageIntro, PageShell } from '@/components/page-shell'
 import { Badge } from '@/components/badge'
 
-export const metadata: Metadata = { title: 'はじめての方へ | ノウキシェア' }
+export const metadata: Metadata = { title: 'はじめての方へ | Agri Machare' }
 
 const roles = [
   {
@@ -17,14 +17,14 @@ const roles = [
   {
     icon: Repeat2,
     title: '借りる',
-    body: '繁忙期や試したい機種だけ短期レンタル。一覧から機種を選び、希望日を添えて出品者に連絡します。',
+    body: '必要な期間だけレンタル。農機具の詳細で利用日を選び、申込み後はマイページで承認状況を確認できます。',
     href: '/listings?deal=rent',
     action: 'レンタルできる農機具を探す',
   },
   {
     icon: ShoppingCart,
     title: '買う',
-    body: '状態・稼働時間・整備記録を確認して購入。エスクロー決済で、受け取り確認後に出品者へ入金されます。',
+    body: '写真・状態・稼働時間を確認して、出品者に問い合わせ。マイページのメッセージで条件を相談し、取引を進めます。',
     href: '/listings?deal=sale',
     action: '販売中の農機具を探す',
   },
@@ -44,7 +44,7 @@ const rentToOwnSteps = [
   },
   {
     title: '気に入ったら購入へ',
-    body: 'レンタル期間中でも購入に切り替えられます。出品者に連絡して条件を相談します。',
+    body: 'レンタル中はマイページから購入に切り替えられます。申込み時の充当条件で購入価格が決まります。',
   },
   {
     title: 'レンタル料を一部充当',
@@ -55,10 +55,11 @@ const rentToOwnSteps = [
 export default function GuidePage() {
   return (
     <PageShell>
-      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8">
+        <p className="eyebrow mb-5">HOW AGRI MACHARE WORKS</p>
         <PageIntro
           title="はじめての方へ"
-          description="ノウキシェアは、農機具を売る・買う・借りる・運ぶ人をつなぐ場所です。会員登録は不要で、必要なときに出品者や依頼者へ連絡するだけで始められます。"
+          description="農機具を売る、買う、借りる、運ぶ。あなたに合う入口から、次のつながりを。出品・申込み・問い合わせにはログインが必要です。"
         />
 
         <section className="mt-10">
@@ -125,14 +126,16 @@ export default function GuidePage() {
           </Link>
         </section>
 
-        <section className="mt-12">
+        <section className="mt-12 rounded-2xl bg-secondary p-7 sm:p-10">
           <h2 className="font-display text-xl font-bold text-foreground">
             安心して取引するために
           </h2>
           <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
             <li>
-              <strong className="text-foreground">エスクロー決済。</strong>
-              代金はいったんノウキシェアが預かり、受け取り確認後に出品者へ入金します。
+              <strong className="text-foreground">
+                やり取りをひとつの場所に。
+              </strong>
+              問い合わせ・応募・返信をマイページで確認できます。現在はコンセプト検証版のため、実際の取引・決済は行われません。
             </li>
             <li>
               <strong className="text-foreground">状態の記録。</strong>

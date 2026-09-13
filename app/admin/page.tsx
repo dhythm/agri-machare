@@ -1,63 +1,225 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import {
+  ArrowRight,
+  ArrowUpRight,
+  CalendarDays,
+  ClipboardCheck,
+  Handshake,
+  MessageSquare,
+  Truck,
+  Users,
+} from 'lucide-react'
 import { AdminSection } from '@/components/admin/admin-section'
 import { getAdminCounts } from '@/lib/server/admin-overview'
 
 export const metadata: Metadata = {
-  title: 'ダッシュボード | ノウキシェア 運営',
+  title: 'ダッシュボード | Agri Machare 運営',
 }
 
 export const dynamic = 'force-dynamic'
 
+const workspaces = [
+  {
+    title: '取引管理',
+    icon: Handshake,
+    links: [
+      { label: '出品の審査', href: '/admin/deals' },
+      { label: 'レンタル', href: '/admin/deals/rentals' },
+      { label: '問い合わせ', href: '/admin/deals/inquiries' },
+      { label: 'レビュー', href: '/admin/deals/reviews' },
+    ],
+  },
+  {
+    title: '運搬管理',
+    icon: Truck,
+    links: [
+      { label: '運搬依頼の審査', href: '/admin/transport' },
+      { label: '運搬への応募', href: '/admin/transport/applications' },
+      { label: '運搬者', href: '/admin/transport/carriers' },
+    ],
+  },
+  {
+    title: 'アカウント管理',
+    icon: Users,
+    links: [{ label: 'アカウントと利用状況', href: '/admin/accounts' }],
+  },
+]
+
 export default async function AdminDashboardPage() {
   const counts = await getAdminCounts()
-  const cards = [
-    {
-      label: '審査待ちの出品',
-      value: counts.pendingListings,
-      href: '/admin/deals',
-    },
-    {
-      label: '審査待ちの運搬依頼',
-      value: counts.pendingTransportJobs,
-      href: '/admin/transport',
-    },
+  const pendingCount = counts.pendingListings + counts.pendingTransportJobs
+  const metrics = [
     {
       label: '申込中のレンタル',
       value: counts.requestedRentals,
-      href: '/admin/deals/rentals',
+      icon: CalendarDays,
+      links: [{ label: '申込一覧', href: '/admin/deals/rentals' }],
     },
     {
       label: '未対応のやり取り',
       value: counts.openThreads,
-      href: '/admin/deals/inquiries',
+      icon: MessageSquare,
+      links: [
+        { label: '問い合わせ', href: '/admin/deals/inquiries' },
+        { label: '運搬への応募', href: '/admin/transport/applications' },
+      ],
     },
     {
       label: '登録済みの運搬者',
       value: counts.carriers,
-      href: '/admin/transport/carriers',
+      icon: Truck,
+      links: [{ label: '運搬者一覧', href: '/admin/transport/carriers' }],
     },
   ]
+
   return (
-    <AdminSection title="ダッシュボード">
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card) => (
-          <li key={card.href}>
-            <Link
-              href={card.href}
-              className="block rounded-2xl border border-border bg-card p-5 transition-colors hover:border-primary/40"
+    <AdminSection
+      title="ダッシュボード"
+      description="農機具と人をつなぐ、日々の運営をここから。"
+    >
+      <section className="relative overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground sm:p-8">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-24 -right-12 size-80 rounded-full border border-primary-foreground/10"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-10 -right-24 size-80 rounded-full border border-primary-foreground/10"
+        />
+        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <p className="mb-4 flex items-center gap-2 text-[10px] font-semibold tracking-[0.18em] text-primary-foreground/65">
+              <ClipboardCheck className="size-4" aria-hidden="true" />
+              REVIEW QUEUE
+            </p>
+            <h2 className="text-lg font-medium">審査を待っている案件</h2>
+            <p
+              aria-label={`審査待ち ${pendingCount} 件`}
+              className="mt-2 font-display text-6xl font-medium tracking-tight tabular-nums"
             >
-              <p className="text-sm text-muted-foreground">{card.label}</p>
-              <p className="mt-2 font-display text-3xl font-bold text-foreground">
-                {card.value}
-                <span className="ml-1 text-base font-medium text-muted-foreground">
-                  件
+              {pendingCount}
+              <span className="ml-3 text-sm font-normal tracking-normal text-primary-foreground/60">
+                件
+              </span>
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:w-[52%]">
+            {[
+              {
+                label: '審査待ちの出品',
+                value: counts.pendingListings,
+                href: '/admin/deals',
+              },
+              {
+                label: '審査待ちの運搬依頼',
+                value: counts.pendingTransportJobs,
+                href: '/admin/transport',
+              },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group rounded-xl border border-primary-foreground/20 bg-primary-foreground/5 p-5 transition-colors hover:bg-primary-foreground/15 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-foreground"
+              >
+                <span className="text-xs text-primary-foreground/75">
+                  {item.label}
                 </span>
-              </p>
-            </Link>
+                <span className="mt-4 flex items-end justify-between gap-4">
+                  <span className="font-display text-3xl font-medium tabular-nums">
+                    {item.value}
+                    <span className="ml-2 text-xs text-primary-foreground/60">
+                      件
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs font-medium">
+                    審査する
+                    <ArrowRight
+                      className="size-4 transition-transform group-hover:translate-x-1"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <ul className="mt-5 grid gap-4 sm:grid-cols-3">
+        {metrics.map((metric) => (
+          <li
+            key={metric.label}
+            className="flex flex-col rounded-2xl border border-border bg-card p-5 sm:p-6"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm text-muted-foreground">{metric.label}</p>
+              <metric.icon
+                className="size-5 shrink-0 text-primary/60"
+                aria-hidden="true"
+              />
+            </div>
+            <p className="mt-4 mb-5 font-display text-4xl font-medium tabular-nums text-foreground">
+              {metric.value}
+              <span className="ml-2 text-xs text-muted-foreground">件</span>
+            </p>
+            <div className="mt-auto flex flex-wrap gap-x-4 gap-y-2 border-t border-border pt-4">
+              {metric.links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex min-h-6 items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                >
+                  {link.label}
+                  <ArrowUpRight className="size-3.5" aria-hidden="true" />
+                </Link>
+              ))}
+            </div>
           </li>
         ))}
       </ul>
+
+      <section className="mt-10">
+        <div className="mb-5 flex items-center gap-3">
+          <h2 className="font-display text-lg font-bold text-foreground">
+            運営業務
+          </h2>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {workspaces.map((workspace) => (
+            <div
+              key={workspace.title}
+              className="rounded-2xl border border-border bg-card p-5 sm:p-6"
+            >
+              <div className="mb-5 flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-primary/7 text-primary">
+                  <workspace.icon className="size-5" aria-hidden="true" />
+                </span>
+                <h3 className="text-sm font-semibold text-foreground">
+                  {workspace.title}
+                </h3>
+              </div>
+              <ul className="space-y-1">
+                {workspace.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="group -mx-2 flex min-h-11 items-center justify-between gap-3 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                    >
+                      {link.label}
+                      <ArrowUpRight
+                        className="size-4 text-muted-foreground/50 transition-colors group-hover:text-primary"
+                        aria-hidden="true"
+                      />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
     </AdminSection>
   )
 }

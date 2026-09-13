@@ -44,8 +44,12 @@ export function InquiryForm({
       <ReceiptPanel
         receipt={form.receipt}
         title="出品者への連絡"
-        description="出品者からの返信はご登録のメールアドレスへ届きます。"
+        description="出品者とのやり取りはマイページで確認できます。"
         links={[
+          {
+            href: `/account/threads/${form.receipt.id}`,
+            label: 'やり取りを開く',
+          },
           { href: `/listings/${listing.id}`, label: '農機具の詳細にもどる' },
           { href: '/listings', label: 'ほかの農機具を探す' },
         ]}
@@ -54,7 +58,11 @@ export function InquiryForm({
   }
 
   return (
-    <form onSubmit={form.submit} noValidate className="flex flex-col gap-5">
+    <form
+      onSubmit={form.submit}
+      noValidate
+      className="page-form flex flex-col gap-5"
+    >
       <FormAlert error={form.failed ? '送信できませんでした。' : undefined} />
       <fieldset>
         <legend className="mb-2 text-sm font-medium text-foreground">
@@ -65,7 +73,7 @@ export function InquiryForm({
             <label
               key={option.id}
               className={cn(
-                'cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+                'cursor-pointer rounded-full border has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary px-3.5 py-1.5 text-sm font-medium transition-colors',
                 form.values.mode === option.id
                   ? 'border-primary bg-primary/10 text-primary'
                   : 'border-border text-muted-foreground hover:text-foreground',

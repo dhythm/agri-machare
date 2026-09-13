@@ -14,7 +14,7 @@ import {
   type InquiryMode,
 } from '@/lib/validation/listing-inquiry'
 
-export const metadata: Metadata = { title: '出品者に連絡する | ノウキシェア' }
+export const metadata: Metadata = { title: '出品者に連絡する | Agri Machare' }
 
 export const dynamic = 'force-dynamic'
 

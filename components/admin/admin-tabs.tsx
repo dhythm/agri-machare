@@ -11,8 +11,8 @@ export function AdminTabs({
 }) {
   const pathname = usePathname()
   return (
-    <nav aria-label="タブ" className="border-b border-border">
-      <ul className="-mb-px flex flex-wrap gap-4">
+    <nav aria-label="タブ" className="overflow-x-auto border-b border-border">
+      <ul className="flex min-w-max gap-1">
         {items.map((item) => {
           const current = pathname === item.href
           return (
@@ -21,10 +21,10 @@ export function AdminTabs({
                 href={item.href}
                 aria-current={current ? 'page' : undefined}
                 className={cn(
-                  'inline-block border-b-2 px-1 py-2 text-sm font-medium transition-colors',
+                  'inline-flex min-h-12 items-center border-b-2 px-4 py-3 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary',
                   current
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground',
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground',
                 )}
               >
                 {item.label}

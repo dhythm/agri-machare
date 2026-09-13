@@ -37,8 +37,12 @@ export function TransportApplicationForm({
       <ReceiptPanel
         receipt={form.receipt}
         title="応募"
-        description="依頼者が内容を確認し、ご登録のメールアドレスへ連絡します。"
+        description="応募の状況と依頼者からの返信はマイページで確認できます。"
         links={[
+          {
+            href: `/account/threads/${form.receipt.id}`,
+            label: 'やり取りを開く',
+          },
           { href: '/transport', label: 'ほかの案件を見る' },
           { href: '/transport/register', label: '運搬者として登録する' },
         ]}

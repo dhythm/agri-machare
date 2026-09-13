@@ -53,6 +53,19 @@ const existing = {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('ListingForm', () => {
+  it('focuses the first invalid field on submit without moving focus while typing', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const user = setup()
+    await user.click(screen.getByRole('button', { name: '出品を申し込む' }))
+    const name = screen.getByLabelText('農機具名')
+    expect(name).toHaveFocus()
+    await user.type(name, 'トラクター')
+    expect(name).toHaveValue('トラクター')
+    expect(name).toHaveFocus()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('edits an existing listing with PUT, keeping remaining pictures', async () => {
     resizeDataUrl.mockResolvedValue('data:image/jpeg;base64,thumbtwo')
     const fetchMock = vi.fn(async () =>

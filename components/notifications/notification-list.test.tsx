@@ -4,16 +4,21 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { NotificationList } from './notification-list'
 
-const { push, refresh } = vi.hoisted(() => ({
+const { push, refresh, invalidateQueries } = vi.hoisted(() => ({
   push: vi.fn(),
   refresh: vi.fn(),
+  invalidateQueries: vi.fn(),
 }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push, refresh }) }))
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ invalidateQueries }),
+}))
 
 afterEach(() => {
   vi.unstubAllGlobals()
   push.mockReset()
   refresh.mockReset()
+  invalidateQueries.mockReset()
 })
 
 const items = [
@@ -38,6 +43,20 @@ const items = [
 ]
 
 describe('NotificationList', () => {
+  it('filters to unread notifications and restores the complete history', async () => {
+    render(<NotificationList items={items} />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /未読のみ/ }))
+    expect(
+      screen.getByRole('button', { name: /返信が届きました/ }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /レンタルが/ })).toBeNull()
+    await user.click(screen.getByRole('button', { name: /^すべて 2/ }))
+    expect(
+      screen.getByRole('button', { name: /レンタルが/ }),
+    ).toBeInTheDocument()
+  })
+
   it('marks a notification read before following its link', async () => {
     const fetchMock = vi.fn(async () => Response.json({ ok: true }))
     vi.stubGlobal('fetch', fetchMock)
@@ -52,6 +71,9 @@ describe('NotificationList', () => {
       expect.objectContaining({ method: 'PATCH' }),
     )
     expect(push).toHaveBeenCalledWith('/account/threads/t-1')
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['notifications', 'unread-count'],
+    })
   })
 
   it('marks everything read', async () => {
@@ -66,6 +88,9 @@ describe('NotificationList', () => {
       expect.objectContaining({ method: 'POST' }),
     )
     expect(refresh).toHaveBeenCalled()
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['notifications', 'unread-count'],
+    })
   })
 
   it('shows an empty state', () => {

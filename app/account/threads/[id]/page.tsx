@@ -8,7 +8,7 @@ import { findReviewForSource } from '@/lib/server/reviews'
 import { markThreadRead } from '@/lib/server/thread-reads'
 import { getThread } from '@/lib/server/threads'
 
-export const metadata: Metadata = { title: 'やり取り | ノウキシェア' }
+export const metadata: Metadata = { title: 'やり取り | Agri Machare' }
 
 export const dynamic = 'force-dynamic'
 
@@ -39,12 +39,15 @@ export default async function ThreadPage({
 
   return (
     <PageShell>
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
         <BackLink href="/account" label="マイページにもどる" />
-        <h1 className="mt-6 font-display text-2xl font-bold text-foreground">
+        <p className="mt-8 text-[10px] font-semibold tracking-[0.22em] text-primary">
+          MESSAGES
+        </p>
+        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground">
           {title}のやり取り
         </h1>
-        <div className="mt-6">
+        <div className="mt-8">
           <ThreadView
             thread={result.value}
             currentUserId={user.id}

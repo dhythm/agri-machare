@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils'
 
 const controlClass =
-  'h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 aria-invalid:border-destructive'
+  'h-12 w-full rounded-lg border border-input bg-card px-3.5 text-base sm:text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 aria-invalid:border-destructive'
 
 function describedBy(id: string, error?: string) {
   return error ? `${id}-error` : undefined
@@ -23,7 +23,7 @@ function FieldLabel({ htmlFor, label }: { htmlFor: string; label: string }) {
   return (
     <label
       htmlFor={htmlFor}
-      className="mb-1.5 block text-sm font-medium text-foreground"
+      className="mb-2 block text-sm font-medium text-foreground"
     >
       {label}
     </label>

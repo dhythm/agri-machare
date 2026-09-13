@@ -1,94 +1,103 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { MapPin, Star, Gauge, Repeat2 } from 'lucide-react'
-import { Badge } from '@/components/badge'
+import { MapPin, Star, ArrowUpRight, Repeat2 } from 'lucide-react'
 import { type Listing, formatYen } from '@/lib/data'
 
 export function ListingCard({ listing }: { listing: Listing }) {
   const canBuy = listing.deals.includes('sale')
   const canRent = listing.deals.includes('rent')
-
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-primary/40 hover:shadow-md"
+      className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-[box-shadow,transform] duration-200 hover:-translate-y-1 hover:shadow-[0_12px_30px_-18px_rgba(23,63,53,0.3)]"
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+      <div className="relative aspect-[1.55] overflow-hidden bg-muted">
         <Image
           src={listing.image || '/placeholder.svg'}
           alt={listing.name}
           fill
-          sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="(min-width: 1280px) 390px, (min-width: 1024px) 31vw, (min-width: 640px) 45vw, 95vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5 text-[10px] font-bold">
           {canBuy && (
-            <Badge className="bg-primary text-primary-foreground shadow-sm">
+            <span className="rounded-md bg-white/95 px-2.5 py-1 text-primary">
               販売
-            </Badge>
+            </span>
           )}
           {canRent && (
-            <Badge className="bg-accent text-accent-foreground shadow-sm">
+            <span className="rounded-md bg-accent px-2.5 py-1 text-accent-foreground">
               レンタル
-            </Badge>
+            </span>
           )}
         </div>
-        {listing.rentToOwn && (
-          <Badge className="absolute bottom-3 left-3 bg-card/95 text-primary shadow-sm">
-            <Repeat2 className="size-3.5" />
-            レンタル購入可
-          </Badge>
-        )}
+        <span className="absolute bottom-3 right-3 flex size-8 items-center justify-center rounded-full bg-white/90 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+          <ArrowUpRight className="size-4" />
+        </span>
       </div>
-
-      <div className="flex flex-1 flex-col p-4">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">{listing.maker}</span>
-          <span>·</span>
-          <span>{listing.year}年式</span>
-          <span className="inline-flex items-center gap-0.5">
-            <Gauge className="size-3" />
-            {listing.hours}h
-          </span>
-        </div>
-        <h3 className="mt-1.5 line-clamp-2 font-medium leading-snug text-foreground">
+      <div className="flex flex-1 flex-col p-5">
+        <p className="text-[10px] font-bold tracking-wider text-muted-foreground">
+          {listing.maker} <span className="mx-1.5 text-border">/</span>{' '}
+          {listing.category}
+        </p>
+        <h3 className="mt-2 line-clamp-2 text-base font-bold leading-relaxed text-foreground">
           {listing.name}
         </h3>
-
-        <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
+        <p className="mt-2 text-xs text-muted-foreground">
+          {listing.year}年式 <span className="mx-1.5">·</span>{' '}
+          {listing.hours.toLocaleString('ja-JP')}時間{' '}
+          <span className="mx-1.5">·</span> {listing.condition}
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
           <MapPin className="size-3.5" />
           {listing.prefecture} {listing.city}
+          {listing.rentToOwn && (
+            <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-primary">
+              <Repeat2 className="size-3" />
+              レンタル購入可
+            </span>
+          )}
         </div>
-
-        <div className="mt-4 flex items-end justify-between border-t border-border pt-3">
-          <div>
-            {listing.rentPerDay && (
-              <p className="font-display text-lg font-bold leading-none text-foreground">
+        <div className="mt-4 space-y-2 border-t border-border pt-4">
+          {canBuy && listing.salePrice !== undefined && (
+            <p className="flex items-baseline justify-between gap-2">
+              <span className="text-[11px] text-muted-foreground">
+                販売価格
+              </span>
+              <span className="font-display text-[22px] font-bold tracking-tight text-primary">
+                {formatYen(listing.salePrice)}
+              </span>
+            </p>
+          )}
+          {canRent && listing.rentPerDay !== undefined && (
+            <p className="flex items-baseline justify-between gap-2">
+              <span className="text-[11px] text-muted-foreground">
+                レンタル
+              </span>
+              <span className="font-display text-lg font-bold text-primary">
                 {formatYen(listing.rentPerDay)}
-                <span className="ml-1 text-xs font-medium text-muted-foreground">
-                  /日
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  / 日
                 </span>
-              </p>
-            )}
-            {listing.salePrice && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                販売 {formatYen(listing.salePrice)}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              </span>
+            </p>
+          )}
+        </div>
+        <div className="mt-4 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+          <span className="truncate">{listing.seller.name}</span>
+          <span className="flex shrink-0 items-center gap-1">
             {listing.seller.reviews > 0 ? (
               <>
-                <Star className="size-3.5 fill-accent text-accent" />
-                <span className="font-medium text-foreground">
+                <Star className="size-3 fill-[#bc933b] text-[#bc933b]" />
+                <span className="font-semibold text-foreground">
                   {listing.seller.rating}
                 </span>
-                <span>({listing.seller.reviews})</span>
+                ({listing.seller.reviews})
               </>
             ) : (
-              <span>評価なし</span>
+              '評価なし'
             )}
-          </div>
+          </span>
         </div>
       </div>
     </Link>

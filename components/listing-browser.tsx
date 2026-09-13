@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Search } from 'lucide-react'
+import Link from 'next/link'
+import { Search, ArrowUpRight, SlidersHorizontal } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { listingPageSize, type ListingPage } from '@/lib/data'
 import { listingQueryOptions } from '@/lib/queries/listings'
@@ -73,49 +74,68 @@ export function ListingBrowser({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <h1 className="text-balance font-display text-3xl font-black tracking-tight text-foreground">
-        農機具を探す
-      </h1>
-
-      <form
-        role="search"
-        onSubmit={submitKeyword}
-        className="mt-6 flex max-w-xl gap-2"
-      >
-        <label className="relative flex-1">
-          <span className="sr-only">キーワード</span>
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="search"
-            name="q"
-            value={keywordInput}
-            onChange={(event) => setKeywordInput(event.target.value)}
-            placeholder="機種名・メーカー・地域"
-            className="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
-          />
-        </label>
-        <button
-          type="submit"
-          className="h-10 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
+    <div className="mx-auto max-w-[1280px] px-5 py-10 sm:px-8 sm:py-14">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <p className="eyebrow mb-3">THE MARKETPLACE</p>
+          <h1 className="text-balance font-display text-3xl font-bold sm:text-4xl tracking-tight text-foreground">
+            農機具を探す
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            買う、借りる、借りてから買う。畑に合う一台を。
+          </p>
+        </div>
+        <Link
+          href="/listings/new"
+          className="inline-flex items-center gap-2 text-xs font-bold text-primary"
         >
-          検索
-        </button>
-      </form>
+          農機具を出品する
+          <ArrowUpRight className="size-4" />
+        </Link>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <form
+            role="search"
+            onSubmit={submitKeyword}
+            className="flex w-full max-w-xl gap-2"
+          >
+            <label className="relative flex-1">
+              <span className="sr-only">キーワード</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                name="q"
+                value={keywordInput}
+                onChange={(event) => setKeywordInput(event.target.value)}
+                placeholder="機種名・メーカー・地域"
+                className="h-12 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
+              />
+            </label>
+            <button
+              type="submit"
+              className="h-12 rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground"
+            >
+              検索
+            </button>
+          </form>
 
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <CategoryChips
-          value={state.filter.category}
-          onChange={(category) => update({ category })}
-        />
-        <DealFilterToggle
-          value={state.filter.deal}
-          onChange={(deal) => update({ deal })}
-        />
+          <DealFilterToggle
+            value={state.filter.deal}
+            onChange={(deal) => update({ deal })}
+          />
+        </div>
+        <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-border pt-5">
+          <SlidersHorizontal className="hidden size-4 text-muted-foreground sm:block" />
+          <CategoryChips
+            value={state.filter.category}
+            onChange={(category) => update({ category })}
+          />
+        </div>
       </div>
 
       {query.data && (
-        <p className="mt-6 text-sm text-muted-foreground">
+        <p className="mt-8 border-b border-border pb-4 text-sm font-medium text-muted-foreground">
           {query.data.total}件
           {state.filter.keyword ? `（「${state.filter.keyword}」で検索）` : ''}
         </p>

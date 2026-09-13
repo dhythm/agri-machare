@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageIntro, PageShell } from '@/components/page-shell'
 
-export const metadata: Metadata = { title: 'よくある質問 | ノウキシェア' }
+export const metadata: Metadata = { title: 'よくある質問 | Agri Machare' }
 
 const groups = [
   {
@@ -13,12 +13,12 @@ const groups = [
         a: '支払い済みレンタル料のうち、出品者が設定した割合（多くは 50%）を購入価格に充当します。割合と上限は詳細ページの「レンタルして試す → 購入」に表示され、日数を入れると充当額と購入価格を確認できます。',
       },
       {
-        q: '支払いはいつ出品者に渡りますか？',
-        a: 'エスクロー決済のため、買い手・借り手が受け取りを確認したあとに出品者へ入金されます。',
+        q: 'このサービスで決済できますか？',
+        a: '現在はコンセプト検証版で、実際の取引・決済は行われません。農機具の検索、申込み、メッセージ、取引管理の流れを確認できます。',
       },
       {
         q: 'レンタル中に故障した場合はどうなりますか？',
-        a: '通常使用による故障は出品者負担、過失による損傷は借り手負担が原則です。出品者への連絡フォームから状況を共有してください。',
+        a: '出品者とのメッセージで状況を共有してください。貸し出し条件や整備状況は、農機具の詳細と申込み前のやり取りで確認できます。',
       },
     ],
   },
@@ -27,7 +27,7 @@ const groups = [
     items: [
       {
         q: '出品に費用はかかりますか？',
-        a: '掲載は無料です。取引が成立した場合に、成約額の一部を手数料としていただきます。',
+        a: '現在のコンセプト検証版では、掲載料や成約手数料は請求されません。',
       },
       {
         q: '販売とレンタルの両方で出品できますか？',
@@ -53,7 +53,7 @@ const groups = [
 export default function FaqPage() {
   return (
     <PageShell>
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
         <PageIntro title="よくある質問" />
         {groups.map((group) => (
           <section key={group.title} className="mt-10">
@@ -63,7 +63,7 @@ export default function FaqPage() {
             <div className="mt-3 divide-y divide-border rounded-2xl border border-border bg-card">
               {group.items.map((item) => (
                 <details key={item.q} className="group px-5 py-4">
-                  <summary className="cursor-pointer list-none font-medium text-foreground marker:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-5 font-medium text-foreground marker:hidden after:text-xl after:font-normal after:text-primary after:content-['+'] group-open:after:content-['−']">
                     {item.q}
                   </summary>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

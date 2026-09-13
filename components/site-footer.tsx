@@ -1,86 +1,84 @@
 import Link from 'next/link'
-import { Sprout } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
+import { BrandLogo } from '@/components/brand-logo'
+
+const groups = [
+  {
+    title: '農機具をつなぐ',
+    links: [
+      { label: '農機具を買う', href: '/listings?deal=sale' },
+      { label: 'レンタルする', href: '/listings?deal=rent' },
+      { label: '借りてから買う', href: '/listings?deal=rentToOwn' },
+      { label: '農機具を出品する', href: '/listings/new' },
+    ],
+  },
+  {
+    title: '運搬をつなぐ',
+    links: [
+      { label: '運搬を依頼する', href: '/transport/new' },
+      { label: '運搬の仕事を探す', href: '/transport' },
+      { label: '運搬者登録', href: '/transport/register' },
+      { label: '運搬料金のめやす', href: '/transport/pricing' },
+    ],
+  },
+  {
+    title: 'サポート',
+    links: [
+      { label: 'はじめての方へ', href: '/guide' },
+      { label: 'よくある質問', href: '/faq' },
+      { label: 'お問い合わせ', href: '/contact' },
+      { label: 'マイページ', href: '/account' },
+      { label: '運営画面', href: '/admin' },
+    ],
+  },
+]
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-secondary/40">
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-          <div className="max-w-sm">
-            <div className="flex items-center gap-2">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Sprout className="size-4" />
-              </span>
-              <span className="font-display text-base font-bold text-foreground">
-                ノウキシェア
-              </span>
-            </div>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              高額な農機具を、売る・買う・借りる・運ぶ。地域で農機具をシェアし、レンタルから購入までなめらかにつなぐプラットフォームです。
+    <footer className="bg-[#173f35] text-white">
+      <div className="mx-auto max-w-[1360px] px-5 pb-8 pt-14 sm:px-8 lg:px-10">
+        <div className="grid gap-12 lg:grid-cols-[1.2fr_2fr]">
+          <div>
+            <Link href="/" aria-label="Agri Machare ホーム">
+              <BrandLogo inverse />
+            </Link>
+            <p className="mt-7 font-display text-2xl font-bold leading-relaxed">
+              農機具と、次の可能性を。
+            </p>
+            <p className="mt-4 max-w-xs text-xs leading-7 text-white/65">
+              つくる人、使う人、運ぶ人。
+              <br />
+              一台の農機具から、農業の未来をつないでいく。
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3">
-            <FooterCol
-              title="使う"
-              links={[
-                { label: '農機具を探す', href: '/listings' },
-                { label: '出品する', href: '/listings/new' },
-                { label: '借りる', href: '/listings?deal=rent' },
-                { label: 'レンタル購入', href: '/listings?deal=rentToOwn' },
-              ]}
-            />
-            <FooterCol
-              title="運搬"
-              links={[
-                { label: '運搬案件を見る', href: '/transport' },
-                { label: '運搬者登録', href: '/transport/register' },
-                { label: '料金のめやす', href: '/transport/pricing' },
-              ]}
-            />
-            <FooterCol
-              title="サポート"
-              links={[
-                { label: 'はじめての方へ', href: '/guide' },
-                { label: 'よくある質問', href: '/faq' },
-                { label: 'お問い合わせ', href: '/contact' },
-                { label: '運営画面', href: '/admin' },
-              ]}
-            />
+          <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3">
+            {groups.map((group) => (
+              <div key={group.title}>
+                <h3 className="text-xs font-bold text-[#d9eb8b]">
+                  {group.title}
+                </h3>
+                <ul className="mt-5 space-y-3.5">
+                  {group.links.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="inline-flex items-center gap-1 text-xs text-white/75 transition-colors hover:text-white"
+                      >
+                        {link.label}
+                        <ArrowUpRight className="size-3 opacity-40" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="mt-10 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            これはコンセプト検証用のモックアップです。実際の取引は行われません。
-          </p>
-          <p>© 2026 ノウキシェア</p>
+        <div className="mt-12 flex flex-col gap-3 border-t border-white/15 pt-6 text-[10px] text-white/55 sm:flex-row sm:items-center sm:justify-between">
+          <p>コンセプト検証版 · 実際の取引・決済は行われません。</p>
+          <p className="tracking-wider">© 2026 Agri Machare</p>
         </div>
       </div>
     </footer>
-  )
-}
-
-function FooterCol({
-  title,
-  links,
-}: {
-  title: string
-  links: { label: string; href: string }[]
-}) {
-  return (
-    <div>
-      <h3 className="font-semibold text-foreground">{title}</h3>
-      <ul className="mt-3 space-y-2">
-        {links.map((link) => (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className="text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
   )
 }

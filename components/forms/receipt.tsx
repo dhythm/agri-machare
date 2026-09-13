@@ -10,7 +10,7 @@ export function ReceiptPanel({
 }: {
   receipt: Receipt
   title: string
-  description: string
+  description?: string
   links: { href: string; label: string }[]
 }) {
   return (
@@ -21,19 +21,21 @@ export function ReceiptPanel({
       <h2 className="mt-4 font-display text-xl font-bold text-foreground">
         {title}を受け付けました
       </h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        {description}
-      </p>
+      {description && (
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          {description}
+        </p>
+      )}
       <dl className="mt-4 grid gap-1 text-sm">
-        <div className="flex gap-3">
+        <div className="grid min-w-0 gap-1 sm:grid-cols-[80px_minmax(0,1fr)] sm:gap-3">
           <dt className="text-muted-foreground">受付番号</dt>
           <dd>
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+            <code className="break-all rounded bg-muted px-1.5 py-0.5 text-xs">
               {receipt.id}
             </code>
           </dd>
         </div>
-        <div className="flex gap-3">
+        <div className="grid min-w-0 gap-1 sm:grid-cols-[80px_minmax(0,1fr)] sm:gap-3">
           <dt className="text-muted-foreground">受付日時</dt>
           <dd>{new Date(receipt.receivedAt).toLocaleString('ja-JP')}</dd>
         </div>

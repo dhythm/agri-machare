@@ -18,7 +18,7 @@ export function DealFilterToggle({
   onChange: (deal: DealFilter) => void
 }) {
   return (
-    <div className="inline-flex flex-wrap rounded-xl border border-border bg-card p-1">
+    <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:inline-flex sm:flex-wrap">
       {dealFilters.map((f) => (
         <button
           key={f.id}
@@ -26,9 +26,9 @@ export function DealFilterToggle({
           onClick={() => onChange(f.id)}
           aria-pressed={value === f.id}
           className={cn(
-            'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+            'min-h-11 rounded-md px-2 py-2 text-xs font-medium sm:px-3 sm:text-sm transition-colors',
             value === f.id
-              ? 'bg-primary text-primary-foreground'
+              ? 'bg-card text-primary shadow-sm'
               : 'text-muted-foreground hover:text-foreground',
           )}
         >
@@ -55,10 +55,10 @@ export function CategoryChips({
           onClick={() => onChange(c)}
           aria-pressed={value === c}
           className={cn(
-            'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+            'min-h-10 rounded-full border px-4 py-2 text-sm font-medium transition-colors',
             value === c
-              ? 'border-primary bg-primary/10 text-primary'
-              : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground',
           )}
         >
           {c}

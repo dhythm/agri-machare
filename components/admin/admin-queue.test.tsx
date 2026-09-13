@@ -62,6 +62,44 @@ afterEach(() => {
 })
 
 describe('AdminQueue', () => {
+  it('searches the selected queue without losing review actions', async () => {
+    const user = setup('listing', {
+      listings: [
+        listing,
+        {
+          ...listing,
+          id: 'other',
+          name: '田植機',
+          seller: { ...listing.seller, name: '別の農園' },
+        },
+      ],
+      transportJobs: [job],
+    })
+    await user.type(
+      screen.getByRole('searchbox', { name: '出品を検索' }),
+      '審査農園',
+    )
+    expect(screen.getByText('審査中トラクター')).toBeInTheDocument()
+    expect(screen.queryByText('田植機')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '承認' })).toBeInTheDocument()
+    await user.clear(screen.getByRole('searchbox', { name: '出品を検索' }))
+    expect(screen.getByText('田植機')).toBeInTheDocument()
+  })
+
+  it('keeps the current filter and data when a refresh fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+    const user = setup('listing')
+    await user.click(screen.getByRole('button', { name: '承認済み' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      '一覧を更新できませんでした。',
+    )
+    expect(screen.getByRole('button', { name: 'すべて' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByText('審査中トラクター')).toBeInTheDocument()
+  })
+
   it('offers only the opposite decision once reviewed', () => {
     setup('listing', {
       listings: [

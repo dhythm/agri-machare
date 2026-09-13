@@ -2,6 +2,8 @@
 
 農機具（AGRIcultural MACHinery）をシェア（sHARE）するサービス。
 
+ブランド、情報設計、既存機能との対応は [リブランディング設計](docs/rebranding.md) を参照してください。
+
 ## 開発
 
 Node.js は `.node-version`、pnpm は `package.json` の `packageManager` に指定したバージョンを使用します。

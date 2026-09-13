@@ -52,6 +52,7 @@ describe('AccountMenu', () => {
       data: { user: { name: '運営デモ', role: 'admin' } },
     })
     renderMenu()
+    await userEvent.setup().click(screen.getByText('アカウント'))
     expect(screen.getByRole('link', { name: '運営画面' })).toHaveAttribute(
       'href',
       '/admin',

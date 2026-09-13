@@ -14,6 +14,8 @@ import {
   ShoppingCart,
   MessageSquare,
   CircleCheckBig,
+  ArrowRight,
+  Pencil,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
@@ -27,12 +29,14 @@ import { StarRating } from '@/components/reviews/star-rating'
 import type { Review } from '@/lib/server/store/types'
 import type { DateRange, RentToOwnTerms } from '@/lib/rent-to-own'
 import {
+  formatYen,
   type Listing,
   type ListingMode,
   type ListingModeConfig,
 } from '@/lib/data'
 
 const modeIcon = { buy: ShoppingCart, rent: Calendar, rentToOwn: Repeat2 }
+const modeLabel = { buy: '購入', rent: 'レンタル', rentToOwn: '試して購入' }
 
 export function ListingDetail({
   listing,
@@ -52,7 +56,7 @@ export function ListingDetail({
   sellerReviews?: Review[]
 }) {
   const [mode, setMode] = useState<ListingMode>(modes[0].id)
-  const active = modes.find((m) => m.id === mode) ?? modes[0]
+  const active = modes.find((item) => item.id === mode) ?? modes[0]
   const pictures =
     listing.images && listing.images.length > 0
       ? listing.images
@@ -62,33 +66,54 @@ export function ListingDetail({
     pictures[pictureIndex] ?? pictures[0] ?? '/placeholder.svg'
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8 lg:py-10">
       <div className="flex items-center justify-between gap-4">
-        <BackLink href="/listings" label="一覧にもどる" />
+        <BackLink href="/listings" label="農機具一覧にもどる" />
         {viewer.canEdit && (
           <Link
             href={`/listings/${listing.id}/edit`}
             className={cn(buttonVariants({ variant: 'outline' }), 'h-9')}
           >
+            <Pencil className="size-3.5" />
             編集する
           </Link>
         )}
       </div>
+      <header className="mt-7 border-b border-border pb-7">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+          <Link
+            href={`/listings?category=${encodeURIComponent(listing.category)}`}
+            className="text-primary hover:underline"
+          >
+            {listing.category}
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span>{listing.maker}</span>
+        </div>
+        <h1 className="mt-3 text-balance font-display text-2xl font-bold leading-snug tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+          {listing.name}
+        </h1>
+        <p className="mt-4 flex items-center gap-1.5 text-sm text-muted-foreground">
+          <MapPin className="size-4" />
+          {listing.prefecture} {listing.city}
+        </p>
+      </header>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-        <div>
-          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-border bg-muted">
+      <div className="mt-7 grid items-start gap-7 lg:grid-cols-[minmax(0,1.5fr)_minmax(350px,1fr)] lg:gap-x-9">
+        <section aria-label="農機具の写真と仕様" className="min-w-0">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted">
             <Image
               src={mainPicture || '/placeholder.svg'}
               alt={listing.name}
               fill
-              priority
-              sizes="(min-width: 1024px) 55vw, 100vw"
+              loading="eager"
+              fetchPriority="high"
+              sizes="(min-width: 1280px) 700px, (min-width: 1024px) 55vw, 100vw"
               className="object-cover"
             />
             <div className="absolute left-4 top-4 flex flex-wrap gap-1.5">
               {listing.deals.includes('sale') && (
-                <Badge className="bg-primary text-primary-foreground shadow-sm">
+                <Badge className="bg-card/95 text-foreground shadow-sm">
                   販売
                 </Badge>
               )}
@@ -97,9 +122,16 @@ export function ListingDetail({
                   レンタル
                 </Badge>
               )}
+              {listing.rentToOwn && (
+                <Badge className="bg-primary text-primary-foreground shadow-sm">
+                  購入充当
+                </Badge>
+              )}
             </div>
+            <span className="absolute bottom-4 right-4 rounded-full bg-foreground/65 px-3 py-1 text-xs tabular-nums text-background">
+              {pictureIndex + 1} / {pictures.length}
+            </span>
           </div>
-
           {pictures.length > 1 && (
             <ul className="mt-3 flex flex-wrap gap-2" aria-label="写真">
               {pictures.map((picture, index) => (
@@ -110,17 +142,17 @@ export function ListingDetail({
                     aria-pressed={index === pictureIndex}
                     onClick={() => setPictureIndex(index)}
                     className={cn(
-                      'relative size-16 overflow-hidden rounded-xl border transition-colors',
+                      'relative h-16 w-20 overflow-hidden rounded-lg border-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
                       index === pictureIndex
-                        ? 'border-primary ring-1 ring-primary/30'
-                        : 'border-border hover:border-primary/40',
+                        ? 'border-primary'
+                        : 'border-transparent opacity-70 hover:opacity-100',
                     )}
                   >
                     <Image
                       src={picture}
                       alt=""
                       fill
-                      sizes="64px"
+                      sizes="80px"
                       className="object-cover"
                     />
                   </button>
@@ -128,8 +160,7 @@ export function ListingDetail({
               ))}
             </ul>
           )}
-
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <dl className="mt-5 grid grid-cols-2 overflow-hidden rounded-2xl border border-border bg-card sm:grid-cols-4">
             <Spec
               icon={<Calendar className="size-4" />}
               label="年式"
@@ -138,7 +169,7 @@ export function ListingDetail({
             <Spec
               icon={<Gauge className="size-4" />}
               label="稼働時間"
-              value={`${listing.hours}h`}
+              value={`${listing.hours.toLocaleString('ja-JP')}h`}
             />
             <Spec
               icon={<Wrench className="size-4" />}
@@ -150,69 +181,182 @@ export function ListingDetail({
               label="所在地"
               value={listing.prefecture}
             />
-          </div>
+          </dl>
+        </section>
 
-          <div className="mt-8">
-            <h2 className="font-display text-lg font-bold text-foreground">
+        <aside
+          className="min-w-0 lg:sticky lg:top-36 xl:top-24 lg:row-span-2"
+          aria-label="利用方法と申し込み"
+        >
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div className="border-b border-border px-5 py-5 sm:px-6">
+              <h2 className="text-sm font-semibold text-foreground">
+                利用方法を選ぶ
+              </h2>
+              <div
+                className="mt-4 flex gap-1 rounded-xl bg-muted p-1"
+                role="group"
+                aria-label="利用方法"
+              >
+                {modes.map((item) => {
+                  const Icon = modeIcon[item.id]
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      aria-label={item.title}
+                      aria-pressed={mode === item.id}
+                      onClick={() => setMode(item.id)}
+                      className={cn(
+                        'flex min-w-0 flex-1 flex-col items-center justify-center gap-1.5 rounded-lg px-1 py-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+                        mode === item.id
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:bg-card hover:text-foreground',
+                      )}
+                    >
+                      <Icon className="size-4" />
+                      {modeLabel[item.id]}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <div className="p-5 sm:p-6">
+              <p className="text-xs font-medium text-muted-foreground">
+                {active.title}
+              </p>
+              <p className="mt-2 break-words font-display text-3xl font-bold leading-tight tracking-tight text-primary sm:text-4xl">
+                {active.id === 'rentToOwn' && listing.rentPerDay
+                  ? `${formatYen(listing.rentPerDay)}/日`
+                  : active.price}
+              </p>
+              <p className="mt-3 text-xs leading-6 text-muted-foreground">
+                {active.desc}
+              </p>
+              {active.note && (
+                <div className="mt-4 flex gap-2 rounded-xl bg-secondary p-3 text-xs leading-6 text-secondary-foreground">
+                  <CircleCheckBig className="mt-1 size-4 shrink-0 text-primary" />
+                  <span>{active.note}</span>
+                </div>
+              )}
+              {active.id === 'rentToOwn' && rentToOwnTerms && (
+                <div className="mt-4">
+                  <RentToOwnSimulator terms={rentToOwnTerms} />
+                </div>
+              )}
+              <div className="mt-6 flex flex-col gap-2">
+                {active.id !== 'buy' &&
+                listing.rentPerDay &&
+                !viewer.isOwner ? (
+                  <RentalRequestForm
+                    listingId={listing.id}
+                    rentPerDay={listing.rentPerDay}
+                    booked={booked}
+                    signedIn={viewer.signedIn}
+                  />
+                ) : (
+                  <Link
+                    href={`/listings/${listing.id}/inquiry?mode=${active.id}`}
+                    className={cn(buttonVariants(), 'h-12 gap-2')}
+                  >
+                    {active.cta}
+                    <ArrowRight className="size-4" />
+                  </Link>
+                )}
+                <Link
+                  href={`/listings/${listing.id}/inquiry?mode=question`}
+                  className={cn(buttonVariants({ variant: 'outline' }), 'h-11')}
+                >
+                  <MessageSquare className="size-4" />
+                  出品者に質問する
+                </Link>
+              </div>
+            </div>
+            <div className="border-t border-border bg-muted/35 p-5 sm:px-6">
+              <TransportEstimate
+                category={listing.category}
+                fromPrefecture={listing.prefecture}
+              />
+              <Link
+                href={`/transport/new?listingId=${encodeURIComponent(listing.id)}`}
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+              >
+                この農機具の運搬を依頼する
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </div>
+          </div>
+          <p className="mt-4 flex items-start gap-2 px-2 text-xs leading-6 text-muted-foreground">
+            <ShieldCheck className="mt-1 size-4 shrink-0 text-primary" />
+            申込みと出品者とのやり取りは、マイページで確認できます。
+          </p>
+        </aside>
+
+        <div className="min-w-0 lg:col-start-1">
+          <section className="border-b border-border pb-8">
+            <h2 className="font-display text-xl font-bold text-foreground">
               この農機具について
             </h2>
-            <p className="mt-3 leading-relaxed text-muted-foreground">
+            <p className="mt-4 whitespace-pre-line text-sm leading-8 text-muted-foreground">
               {listing.summary}
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
               {listing.tags.map((tag) => (
                 <Badge key={tag} variant="outline">
                   {tag}
                 </Badge>
               ))}
             </div>
-          </div>
-
-          <div className="mt-8 flex items-center gap-4 rounded-2xl border border-border bg-card p-5">
-            <span className="flex size-12 items-center justify-center rounded-full bg-secondary font-display text-lg font-bold text-primary">
-              {listing.seller.name.charAt(0)}
-            </span>
-            <div className="flex-1">
-              <p className="font-medium text-foreground">
-                {listing.seller.name}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {listing.seller.kind}
-              </p>
+          </section>
+          <section className="mt-8" aria-label="出品者情報">
+            <h2 className="font-display text-xl font-bold text-foreground">
+              出品者
+            </h2>
+            <div className="mt-4 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card p-5">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-lg font-bold text-primary">
+                {listing.seller.name.charAt(0)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-foreground">
+                  {listing.seller.name}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {listing.seller.kind}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                {listing.seller.reviews > 0 ? (
+                  <>
+                    <Star className="size-4 fill-primary text-primary" />
+                    <span className="font-semibold text-foreground">
+                      {listing.seller.rating}
+                    </span>
+                    <span>({listing.seller.reviews}件)</span>
+                  </>
+                ) : (
+                  <span className="text-xs">評価なし</span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              {listing.seller.reviews > 0 ? (
-                <>
-                  <Star className="size-4 fill-accent text-accent" />
-                  <span className="font-medium text-foreground">
-                    {listing.seller.rating}
-                  </span>
-                  <span>({listing.seller.reviews})</span>
-                </>
-              ) : (
-                <span>評価なし</span>
-              )}
-            </div>
-          </div>
+          </section>
           {sellerReviews.length > 0 && (
-            <section className="mt-6">
+            <section className="mt-8">
               <h2 className="font-display text-lg font-bold text-foreground">
                 出品者へのレビュー
               </h2>
-              <ul className="mt-3 flex flex-col gap-3">
+              <ul className="mt-4 divide-y divide-border">
                 {sellerReviews.map((review) => (
-                  <li
-                    key={review.id}
-                    className="rounded-2xl border border-border bg-card p-4 text-sm"
-                  >
-                    <div className="flex items-center gap-2">
+                  <li key={review.id} className="py-4 text-sm first:pt-0">
+                    <div className="flex items-center justify-between gap-2">
                       <StarRating rating={review.rating} />
                       <span className="text-xs text-muted-foreground">
                         {new Date(review.createdAt).toLocaleDateString('ja-JP')}
                       </span>
                     </div>
                     {review.comment && (
-                      <p className="mt-1 text-foreground">{review.comment}</p>
+                      <p className="mt-3 leading-7 text-foreground">
+                        {review.comment}
+                      </p>
                     )}
                   </li>
                 ))}
@@ -220,127 +364,22 @@ export function ListingDetail({
             </section>
           )}
         </div>
-
-        {/* Action panel */}
-        <div className="lg:sticky lg:top-20 lg:self-start">
-          <div className="rounded-3xl border border-border bg-card p-6">
-            <p className="text-xs font-medium text-muted-foreground">
-              {listing.maker} · {listing.category}
-            </p>
-            <h1 className="mt-1 text-balance font-display text-xl font-bold leading-snug text-foreground">
-              {listing.name}
-            </h1>
-
-            <div className="mt-5 flex flex-col gap-2">
-              {modes.map((m) => {
-                const Icon = modeIcon[m.id]
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setMode(m.id)}
-                    className={cn(
-                      'flex items-start gap-3 rounded-2xl border p-4 text-left transition-all',
-                      mode === m.id
-                        ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
-                        : 'border-border hover:border-primary/40',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg',
-                        mode === m.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-primary',
-                      )}
-                    >
-                      <Icon className="size-4" />
-                    </span>
-                    <span className="flex-1">
-                      <span className="flex items-baseline justify-between gap-2">
-                        <span className="font-medium text-foreground">
-                          {m.title}
-                        </span>
-                        <span className="font-display font-bold text-foreground">
-                          {m.price}
-                        </span>
-                      </span>
-                      <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                        {m.desc}
-                      </span>
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-
-            {active.note && (
-              <div className="mt-4 flex gap-2 rounded-xl bg-secondary/60 p-3 text-xs leading-relaxed text-secondary-foreground">
-                <CircleCheckBig className="mt-0.5 size-4 shrink-0 text-primary" />
-                <span>{active.note}</span>
-              </div>
-            )}
-            {active.id === 'rentToOwn' && rentToOwnTerms && (
-              <div className="mt-4">
-                <RentToOwnSimulator terms={rentToOwnTerms} />
-              </div>
-            )}
-
-            <div className="mt-5 flex flex-col gap-2">
-              {active.id !== 'buy' && listing.rentPerDay && !viewer.isOwner ? (
-                <RentalRequestForm
-                  listingId={listing.id}
-                  rentPerDay={listing.rentPerDay}
-                  booked={booked}
-                  signedIn={viewer.signedIn}
-                />
-              ) : (
-                <Link
-                  href={`/listings/${listing.id}/inquiry?mode=${active.id}`}
-                  className={cn(buttonVariants(), 'h-11')}
-                >
-                  {active.cta}
-                </Link>
-              )}
-              <Link
-                href={`/listings/${listing.id}/inquiry?mode=question`}
-                className={cn(buttonVariants({ variant: 'outline' }), 'h-11')}
-              >
-                <MessageSquare className="size-4" />
-                出品者に質問する
-              </Link>
-            </div>
-
-            <div className="mt-5 border-t border-border pt-4">
-              <TransportEstimate
-                category={listing.category}
-                fromPrefecture={listing.prefecture}
-              />
-            </div>
-            <div className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
-              <ShieldCheck className="mt-0.5 size-4 shrink-0" />
-              <span>
-                取引はエスクロー決済で保護。受け取り確認後に出品者へ入金されます。
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
-
       {related.length > 0 && (
-        <section className="mt-16">
-          <div className="flex items-end justify-between gap-4">
-            <h2 className="font-display text-xl font-bold text-foreground">
-              同じカテゴリの農機具
+        <section className="mt-16 border-t border-border pt-10">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
+              こちらの農機具も
             </h2>
             <Link
               href={`/listings?category=${encodeURIComponent(listing.category)}`}
-              className="text-sm font-medium text-primary"
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary"
             >
               {listing.category}をすべて見る
+              <ArrowRight className="size-4" />
             </Link>
           </div>
-          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((item) => (
               <ListingCard key={item.id} listing={item} />
             ))}
@@ -361,12 +400,12 @@ function Spec({
   value: string
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+    <div className="p-4">
+      <dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
         {icon}
         {label}
-      </span>
-      <p className="mt-1.5 font-medium text-foreground">{value}</p>
+      </dt>
+      <dd className="mt-2 text-sm font-semibold text-foreground">{value}</dd>
     </div>
   )
 }

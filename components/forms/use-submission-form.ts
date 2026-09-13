@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useSubmission, type SubmitMethod } from '@/lib/queries/submit'
 import type { FieldErrors, ValidationResult } from '@/lib/validation/shared'
 
@@ -17,7 +17,17 @@ export function useSubmissionForm<T extends Record<string, unknown>>({
 }) {
   const [values, setValues] = useState<T>(initialValues)
   const [errors, setErrors] = useState<FieldErrors>({})
+  const formRef = useRef<HTMLFormElement | null>(null)
+  const shouldFocusError = useRef(false)
   const mutation = useSubmission(url, method)
+
+  useEffect(() => {
+    if (!shouldFocusError.current) return
+    shouldFocusError.current = false
+    formRef.current
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+      ?.focus()
+  }, [errors])
 
   const setValue = <K extends keyof T>(key: K, value: T[K]) => {
     setValues((current) => ({ ...current, [key]: value }))
@@ -32,16 +42,22 @@ export function useSubmissionForm<T extends Record<string, unknown>>({
   /** `overrides` lets a form add values computed right before sending. */
   const submit = async (event: FormEvent, overrides?: Partial<T>) => {
     event.preventDefault()
+    const element = event.currentTarget ?? event.target
+    if (element instanceof HTMLFormElement) formRef.current = element
     const payload = { ...values, ...overrides }
     const result = validate(payload)
     if (!result.ok) {
+      shouldFocusError.current = true
       setErrors(result.errors)
       return
     }
     setErrors({})
     try {
       const response = await mutation.mutateAsync(payload)
-      if (!response.ok) setErrors(response.errors)
+      if (!response.ok) {
+        shouldFocusError.current = true
+        setErrors(response.errors)
+      }
     } catch {
       // mutation.isError carries the failure to the UI
     }

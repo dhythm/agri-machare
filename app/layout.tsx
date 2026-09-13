@@ -18,14 +18,14 @@ const zenKaku = Zen_Kaku_Gothic_New({
 })
 
 export const metadata: Metadata = {
-  title: 'ノウキシェア | 農機具の売買・レンタル・レンタル購入プラットフォーム',
+  icons: { icon: { url: '/icon.svg', type: 'image/svg+xml' } },
+  title: 'Agri Machare | 農機具の売買・レンタル・運搬マッチング',
   description:
     'トラクター・コンバイン・田植機などの農機具を、売る・買う・借りる・運ぶ。高額な農機具をシェアして、レンタルから購入までスムーズに。',
-  generator: 'v0.app',
 }
 
 export const viewport: Viewport = {
-  themeColor: '#3d6b3a',
+  themeColor: '#173f35',
 }
 
 export default function RootLayout({
@@ -36,7 +36,8 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`${notoSansJp.variable} ${zenKaku.variable} bg-background`}
+      data-scroll-behavior="smooth"
+      className={`light ${notoSansJp.variable} ${zenKaku.variable} bg-background`}
     >
       <body className="font-sans antialiased">
         <SessionProvider>

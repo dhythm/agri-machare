@@ -30,15 +30,16 @@ export function Marketplace({ initialPage }: { initialPage: ListingPage }) {
   return (
     <section
       id="marketplace"
-      className="mx-auto max-w-6xl scroll-mt-16 px-4 py-16 sm:px-6"
+      className="mx-auto max-w-[1280px] scroll-mt-32 px-5 py-10 sm:px-8 sm:py-14"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
+          <p className="eyebrow mb-3">THE MARKETPLACE</p>
           <h2 className="text-balance font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            出品中の農機具
+            次の相棒を、見つけよう。
           </h2>
           <p className="mt-2 leading-relaxed text-muted-foreground">
-            売買・レンタルをまとめて。気になる1台は、まず借りて試せます。
+            畑に合う一台を、あなたに合う持ち方で。
           </p>
         </div>
         <DealFilterToggle value={deal} onChange={setDeal} />
@@ -53,7 +54,7 @@ export function Marketplace({ initialPage }: { initialPage: ListingPage }) {
       <div className="mt-8 flex justify-center">
         <Link
           href={allHref}
-          className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-transparent px-7 py-3.5 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
         >
           すべての農機具を見る
           {query.data ? `（${query.data.total}件）` : ''}

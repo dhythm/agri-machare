@@ -75,7 +75,8 @@ export function RentalActions({
           key={action.status}
           type="button"
           size="sm"
-          variant={action.destructive ? 'destructive' : 'outline'}
+          variant={action.destructive ? 'destructive' : 'default'}
+          className="min-h-9 px-3"
           disabled={busy}
           onClick={() => void apply(action.status)}
         >

@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import type { ReactNode } from 'react'
 import { Badge } from '@/components/badge'
 import { formatYen, threadStatusLabels } from '@/lib/data'
 import { rentalStatusLabels } from '@/lib/rent-to-own'
@@ -8,65 +7,31 @@ import type { RentalWithListing } from '@/lib/server/rentals'
 import type { CarrierProfile, Review } from '@/lib/server/store/types'
 import { StarRating } from '@/components/reviews/star-rating'
 import { AccountStatusButton } from './account-status-button'
+import { AdminDataTable } from './admin-data-table'
 
 function when(iso: string): string {
-  return new Date(iso).toLocaleString('ja-JP')
-}
-
-function Table({
-  headers,
-  rows,
-}: {
-  headers: string[]
-  rows: { key: string; cells: ReactNode[] }[]
-}) {
-  if (rows.length === 0)
-    return <p className="text-sm text-muted-foreground">該当なし</p>
-  return (
-    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-          <tr>
-            {headers.map((header) => (
-              <th
-                key={header}
-                className="whitespace-nowrap px-4 py-2 font-medium"
-              >
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.key} className="border-t border-border">
-              {row.cells.map((cell, index) => (
-                <td
-                  key={index}
-                  className="whitespace-nowrap px-4 py-2 align-top"
-                >
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
+  return new Date(iso).toLocaleString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 export function RentalTable({ items }: { items: RentalWithListing[] }) {
   return (
-    <Table
+    <AdminDataTable
+      title="レンタル"
       headers={['農機具', '申込者', '期間', '金額', '状態', '購入価格']}
       rows={items.map(({ rental, listing }) => ({
         key: rental.id,
+        searchText: `${rental.id} ${listing?.name ?? '削除済み'} ${rental.renterUserId} ${rentalStatusLabels[rental.status]} ${rental.startDate} ${rental.endDate}`,
         cells: [
           listing ? (
             <Link
               href={`/listings/${listing.id}`}
-              className="font-medium hover:underline"
+              className="font-semibold text-foreground decoration-primary/40 underline-offset-4 hover:text-primary hover:underline"
             >
               {listing.name}
             </Link>
@@ -95,10 +60,12 @@ export function RentalTable({ items }: { items: RentalWithListing[] }) {
 
 export function ThreadTable({ items }: { items: ThreadSummary[] }) {
   return (
-    <Table
-      headers={['対象', '送信者', '受付', '状態', '返信', '']}
+    <AdminDataTable
+      title="やり取り"
+      headers={['対象', '送信者', '受付', '状態', '返信', '操作']}
       rows={items.map((thread) => ({
         key: thread.id,
+        searchText: `${thread.id} ${thread.targetName} ${thread.senderName} ${threadStatusLabels[thread.status]}`,
         cells: [
           thread.targetId && !thread.targetName.startsWith('（') ? (
             <Link
@@ -107,7 +74,7 @@ export function ThreadTable({ items }: { items: ThreadSummary[] }) {
                   ? `/listings/${thread.targetId}`
                   : `/transport/${thread.targetId}`
               }
-              className="font-medium hover:underline"
+              className="font-semibold text-foreground decoration-primary/40 underline-offset-4 hover:text-primary hover:underline"
             >
               {thread.targetName}
             </Link>
@@ -126,7 +93,7 @@ export function ThreadTable({ items }: { items: ThreadSummary[] }) {
           <Link
             key="link-113"
             href={`/account/threads/${thread.id}`}
-            className="text-primary hover:underline"
+            className="inline-flex min-h-10 items-center rounded-lg border border-border px-3 font-medium text-primary transition-colors hover:border-primary/30 hover:bg-primary/5"
           >
             開く
           </Link>,
@@ -138,19 +105,25 @@ export function ThreadTable({ items }: { items: ThreadSummary[] }) {
 
 export function CarrierTable({ items }: { items: CarrierProfile[] }) {
   return (
-    <Table
-      headers={['ID', '名前', '区分', '拠点', '車両', '対応地域', '更新日']}
+    <AdminDataTable
+      title="運搬者"
+      headers={['運搬者', '区分', '拠点', '車両', '対応地域', '更新日']}
       rows={items.map((carrier) => ({
         key: carrier.id,
+        searchText: `${carrier.id} ${carrier.name} ${carrier.kind} ${carrier.prefecture} ${carrier.vehicles.join(' ')} ${carrier.serviceAreas.join(' ')}`,
         cells: [
-          <code key="id" className="text-xs">
-            {carrier.id}
-          </code>,
-          carrier.name,
+          <div key="identity" className="min-w-40 space-y-1">
+            <p className="font-semibold text-foreground">{carrier.name}</p>
+            <code className="text-xs text-muted-foreground">{carrier.id}</code>
+          </div>,
           carrier.kind,
           carrier.prefecture,
-          carrier.vehicles.join('・'),
-          carrier.serviceAreas.join('・'),
+          <span key="vehicle" className="block min-w-32 whitespace-normal">
+            {carrier.vehicles.join('・')}
+          </span>,
+          <span key="area" className="block min-w-32 whitespace-normal">
+            {carrier.serviceAreas.join('・')}
+          </span>,
           when(carrier.updatedAt),
         ],
       }))}
@@ -168,26 +141,28 @@ export function AccountTable({
   currentUserId: string
 }) {
   return (
-    <Table
+    <AdminDataTable
+      title="アカウント"
       headers={[
-        'ID',
-        '名前',
-        'メール',
+        'アカウント',
         '役割',
         '出品',
         '運搬依頼',
         'レンタル',
         '状態',
-        '',
+        '操作',
       ]}
       rows={items.map((account) => ({
         key: account.id,
+        searchText: `${account.id} ${account.name} ${account.email} ${roleLabels[account.role]} ${account.status === 'suspended' ? '停止中' : '有効'} ${account.note ?? ''}`,
         cells: [
-          <code key="code-152" className="text-xs">
-            {account.id}
-          </code>,
-          account.name,
-          account.email,
+          <div key="identity" className="min-w-44 space-y-1">
+            <p className="font-semibold text-foreground">{account.name}</p>
+            <p className="text-xs text-muted-foreground">{account.email}</p>
+            <code className="text-[10px] text-muted-foreground">
+              {account.id}
+            </code>
+          </div>,
           <Badge
             key="badge-155"
             variant={account.role === 'admin' ? 'default' : 'muted'}
@@ -225,10 +200,12 @@ export type ReviewRow = { review: Review; listingName: string }
 
 export function ReviewTable({ items }: { items: ReviewRow[] }) {
   return (
-    <Table
+    <AdminDataTable
+      title="レビュー"
       headers={['農機具', '出品者', 'レビュー者', '評価', 'コメント', '日時']}
       rows={items.map(({ review, listingName }) => ({
         key: review.id,
+        searchText: `${listingName} ${review.sellerUserId} ${review.reviewerUserId} ${review.comment ?? ''} ${review.rating}`,
         cells: [
           listingName,
           <code key="seller" className="text-xs">
@@ -238,7 +215,12 @@ export function ReviewTable({ items }: { items: ReviewRow[] }) {
             {review.reviewerUserId}
           </code>,
           <StarRating key="rating" rating={review.rating} />,
-          review.comment ?? '—',
+          <span
+            key="comment"
+            className="block min-w-40 max-w-80 whitespace-normal"
+          >
+            {review.comment ?? '—'}
+          </span>,
           when(review.createdAt),
         ],
       }))}

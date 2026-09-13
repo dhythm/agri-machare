@@ -8,18 +8,19 @@ export async function TransportPreview() {
   const jobs = (await getTransportJobs()).slice(0, 3)
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <div className="overflow-hidden rounded-3xl border border-border bg-card">
-        <div className="grid gap-8 p-8 lg:grid-cols-[1fr_1.2fr] lg:p-10">
+    <section className="mx-auto max-w-[1280px] px-5 py-10 sm:px-8 sm:pb-16">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="grid gap-8 p-8 lg:grid-cols-[0.8fr_1.2fr] lg:p-10">
           <div className="flex flex-col">
             <span className="flex size-11 items-center justify-center rounded-xl bg-accent/15 text-accent-foreground">
               <Truck className="size-5" />
             </span>
-            <h2 className="mt-5 text-balance font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              運ぶ人のチャネル
+            <p className="eyebrow mt-5">TRANSPORT MATCHING</p>
+            <h2 className="mt-3 text-balance font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              距離の先に、可能性を。
             </h2>
             <p className="mt-3 text-pretty leading-relaxed text-muted-foreground">
-              輸送費の高騰で、遠くの農機具は諦めがち。空きトラックや帰り便を持つ人と、運びたい荷物をマッチング。運搬を手伝って報酬を得られます。
+              遠くで見つけた一台も、地域の運搬者とつなぐ。空きトラックや帰り便を、次の仕事に。
             </p>
             <Link
               href="/transport"
@@ -35,7 +36,7 @@ export async function TransportPreview() {
               <li key={job.id}>
                 <Link
                   href={`/transport/${job.id}`}
-                  className="flex items-center gap-4 rounded-2xl border border-border bg-background p-4 transition-colors hover:border-primary/40"
+                  className="flex items-center gap-4 rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40"
                 >
                   <span className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary sm:flex">
                     <Route className="size-4" />

@@ -45,7 +45,7 @@ export function AccountStatusButton({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-56 flex-wrap items-center gap-2">
       {status === 'active' && (
         <label className="flex items-center">
           <span className="sr-only">メモ</span>
@@ -54,7 +54,7 @@ export function AccountStatusButton({
             value={note}
             placeholder="停止理由"
             onChange={(event) => setNote(event.target.value)}
-            className="h-8 w-36 rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
+            className="h-10 w-36 rounded-lg border border-border bg-background px-3 text-xs text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
           />
         </label>
       )}
@@ -63,11 +63,16 @@ export function AccountStatusButton({
         size="sm"
         variant={status === 'active' ? 'destructive' : 'outline'}
         disabled={busy || self}
+        className="min-h-10 px-3"
         onClick={() => void apply()}
       >
         {status === 'active' ? '停止する' : '停止を解除'}
       </Button>
-      {error && <span className="text-xs text-destructive">{error}</span>}
+      {error && (
+        <span role="alert" className="w-full text-xs text-destructive">
+          {error}
+        </span>
+      )}
     </div>
   )
 }

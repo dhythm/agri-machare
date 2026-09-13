@@ -198,80 +198,88 @@ export function ListingForm({
   }
 
   return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-5">
+    <form onSubmit={submit} noValidate className="flex flex-col gap-6">
       <FormAlert error={form.failed ? '送信できませんでした。' : undefined} />
 
-      <TextField
-        id="name"
-        label="農機具名"
-        placeholder="例: クボタ トラクター 45馬力 GLシリーズ"
-        value={form.values.name}
-        onChange={(e) => form.setValue('name', e.target.value)}
-        error={form.errors.name}
-      />
-      <div className="grid gap-5 sm:grid-cols-2">
-        <SelectField
-          id="category"
-          label="カテゴリ"
-          options={listingCategories}
-          value={form.values.category}
-          onChange={(e) => form.setValue('category', e.target.value)}
-          error={form.errors.category}
-        />
+      <section className="page-form space-y-5" aria-labelledby="listing-basics">
+        <h2
+          id="listing-basics"
+          className="mb-6 flex items-center gap-3 text-lg font-bold"
+        >
+          <span className="text-xs text-muted-foreground">01</span>
+          農機具の基本情報
+        </h2>
         <TextField
-          id="maker"
-          label="メーカー"
-          value={form.values.maker}
-          onChange={(e) => form.setValue('maker', e.target.value)}
-          error={form.errors.maker}
+          id="name"
+          label="農機具名"
+          placeholder="例: クボタ トラクター 45馬力 GLシリーズ"
+          value={form.values.name}
+          onChange={(e) => form.setValue('name', e.target.value)}
+          error={form.errors.name}
         />
-        <TextField
-          id="year"
-          label="年式"
-          inputMode="numeric"
-          placeholder="例: 2019"
-          value={form.values.year}
-          onChange={(e) => form.setValue('year', e.target.value)}
-          error={form.errors.year}
-        />
-        <TextField
-          id="hours"
-          label="稼働時間"
-          inputMode="numeric"
-          placeholder="例: 620"
-          value={form.values.hours}
-          onChange={(e) => form.setValue('hours', e.target.value)}
-          error={form.errors.hours}
-        />
-        <SelectField
-          id="condition"
-          label="状態"
-          options={listingConditions}
-          value={form.values.condition}
-          onChange={(e) => form.setValue('condition', e.target.value)}
-          error={form.errors.condition}
-        />
-        <div className="grid grid-cols-2 gap-3">
-          <TextField
-            id="prefecture"
-            label="都道府県"
-            value={form.values.prefecture}
-            onChange={(e) => form.setValue('prefecture', e.target.value)}
-            error={form.errors.prefecture}
+        <div className="grid gap-5 sm:grid-cols-2">
+          <SelectField
+            id="category"
+            label="カテゴリ"
+            options={listingCategories}
+            value={form.values.category}
+            onChange={(e) => form.setValue('category', e.target.value)}
+            error={form.errors.category}
           />
           <TextField
-            id="city"
-            label="市区町村"
-            value={form.values.city}
-            onChange={(e) => form.setValue('city', e.target.value)}
-            error={form.errors.city}
+            id="maker"
+            label="メーカー"
+            value={form.values.maker}
+            onChange={(e) => form.setValue('maker', e.target.value)}
+            error={form.errors.maker}
           />
+          <TextField
+            id="year"
+            label="年式"
+            inputMode="numeric"
+            placeholder="例: 2019"
+            value={form.values.year}
+            onChange={(e) => form.setValue('year', e.target.value)}
+            error={form.errors.year}
+          />
+          <TextField
+            id="hours"
+            label="稼働時間"
+            inputMode="numeric"
+            placeholder="例: 620"
+            value={form.values.hours}
+            onChange={(e) => form.setValue('hours', e.target.value)}
+            error={form.errors.hours}
+          />
+          <SelectField
+            id="condition"
+            label="状態"
+            options={listingConditions}
+            value={form.values.condition}
+            onChange={(e) => form.setValue('condition', e.target.value)}
+            error={form.errors.condition}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <TextField
+              id="prefecture"
+              label="都道府県"
+              value={form.values.prefecture}
+              onChange={(e) => form.setValue('prefecture', e.target.value)}
+              error={form.errors.prefecture}
+            />
+            <TextField
+              id="city"
+              label="市区町村"
+              value={form.values.city}
+              onChange={(e) => form.setValue('city', e.target.value)}
+              error={form.errors.city}
+            />
+          </div>
         </div>
-      </div>
-
-      <fieldset className="rounded-2xl border border-border p-5">
-        <legend className="px-1 text-sm font-medium text-foreground">
-          取引方法
+      </section>
+      <fieldset className="page-form">
+        <legend className="rounded-md bg-card px-3 text-base font-bold text-foreground">
+          02 取引方法・価格
         </legend>
         <div className="flex flex-wrap gap-6">
           <CheckboxField
@@ -355,91 +363,111 @@ export function ListingForm({
         )}
       </fieldset>
 
-      <fieldset>
-        <label
-          htmlFor="pictures"
-          className="mb-1.5 block text-sm font-medium text-foreground"
+      <section className="page-form space-y-6" aria-labelledby="listing-photos">
+        <h2
+          id="listing-photos"
+          className="flex items-center gap-3 text-lg font-bold"
         >
-          写真（{maxListingImages}枚まで）
-        </label>
-        <input
-          id="pictures"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          multiple
-          disabled={isReading || pictures.length >= maxListingImages}
-          onChange={(event) => {
-            void addPictures(event.target.files)
-            event.target.value = ''
-          }}
-          className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border file:border-border file:bg-card file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-foreground"
-        />
-        {(pictureError || form.errors.images) && (
-          <p className="mt-1 text-xs text-destructive">
-            {pictureError ?? form.errors.images}
-          </p>
-        )}
-        {pictures.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-3">
-            {pictures.map((picture, index) => (
-              <li key={`${index}-${picture.full.length}`} className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={picture.thumb ?? picture.full}
-                  alt={`写真 ${index + 1}`}
-                  className="size-24 rounded-xl border border-border object-cover"
-                />
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="outline"
-                  aria-label="削除"
-                  className="absolute -right-2 -top-2 rounded-full"
-                  onClick={() => removePicture(index)}
+          <span className="text-xs text-muted-foreground">03</span>
+          写真・コンディション
+        </h2>
+        <fieldset>
+          <label
+            htmlFor="pictures"
+            className="mb-1.5 block text-sm font-medium text-foreground"
+          >
+            写真（{maxListingImages}枚まで）
+          </label>
+          <input
+            id="pictures"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            disabled={isReading || pictures.length >= maxListingImages}
+            onChange={(event) => {
+              void addPictures(event.target.files)
+              event.target.value = ''
+            }}
+            className="block w-full rounded-xl border border-dashed border-primary/30 bg-secondary/40 p-5 text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border file:border-border file:bg-card file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-foreground"
+          />
+          {(pictureError || form.errors.images) && (
+            <p className="mt-1 text-xs text-destructive">
+              {pictureError ?? form.errors.images}
+            </p>
+          )}
+          {pictures.length > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-3">
+              {pictures.map((picture, index) => (
+                <li
+                  key={`${index}-${picture.full.length}`}
+                  className="relative"
                 >
-                  <X className="size-3" />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </fieldset>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={picture.thumb ?? picture.full}
+                    alt={`写真 ${index + 1}`}
+                    className="size-24 rounded-xl border border-border object-cover"
+                  />
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="outline"
+                    aria-label="削除"
+                    className="absolute -right-2 -top-2 rounded-full"
+                    onClick={() => removePicture(index)}
+                  >
+                    <X className="size-3" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </fieldset>
 
-      <TextareaField
-        id="summary"
-        label="説明"
-        placeholder="装備、整備状況、貸し出し条件など"
-        value={form.values.summary}
-        onChange={(e) => form.setValue('summary', e.target.value)}
-        error={form.errors.summary}
-      />
-      <div className="grid gap-5 sm:grid-cols-2">
+        <TextareaField
+          id="summary"
+          label="説明"
+          placeholder="装備、整備状況、貸し出し条件など"
+          value={form.values.summary}
+          onChange={(e) => form.setValue('summary', e.target.value)}
+          error={form.errors.summary}
+        />
+      </section>
+      <section className="page-form space-y-5" aria-labelledby="listing-owner">
+        <h2
+          id="listing-owner"
+          className="mb-6 flex items-center gap-3 text-lg font-bold"
+        >
+          <span className="text-xs text-muted-foreground">04</span>出品者情報
+        </h2>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <TextField
+            id="sellerName"
+            label="出品者名"
+            placeholder="例: 中村ファーム"
+            value={form.values.sellerName}
+            onChange={(e) => form.setValue('sellerName', e.target.value)}
+            error={form.errors.sellerName}
+          />
+          <SelectField
+            id="sellerKind"
+            label="出品者の区分"
+            options={sellerKinds}
+            value={form.values.sellerKind}
+            onChange={(e) => form.setValue('sellerKind', e.target.value)}
+            error={form.errors.sellerKind}
+          />
+        </div>
         <TextField
-          id="sellerName"
-          label="出品者名"
-          placeholder="例: 中村ファーム"
-          value={form.values.sellerName}
-          onChange={(e) => form.setValue('sellerName', e.target.value)}
-          error={form.errors.sellerName}
+          id="contactEmail"
+          label="メールアドレス"
+          type="email"
+          value={form.values.contactEmail}
+          onChange={(e) => form.setValue('contactEmail', e.target.value)}
+          error={form.errors.contactEmail}
         />
-        <SelectField
-          id="sellerKind"
-          label="出品者の区分"
-          options={sellerKinds}
-          value={form.values.sellerKind}
-          onChange={(e) => form.setValue('sellerKind', e.target.value)}
-          error={form.errors.sellerKind}
-        />
-      </div>
-      <TextField
-        id="contactEmail"
-        label="メールアドレス"
-        type="email"
-        value={form.values.contactEmail}
-        onChange={(e) => form.setValue('contactEmail', e.target.value)}
-        error={form.errors.contactEmail}
-      />
-      <div>
+      </section>
+      <div className="flex justify-end rounded-xl border border-border bg-card p-5">
         <SubmitButton
           label={edit ? '更新する' : '出品を申し込む'}
           isSubmitting={form.isSubmitting}
