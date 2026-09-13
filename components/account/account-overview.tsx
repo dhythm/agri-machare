@@ -8,6 +8,9 @@ import {
 import type { AccountOverview } from '@/lib/server/account'
 import type { Submission } from '@/lib/server/store/types'
 import { CompleteJobButton } from './complete-job-button'
+import { RentalActions } from './rental-actions'
+import { rentalStatusLabels } from '@/lib/rent-to-own'
+import type { RentalWithListing } from '@/lib/server/rentals'
 
 const moderationLabels: Record<ModerationStatus, string> = {
   pending: '審査待ち',
@@ -99,6 +102,64 @@ function IncomingList({
       {items.map((submission) => (
         <li key={submission.id} className="text-sm">
           {render(submission)}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function RentalList({
+  items,
+  party,
+}: {
+  items: RentalWithListing[]
+  party: 'owner' | 'renter'
+}) {
+  if (items.length === 0) return <Empty label="まだありません" />
+  return (
+    <ul className="flex flex-col gap-3">
+      {items.map(({ rental, listing }) => (
+        <li
+          key={rental.id}
+          className="rounded-2xl border border-border bg-card p-4 text-sm"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            {listing ? (
+              <Link
+                href={`/listings/${listing.id}`}
+                className="font-medium text-foreground hover:underline"
+              >
+                {listing.name}
+              </Link>
+            ) : (
+              <span className="text-muted-foreground">削除された農機具</span>
+            )}
+            <Badge
+              variant={rental.status === 'requested' ? 'default' : 'muted'}
+            >
+              {rentalStatusLabels[rental.status]}
+            </Badge>
+          </div>
+          <p className="mt-1 text-muted-foreground">
+            {rental.startDate} 〜 {rental.endDate}・{rental.days}日間・
+            {formatYen(rental.rentTotal)}
+          </p>
+          {rental.purchasePrice !== undefined && (
+            <p className="mt-1 text-foreground">
+              購入価格 {formatYen(rental.purchasePrice)}（充当後）
+            </p>
+          )}
+          <div className="mt-2">
+            <RentalActions
+              rentalId={rental.id}
+              status={rental.status}
+              party={party}
+              canConvert={
+                rental.salePrice !== undefined &&
+                rental.creditRate !== undefined
+              }
+            />
+          </div>
         </li>
       ))}
     </ul>
@@ -234,6 +295,14 @@ export function AccountOverviewView({
             ))}
           </ul>
         )}
+      </Section>
+
+      <Section title="借りている農機具">
+        <RentalList items={overview.rentals.asRenter} party="renter" />
+      </Section>
+
+      <Section title="貸している農機具">
+        <RentalList items={overview.rentals.asOwner} party="owner" />
       </Section>
 
       <Section title="送った問い合わせ">
