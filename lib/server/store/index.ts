@@ -10,6 +10,8 @@ export type {
   Notification,
   NotificationKind,
   Rental,
+  Review,
+  ReviewSourceKind,
   Store,
   Submission,
   SubmissionKind,

@@ -8,6 +8,7 @@ import type {
   Message,
   Notification,
   Rental,
+  Review,
   Store,
   Submission,
 } from './types'
@@ -274,6 +275,25 @@ describe.each(stores)('$name store', { timeout: 20_000 }, ({ store }) => {
     ).toBe('2026-09-13T06:05:00.000Z')
     await store.reset()
     expect(await store.notifications.list()).toEqual([])
+  })
+
+  it('round-trips reviews', async () => {
+    const review: Review = {
+      id: 'rv-1',
+      listingId: 'trc-001',
+      sellerUserId: 'demo-seller',
+      reviewerUserId: 'demo-user',
+      sourceKind: 'rental',
+      sourceId: 'r-1',
+      rating: 5,
+      comment: '整備が行き届いていました',
+      createdAt: '2026-09-13T07:00:00.000Z',
+    }
+    expect(await store.reviews.create(review)).toEqual(review)
+    await store.reviews.create({ ...review, id: 'rv-2', comment: undefined })
+    expect((await store.reviews.get('rv-2'))?.comment).toBeUndefined()
+    await store.reset()
+    expect(await store.reviews.list()).toEqual([])
   })
 
   it('does not let callers mutate stored data through returned objects', async () => {
