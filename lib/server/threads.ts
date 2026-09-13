@@ -1,8 +1,14 @@
 import 'server-only'
 
 import { randomUUID } from 'node:crypto'
-import type { Listing, ThreadStatus, TransportJob } from '@/lib/data'
+import {
+  threadStatusLabels,
+  type Listing,
+  type ThreadStatus,
+  type TransportJob,
+} from '@/lib/data'
 import type { AuthenticatedUser } from './auth/accounts'
+import { notify } from './notifications'
 import { getStore, type Message, type Submission } from './store'
 
 type ThreadTarget =
@@ -51,6 +57,15 @@ function ownerOf(target: ThreadTarget | undefined): string | undefined {
   return target.kind === 'listing'
     ? target.listing.ownerUserId
     : target.job.ownerUserId
+}
+
+function targetLabel(target: ThreadTarget | undefined): string | undefined {
+  if (!target) return undefined
+  return target.kind === 'listing' ? target.listing.name : target.job.item
+}
+
+function kindLabel(submission: Submission): string {
+  return submission.kind === 'listingInquiry' ? '問い合わせ' : '応募'
 }
 
 function roleFor(
@@ -118,7 +133,8 @@ export async function addMessage(
 ): Promise<ThreadResult<Message>> {
   const resolved = await resolve(threadId, user)
   if (!resolved.ok) return resolved
-  if (resolved.value.role === 'admin') return forbidden
+  const { submission, target, role } = resolved.value
+  if (role === 'admin') return forbidden
   const message = await getStore().messages.create({
     id: randomUUID(),
     threadId,
@@ -126,6 +142,15 @@ export async function addMessage(
     body,
     createdAt: new Date().toISOString(),
   })
+  const recipient = role === 'sender' ? ownerOf(target) : submission.userId
+  if (recipient)
+    await notify({
+      userId: recipient,
+      kind: 'reply',
+      title: '返信が届きました',
+      body: targetLabel(target),
+      href: `/account/threads/${threadId}`,
+    })
   return { ok: true, value: message }
 }
 
@@ -137,11 +162,19 @@ export async function updateThreadStatus(
 ): Promise<ThreadResult<Submission>> {
   const resolved = await resolve(threadId, user)
   if (!resolved.ok) return resolved
-  const { target, role } = resolved.value
+  const { submission, target, role } = resolved.value
   if (role !== 'owner') return forbidden
   const store = getStore()
   const updated = await store.submissions.update(threadId, { status })
   if (!updated) return notFound
+  if (submission.userId)
+    await notify({
+      userId: submission.userId,
+      kind: 'threadStatus',
+      title: `${kindLabel(submission)}が「${threadStatusLabels[status]}」になりました`,
+      body: targetLabel(target),
+      href: `/account/threads/${threadId}`,
+    })
   if (
     status === 'agreed' &&
     target?.kind === 'transportJob' &&

@@ -2,6 +2,7 @@ import 'server-only'
 
 import { randomUUID } from 'node:crypto'
 import { getStore, type Submission, type SubmissionKind } from './store'
+import { notify } from './notifications'
 import { deleteMessagesFor } from './threads'
 
 export type { SubmissionKind }
@@ -33,7 +34,34 @@ export async function acceptSubmission(
     payload,
   }
   await getStore().submissions.create(submission)
+  await notifyTargetOwner(submission)
   return { id: submission.id, receivedAt: submission.receivedAt }
+}
+
+async function notifyTargetOwner(submission: Submission): Promise<void> {
+  if (!submission.targetId) return
+  const store = getStore()
+  if (submission.kind === 'listingInquiry') {
+    const listing = await store.listings.get(submission.targetId)
+    if (!listing?.ownerUserId) return
+    await notify({
+      userId: listing.ownerUserId,
+      kind: 'inquiry',
+      title: '問い合わせが届きました',
+      body: listing.name,
+      href: `/account/threads/${submission.id}`,
+    })
+  } else if (submission.kind === 'transportApplication') {
+    const job = await store.transportJobs.get(submission.targetId)
+    if (!job?.ownerUserId) return
+    await notify({
+      userId: job.ownerUserId,
+      kind: 'application',
+      title: '応募が届きました',
+      body: job.item,
+      href: `/account/threads/${submission.id}`,
+    })
+  }
 }
 
 export async function listSubmissions(

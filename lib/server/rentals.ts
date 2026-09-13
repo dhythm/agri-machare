@@ -4,12 +4,14 @@ import { randomUUID } from 'node:crypto'
 import type { Listing } from '@/lib/data'
 import {
   calculateRentToOwn,
+  rentalStatusLabels,
   countRentalDays,
   rangesOverlap,
   type DateRange,
   type RentalStatus,
 } from '@/lib/rent-to-own'
 import type { AuthenticatedUser } from './auth/accounts'
+import { notify } from './notifications'
 import { getStore, type Rental } from './store'
 
 export type RentalResult<T> =
@@ -74,6 +76,14 @@ export async function requestRental(
     createdAt: now,
     updatedAt: now,
   })
+  if (listing.ownerUserId)
+    await notify({
+      userId: listing.ownerUserId,
+      kind: 'rental',
+      title: 'レンタルの申込が届きました',
+      body: `${listing.name}（${range.startDate} 〜 ${range.endDate}）`,
+      href: '/account',
+    })
   return { ok: true, value: rental }
 }
 
@@ -124,7 +134,19 @@ export async function updateRentalStatus(
     ).purchasePrice
   }
   const updated = await store.rentals.update(id, patch)
-  return updated ? { ok: true, value: updated } : fail('not_found')
+  if (!updated) return fail('not_found')
+  const listing = await store.listings.get(rental.listingId)
+  const recipient =
+    party === 'owner' ? rental.renterUserId : listing?.ownerUserId
+  if (recipient)
+    await notify({
+      userId: recipient,
+      kind: 'rental',
+      title: `レンタルが「${rentalStatusLabels[status]}」になりました`,
+      body: listing?.name,
+      href: '/account',
+    })
+  return { ok: true, value: updated }
 }
 
 async function withListings(rentals: Rental[]): Promise<RentalWithListing[]> {
