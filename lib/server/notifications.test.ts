@@ -134,6 +134,7 @@ describe('notification triggers', () => {
         deals: ['sale'],
         salePrice: 1_000_000,
         rentToOwn: false,
+        images: [],
         summary: '説明',
         sellerName: '出品者デモ',
         sellerKind: '農業法人',

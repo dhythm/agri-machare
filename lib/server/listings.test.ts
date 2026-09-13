@@ -5,6 +5,7 @@ import {
   getFeaturedListings,
   getListing,
   getListingIds,
+  getRelatedListings,
   paginateListings,
   searchListings,
   updateListing,
@@ -18,6 +19,7 @@ vi.mock('server-only', () => ({}))
 beforeEach(() => resetStore())
 
 const submission: ListingSubmission = {
+  images: [],
   name: 'クボタ トラクター 30馬力 テスト',
   category: 'トラクター',
   maker: 'クボタ',
@@ -239,6 +241,38 @@ describe('listing CRUD', () => {
         keyword: 'テスト農園',
       }),
     ).toEqual([])
+  })
+
+  it('stores uploaded pictures, uses the thumbnail for lists, and keeps full images off lists', async () => {
+    const full = 'data:image/jpeg;base64,/9j/4AAQ'
+    const thumb = 'data:image/jpeg;base64,/9j/thumb'
+    const created = await createListing(
+      { ...submission, images: [full, full], thumbnail: thumb },
+      'demo-seller',
+    )
+    expect(created.image).toBe(thumb)
+    expect(created.images).toEqual([full, full])
+    await applyModeration('listing', created.id, { status: 'approved' })
+    const detail = await getListing(created.id)
+    expect(detail?.images).toHaveLength(2)
+    const listed = (
+      await searchListings({
+        category: 'すべて',
+        deal: 'all',
+        keyword: 'テスト農園',
+      })
+    )[0]
+    expect(listed.image).toBe(thumb)
+    expect(listed.images).toBeUndefined()
+    expect((await getFeaturedListings(1))[0].images).toBeUndefined()
+    expect(
+      (await getRelatedListings({ ...created, id: 'other' }, 5)).every(
+        (item) => item.images === undefined,
+      ),
+    ).toBe(true)
+    const withoutPictures = await createListing(submission, 'demo-seller')
+    expect(withoutPictures.image).toBe('/equipment/tractor.png')
+    expect(withoutPictures.images).toEqual([])
   })
 
   it('does not store the contact email on the public listing', async () => {

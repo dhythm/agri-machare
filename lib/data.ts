@@ -24,7 +24,10 @@ export type Listing = {
   condition: '未使用に近い' | '目立った傷なし' | '使用感あり' | '要整備'
   prefecture: string
   city: string
+  /** Thumbnail for lists: a small data URL or the category's default picture. */
   image: string
+  /** Full-size data URLs, shown on the detail page only. */
+  images?: string[]
   summary: string
   deals: DealType[]
   salePrice?: number
