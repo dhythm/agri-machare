@@ -30,6 +30,42 @@ describe('listing query', () => {
     )
   })
 
+  it('includes refinements in the key and the URL', async () => {
+    const options = listingQueryOptions(
+      {
+        category: 'すべて',
+        deal: 'rent',
+        prefecture: '新潟県',
+        priceMax: 30_000,
+        sort: 'rentAsc',
+        availableFrom: '2026-10-01',
+        availableTo: '2026-10-07',
+      },
+      page,
+    )
+    expect(options.queryKey).not.toEqual(
+      listingQueryOptions({ category: 'すべて', deal: 'rent' }, page).queryKey,
+    )
+    const fetchMock = vi.fn<(input: string) => Promise<Response>>(async () =>
+      Response.json({
+        items: [],
+        total: 0,
+        page: 1,
+        pageSize: 12,
+        pageCount: 0,
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    await options.queryFn!({ signal: new AbortController().signal } as never)
+    const url = new URL(fetchMock.mock.calls[0][0], 'http://localhost')
+    expect(url.searchParams.get('prefecture')).toBe('新潟県')
+    expect(url.searchParams.get('priceMax')).toBe('30000')
+    expect(url.searchParams.get('sort')).toBe('rentAsc')
+    expect(url.searchParams.get('from')).toBe('2026-10-01')
+    expect(url.searchParams.get('to')).toBe('2026-10-07')
+    expect(url.searchParams.has('priceMin')).toBe(false)
+  })
+
   it('builds the request URL and omits an empty keyword', async () => {
     const fetchMock = vi.fn<(input: string) => Promise<Response>>(async () =>
       Response.json({

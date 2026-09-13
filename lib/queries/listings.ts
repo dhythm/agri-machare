@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import type { ListingFilter, ListingPage, PageRequest } from '@/lib/data'
+import { refinementEntries } from '@/lib/listing-search-params'
 
 export function listingQueryOptions(filter: ListingFilter, page: PageRequest) {
   const keyword = filter.keyword?.trim() ?? ''
@@ -13,6 +14,8 @@ export function listingQueryOptions(filter: ListingFilter, page: PageRequest) {
         pageSize: String(page.pageSize),
       })
       if (keyword) parameter.set('q', keyword)
+      for (const [key, value] of refinementEntries(filter))
+        parameter.set(key, value)
       const response = await fetch(`/api/listings?${parameter}`, { signal })
       if (!response.ok) {
         throw new Error('農機具を取得できませんでした。')

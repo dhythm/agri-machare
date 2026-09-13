@@ -146,6 +146,97 @@ describe('listing search', () => {
   })
 })
 
+describe('listing refinements', () => {
+  it('filters by prefecture and price range for the selected deal', async () => {
+    const niigata = await searchListings({
+      category: 'すべて',
+      deal: 'all',
+      prefecture: '新潟県',
+    })
+    expect(niigata.length).toBeGreaterThan(0)
+    expect(niigata.every((listing) => listing.prefecture === '新潟県')).toBe(
+      true,
+    )
+
+    const cheapSales = await searchListings({
+      category: 'すべて',
+      deal: 'sale',
+      priceMax: 500_000,
+    })
+    expect(cheapSales.length).toBeGreaterThan(0)
+    expect(
+      cheapSales.every((listing) => (listing.salePrice ?? 0) <= 500_000),
+    ).toBe(true)
+
+    const dailyRent = await searchListings({
+      category: 'すべて',
+      deal: 'rent',
+      priceMin: 20_000,
+      priceMax: 30_000,
+    })
+    expect(dailyRent.length).toBeGreaterThan(0)
+    expect(
+      dailyRent.every(
+        (listing) =>
+          listing.rentPerDay !== undefined &&
+          listing.rentPerDay >= 20_000 &&
+          listing.rentPerDay <= 30_000,
+      ),
+    ).toBe(true)
+  })
+
+  it('sorts by price with unpriced listings last', async () => {
+    const asc = await searchListings({
+      category: 'すべて',
+      deal: 'all',
+      sort: 'priceAsc',
+    })
+    const priced = asc.filter((listing) => listing.salePrice !== undefined)
+    const prices = priced.map((listing) => listing.salePrice as number)
+    expect(prices).toEqual([...prices].sort((a, b) => a - b))
+    expect(
+      asc.slice(0, priced.length).every((l) => l.salePrice !== undefined),
+    ).toBe(true)
+    const desc = await searchListings({
+      category: 'すべて',
+      deal: 'all',
+      sort: 'priceDesc',
+    })
+    expect(desc[0].salePrice).toBe(Math.max(...prices))
+    const rent = await searchListings({
+      category: 'すべて',
+      deal: 'all',
+      sort: 'rentAsc',
+    })
+    const rents = rent
+      .filter((l) => l.rentPerDay !== undefined)
+      .map((l) => l.rentPerDay as number)
+    expect(rents).toEqual([...rents].sort((a, b) => a - b))
+  })
+
+  it('keeps only rentable listings free for the requested dates', async () => {
+    await requestRental((await getListing('trc-001'))!, demoUser, {
+      startDate: '2026-10-01',
+      endDate: '2026-10-07',
+    })
+    const busy = await searchListings({
+      category: 'すべて',
+      deal: 'all',
+      availableFrom: '2026-10-05',
+      availableTo: '2026-10-06',
+    })
+    expect(busy.map((l) => l.id)).not.toContain('trc-001')
+    expect(busy.every((l) => l.rentPerDay !== undefined)).toBe(true)
+    const free = await searchListings({
+      category: 'すべて',
+      deal: 'all',
+      availableFrom: '2026-10-08',
+      availableTo: '2026-10-09',
+    })
+    expect(free.map((l) => l.id)).toContain('trc-001')
+  })
+})
+
 describe('listing pagination', () => {
   const filter = { category: 'すべて', deal: 'all' } as const
 

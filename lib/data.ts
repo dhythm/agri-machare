@@ -92,10 +92,38 @@ export function formatYen(value: number): string {
 
 export type DealFilter = 'all' | 'sale' | 'rent' | 'rentToOwn'
 
+export const listingSorts = [
+  'newest',
+  'priceAsc',
+  'priceDesc',
+  'rentAsc',
+] as const
+
+export type ListingSort = (typeof listingSorts)[number]
+
+export const listingSortLabels: Record<ListingSort, string> = {
+  newest: '新着順',
+  priceAsc: '販売価格が安い順',
+  priceDesc: '販売価格が高い順',
+  rentAsc: '日額が安い順',
+}
+
+export function isListingSort(value: string): value is ListingSort {
+  return (listingSorts as readonly string[]).includes(value)
+}
+
 export type ListingFilter = {
   category: string
   deal: DealFilter
   keyword?: string
+  prefecture?: string
+  /** Yen. Applies to the daily rate when `deal` is `rent`, otherwise to the sale price. */
+  priceMin?: number
+  priceMax?: number
+  sort?: ListingSort
+  /** Both dates (YYYY-MM-DD) narrow to rentable listings free over that span. */
+  availableFrom?: string
+  availableTo?: string
 }
 
 export type PageRequest = {

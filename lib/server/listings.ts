@@ -8,6 +8,7 @@ import type {
   ListingPage,
   PageRequest,
 } from '@/lib/data'
+import { rangesOverlap } from '@/lib/rent-to-own'
 import type { ListingSubmission } from '@/lib/validation/listing-submission'
 import type { AuthenticatedUser } from './auth/accounts'
 import { canManage } from './auth/access'
@@ -56,9 +57,71 @@ function searchableText(listing: Listing): string {
   )
 }
 
+function priceFor(listing: Listing, filter: ListingFilter): number | undefined {
+  return filter.deal === 'rent' ? listing.rentPerDay : listing.salePrice
+}
+
+function withinPrice(listing: Listing, filter: ListingFilter): boolean {
+  if (filter.priceMin === undefined && filter.priceMax === undefined)
+    return true
+  const price = priceFor(listing, filter)
+  if (price === undefined) return false
+  if (filter.priceMin !== undefined && price < filter.priceMin) return false
+  if (filter.priceMax !== undefined && price > filter.priceMax) return false
+  return true
+}
+
+/** Unpriced listings sort last whatever the direction. */
+function compareBy(
+  pick: (listing: Listing) => number | undefined,
+  direction: 1 | -1,
+) {
+  return (a: Listing, b: Listing) => {
+    const left = pick(a)
+    const right = pick(b)
+    if (left === undefined && right === undefined) return 0
+    if (left === undefined) return 1
+    if (right === undefined) return -1
+    return (left - right) * direction
+  }
+}
+
+function sortListings(listings: Listing[], sort: ListingFilter['sort']) {
+  switch (sort) {
+    case 'priceAsc':
+      return [...listings].sort(compareBy((l) => l.salePrice, 1))
+    case 'priceDesc':
+      return [...listings].sort(compareBy((l) => l.salePrice, -1))
+    case 'rentAsc':
+      return [...listings].sort(compareBy((l) => l.rentPerDay, 1))
+    default:
+      return listings
+  }
+}
+
+/** Ids of listings booked (requested or active) over the wanted span. */
+async function bookedListingIds(
+  from: string,
+  to: string,
+): Promise<Set<string>> {
+  const rentals = await getStore().rentals.list()
+  return new Set(
+    rentals
+      .filter(
+        (rental) =>
+          (rental.status === 'requested' || rental.status === 'active') &&
+          rangesOverlap(rental, { startDate: from, endDate: to }),
+      )
+      .map((rental) => rental.listingId),
+  )
+}
+
 function matches(listing: Listing, filter: ListingFilter, terms: string[]) {
   if (filter.category !== 'すべて' && listing.category !== filter.category)
     return false
+  if (filter.prefecture && listing.prefecture !== filter.prefecture)
+    return false
+  if (!withinPrice(listing, filter)) return false
   if (filter.deal === 'rentToOwn' && listing.rentToOwn !== true) return false
   if (
     filter.deal !== 'all' &&
@@ -76,9 +139,19 @@ export async function searchListings(
 ): Promise<Listing[]> {
   const terms = keywordTerms(filter.keyword)
   const listings = await getStore().listings.list()
-  return listings
-    .filter((listing) => isApproved(listing) && matches(listing, filter, terms))
-    .map(withoutImages)
+  const wantsDates =
+    filter.availableFrom !== undefined && filter.availableTo !== undefined
+  const booked = wantsDates
+    ? await bookedListingIds(filter.availableFrom!, filter.availableTo!)
+    : undefined
+  const matched = listings.filter(
+    (listing) =>
+      isApproved(listing) &&
+      matches(listing, filter, terms) &&
+      (booked === undefined ||
+        (listing.rentPerDay !== undefined && !booked.has(listing.id))),
+  )
+  return sortListings(matched, filter.sort).map(withoutImages)
 }
 
 export async function paginateListings(
