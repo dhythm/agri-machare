@@ -1,5 +1,11 @@
 import type { Listing, TransportJob } from '@/lib/data'
-import type { AccountStatus, Message, Rental, Submission } from '../types'
+import type {
+  AccountStatus,
+  Message,
+  Notification,
+  Rental,
+  Submission,
+} from '../types'
 import {
   compact,
   isoString,
@@ -284,5 +290,40 @@ export const accountStatusTable: TableSpec<AccountStatus> = {
       status: row.status as AccountStatus['status'],
       note: (row.note as string | null) ?? undefined,
       updatedAt: isoString(row.updated_at) as string,
+    }),
+}
+
+export const notificationTable: TableSpec<Notification> = {
+  table: 'notifications',
+  columns: [
+    'id',
+    'user_id',
+    'kind',
+    'title',
+    'body',
+    'href',
+    'created_at',
+    'read_at',
+  ],
+  toRow: (notification) => [
+    notification.id,
+    notification.userId,
+    notification.kind,
+    notification.title,
+    nullable(notification.body),
+    notification.href,
+    notification.createdAt,
+    nullable(notification.readAt),
+  ],
+  fromRow: (row: Row) =>
+    compact({
+      id: row.id as string,
+      userId: row.user_id as string,
+      kind: row.kind as Notification['kind'],
+      title: row.title as string,
+      body: (row.body as string | null) ?? undefined,
+      href: row.href as string,
+      createdAt: isoString(row.created_at) as string,
+      readAt: isoString(row.read_at),
     }),
 }

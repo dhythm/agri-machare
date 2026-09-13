@@ -8,6 +8,7 @@ import {
   accountStatusTable,
   listingTable,
   messageTable,
+  notificationTable,
   rentalTable,
   submissionTable,
   transportJobTable,
@@ -62,10 +63,11 @@ export function createPgliteStore(options: PgliteStoreOptions): Store {
     messages: createSqlRepository(messageTable, connect),
     rentals: createSqlRepository(rentalTable, connect),
     accountStatuses: createSqlRepository(accountStatusTable, connect),
+    notifications: createSqlRepository(notificationTable, connect),
     async reset() {
       const db = await ready
       await db.exec(
-        `truncate listings, transport_jobs, submissions, messages, rentals, account_statuses restart identity`,
+        `truncate listings, transport_jobs, submissions, messages, rentals, account_statuses, notifications restart identity`,
       )
       await seed(db)
     },

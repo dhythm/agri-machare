@@ -58,6 +58,21 @@ export type AccountStatus = {
   updatedAt: string
 }
 
+export type NotificationKind =
+  'inquiry' | 'application' | 'reply' | 'threadStatus' | 'rental' | 'moderation'
+
+/** In-app notification for one user; `readAt` is set when opened. */
+export type Notification = {
+  id: string
+  userId: string
+  kind: NotificationKind
+  title: string
+  body?: string
+  href: string
+  createdAt: string
+  readAt?: string
+}
+
 export type StoreKind = 'memory' | 'pglite'
 
 export type Store = {
@@ -68,6 +83,7 @@ export type Store = {
   messages: Repository<Message>
   rentals: Repository<Rental>
   accountStatuses: Repository<AccountStatus>
+  notifications: Repository<Notification>
   /** Drop every row and load the sample data again. */
   reset(): Promise<void>
   /** Release resources; the store must not be used afterwards. */

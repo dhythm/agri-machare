@@ -2,7 +2,14 @@ import type { Listing, TransportJob } from '@/lib/data'
 import { listings, transportJobs } from '../data'
 import { createMemoryRepository } from './memory-repository'
 import type { Repository } from './repository'
-import type { AccountStatus, Message, Rental, Store, Submission } from './types'
+import type {
+  AccountStatus,
+  Message,
+  Notification,
+  Rental,
+  Store,
+  Submission,
+} from './types'
 
 export function createMemoryStore(): Store {
   let store = {
@@ -12,6 +19,7 @@ export function createMemoryStore(): Store {
     messages: createMemoryRepository<Message>([]),
     rentals: createMemoryRepository<Rental>([]),
     accountStatuses: createMemoryRepository<AccountStatus>([]),
+    notifications: createMemoryRepository<Notification>([]),
   }
   const proxy = <T extends { id: string }>(
     pick: () => Repository<T>,
@@ -30,6 +38,7 @@ export function createMemoryStore(): Store {
     messages: proxy<Message>(() => store.messages),
     rentals: proxy<Rental>(() => store.rentals),
     accountStatuses: proxy<AccountStatus>(() => store.accountStatuses),
+    notifications: proxy<Notification>(() => store.notifications),
     async reset() {
       store = {
         listings: createMemoryRepository(listings),
@@ -38,6 +47,7 @@ export function createMemoryStore(): Store {
         messages: createMemoryRepository<Message>([]),
         rentals: createMemoryRepository<Rental>([]),
         accountStatuses: createMemoryRepository<AccountStatus>([]),
+        notifications: createMemoryRepository<Notification>([]),
       }
     },
     async close() {},

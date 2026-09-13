@@ -7,6 +7,8 @@ import type { Store, StoreKind } from './types'
 export type {
   AccountStatus,
   Message,
+  Notification,
+  NotificationKind,
   Rental,
   Store,
   Submission,

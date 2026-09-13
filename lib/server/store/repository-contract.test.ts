@@ -3,7 +3,14 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Listing, TransportJob } from '@/lib/data'
 import { createMemoryStore } from './memory'
 import { createPgliteStore } from './pglite'
-import type { AccountStatus, Message, Rental, Store, Submission } from './types'
+import type {
+  AccountStatus,
+  Message,
+  Notification,
+  Rental,
+  Store,
+  Submission,
+} from './types'
 
 vi.mock('server-only', () => ({}))
 
@@ -244,6 +251,28 @@ describe.each(stores)('$name store', { timeout: 20_000 }, ({ store }) => {
     ).toBe('active')
     await store.reset()
     expect(await store.accountStatuses.list()).toEqual([])
+  })
+
+  it('round-trips notifications', async () => {
+    const notification: Notification = {
+      id: 'n-1',
+      userId: 'demo-seller',
+      kind: 'inquiry',
+      title: '問い合わせが届きました',
+      body: 'クボタ 45馬力',
+      href: '/account/threads/t-1',
+      createdAt: '2026-09-13T06:00:00.000Z',
+    }
+    expect(await store.notifications.create(notification)).toEqual(notification)
+    expect(
+      (
+        await store.notifications.update('n-1', {
+          readAt: '2026-09-13T06:05:00.000Z',
+        })
+      )?.readAt,
+    ).toBe('2026-09-13T06:05:00.000Z')
+    await store.reset()
+    expect(await store.notifications.list()).toEqual([])
   })
 
   it('does not let callers mutate stored data through returned objects', async () => {

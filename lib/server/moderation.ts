@@ -8,6 +8,7 @@ import {
   type ModerationStatus,
   type TransportJob,
 } from '@/lib/data'
+import { notify } from './notifications'
 import { getStore } from './store'
 
 export type ModerationKind = 'listing' | 'transportJob'
@@ -53,7 +54,20 @@ export async function applyModeration(
     updatedAt: now,
   }
   const store = getStore()
-  return kind === 'listing'
-    ? store.listings.update(id, patch)
-    : store.transportJobs.update(id, patch)
+  const updated =
+    kind === 'listing'
+      ? await store.listings.update(id, patch)
+      : await store.transportJobs.update(id, patch)
+  if (updated?.ownerUserId) {
+    const label = kind === 'listing' ? '出品' : '運搬依頼'
+    const name = 'name' in updated ? updated.name : updated.item
+    await notify({
+      userId: updated.ownerUserId,
+      kind: 'moderation',
+      title: `${label}が${decision.status === 'approved' ? '承認' : '却下'}されました`,
+      body: decision.note ? `${name}: ${decision.note}` : name,
+      href: kind === 'listing' ? `/listings/${id}` : `/transport/${id}`,
+    })
+  }
+  return updated
 }

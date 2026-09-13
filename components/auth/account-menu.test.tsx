@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -14,18 +15,31 @@ vi.mock('next-auth/react', () => ({ useSession, signOut }))
 afterEach(() => {
   useSession.mockReset()
   signOut.mockReset()
+  vi.unstubAllGlobals()
 })
+
+function renderMenu() {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => Response.json({ items: [], unreadCount: 0 })),
+  )
+  return render(
+    <QueryClientProvider client={new QueryClient()}>
+      <AccountMenu />
+    </QueryClientProvider>,
+  )
+}
 
 describe('AccountMenu', () => {
   it('renders nothing while the session loads', () => {
     useSession.mockReturnValue({ status: 'loading', data: null })
-    const { container } = render(<AccountMenu />)
+    const { container } = renderMenu()
     expect(container).toBeEmptyDOMElement()
   })
 
   it('links to the login page when signed out', () => {
     useSession.mockReturnValue({ status: 'unauthenticated', data: null })
-    render(<AccountMenu />)
+    renderMenu()
     expect(screen.getByRole('link', { name: 'ログイン' })).toHaveAttribute(
       'href',
       '/login',
@@ -37,7 +51,7 @@ describe('AccountMenu', () => {
       status: 'authenticated',
       data: { user: { name: '運営デモ', role: 'admin' } },
     })
-    render(<AccountMenu />)
+    renderMenu()
     expect(screen.getByRole('link', { name: '運営画面' })).toHaveAttribute(
       'href',
       '/admin',
@@ -58,7 +72,7 @@ describe('AccountMenu', () => {
       status: 'authenticated',
       data: { user: { name: '利用者デモ', role: 'user' } },
     })
-    render(<AccountMenu />)
+    renderMenu()
     expect(screen.queryByRole('link', { name: '運営画面' })).toBeNull()
   })
 })

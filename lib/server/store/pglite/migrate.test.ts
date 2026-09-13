@@ -23,6 +23,7 @@ describe('migrate', { timeout: 20_000 }, () => {
       'account_statuses',
       'listings',
       'messages',
+      'notifications',
       'rentals',
       'schema_migrations',
       'submissions',
