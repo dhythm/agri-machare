@@ -11,7 +11,16 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-http://localhost:3000 で確認できます。現在のデータはサーバー内のサンプル（農機具 48 件・運搬案件 10 件を `lib/server/` で決定的に生成）で、環境変数やデータベースの設定は不要です。出品・問い合わせ・運搬者登録・案件応募・お問い合わせの各フォームは API で検証して受付番号を返しますが、保存や決済は未実装です。保存先を追加する場合は `lib/server/submissions.ts` の `acceptSubmission` を差し替えます。
+http://localhost:3000 で確認できます。データはサーバープロセス内のインメモリストアに保持し、起動時にサンプル（農機具 48 件・運搬案件 10 件を `lib/server/` で決定的に生成）を投入します。環境変数やデータベースの設定は不要です。出品と運搬依頼は作成・更新・削除が一覧に即時反映され、問い合わせ・応募・運搬者登録・お問い合わせも保存されます。プロセスを再起動すると初期状態に戻ります。決済と認証は未実装です。
+
+## データストア
+
+- `lib/server/store/repository.ts` がコレクションごとの契約（`list` / `get` / `create` / `update` / `delete`、すべて非同期）です。
+- `lib/server/store/memory-repository.ts` が唯一の実装で、揮発性のインメモリストアです。格納・返却時にコピーを取り、呼び出し側の変更がストアに漏れません。新規作成は先頭に並びます。
+- `lib/server/store/index.ts` が `listings` / `transportJobs` / `submissions` の 3 コレクションを `globalThis` 上のシングルトンとして提供します（開発時の HMR で消えません）。テストでは `resetStore()` で初期化します。
+- サービス（`lib/server/listings.ts` / `transport.ts` / `submissions.ts`）はストア経由でのみデータに触れます。DB に移行する際は `Repository<T>` を実装した別のストアを `index.ts` で差し替えます。
+- 連絡先メールアドレスは公開エンティティに保存せず、受付（submissions）にも農機具・案件の公開フィールドにも含めません。
+- 更新・削除の API は認証がなく誰でも実行できます。DB 導入時に認証と合わせて制限します。
 
 ## ページ構成
 
@@ -59,7 +68,18 @@ http://localhost:3000 で確認できます。現在のデータはサーバー�
 
 `GET /api/listings` は `category`（`すべて` または画面のカテゴリ）、`deal`（`all` / `sale` / `rent` / `rentToOwn`）、`q`（キーワード、100 文字まで）、`page`、`pageSize`（1〜48、既定 12）を受け取り、`{ items, total, page, pageSize, pageCount }` を返します。不正条件は HTTP 400 です。
 
-フォーム送信の API は `POST /api/listings`、`POST /api/listings/[id]/inquiries`、`POST /api/transport/registrations`、`POST /api/transport/jobs/[id]/applications`、`POST /api/contact` です。成功時は HTTP 201 で `{ id, receivedAt }`、検証エラーは 400 で `{ error, errors }`、対象がない場合は 404 を返します。
+CRUD の API は次のとおりです。成功時は作成が HTTP 201、取得・更新が 200、削除が 204、検証エラーは 400 で `{ error, errors }`、対象がない場合は 404 を返します。
+
+| メソッドとパス                                | 内容                                                                         |
+| --------------------------------------------- | ---------------------------------------------------------------------------- |
+| `POST /api/listings`                          | 農機具を作成。`{ id, receivedAt, listing }`                                  |
+| `GET / PUT / DELETE /api/listings/[id]`       | 農機具の取得・全置換更新（出品フォームと同じ検証）・削除（問い合わせも削除） |
+| `POST /api/listings/[id]/inquiries`           | 出品者への連絡を保存。`{ id, receivedAt }`                                   |
+| `GET / POST /api/transport/jobs`              | 運搬案件の一覧・作成。作成は `{ id, receivedAt, job }`                       |
+| `GET / PUT / DELETE /api/transport/jobs/[id]` | 運搬案件の取得・更新・削除（応募も削除）                                     |
+| `POST /api/transport/jobs/[id]/applications`  | 案件への応募を保存                                                           |
+| `POST /api/transport/registrations`           | 運搬者登録を保存                                                             |
+| `POST /api/contact`                           | お問い合わせを保存                                                           |
 
 TanStack Query の初期データとキャッシュの構成は [公式 SSR ガイド](https://tanstack.com/query/latest/docs/framework/react/guides/ssr) を参照してください。
 
