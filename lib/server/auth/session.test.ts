@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { getCurrentUser, requireAdmin } from './session'
+import { canManage, getCurrentUser, requireAdmin, requireUser } from './session'
 
 const auth = vi.hoisted(() => vi.fn())
 
@@ -50,5 +50,54 @@ describe('requireAdmin', () => {
       user: { id: 'demo-admin', email: 'admin@example.com', role: 'admin' },
     })
     expect(await requireAdmin()).toBeUndefined()
+  })
+})
+
+describe('requireUser', () => {
+  it('responds 401 when signed out and returns the user otherwise', async () => {
+    auth.mockResolvedValue(null)
+    const denied = await requireUser()
+    expect(denied.ok).toBe(false)
+    if (!denied.ok) expect(denied.response.status).toBe(401)
+
+    auth.mockResolvedValue({
+      user: { id: 'demo-user', email: 'user@example.com', role: 'user' },
+    })
+    const allowed = await requireUser()
+    expect(allowed.ok).toBe(true)
+    if (allowed.ok) expect(allowed.user.id).toBe('demo-user')
+  })
+})
+
+describe('canManage', () => {
+  const owner = {
+    id: 'demo-seller',
+    email: 's@example.com',
+    name: '',
+    role: 'user' as const,
+  }
+  const other = {
+    id: 'demo-user',
+    email: 'u@example.com',
+    name: '',
+    role: 'user' as const,
+  }
+  const admin = {
+    id: 'demo-admin',
+    email: 'a@example.com',
+    name: '',
+    role: 'admin' as const,
+  }
+
+  it('allows the owner and admins only', () => {
+    expect(canManage(owner, { ownerUserId: 'demo-seller' })).toBe(true)
+    expect(canManage(admin, { ownerUserId: 'demo-seller' })).toBe(true)
+    expect(canManage(other, { ownerUserId: 'demo-seller' })).toBe(false)
+    expect(canManage(undefined, { ownerUserId: 'demo-seller' })).toBe(false)
+  })
+
+  it('treats unowned rows as admin-only', () => {
+    expect(canManage(owner, {})).toBe(false)
+    expect(canManage(admin, {})).toBe(true)
   })
 })
