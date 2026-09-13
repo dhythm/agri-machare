@@ -23,6 +23,7 @@ import type { AccountOverview } from '@/lib/server/account'
 import type { Submission } from '@/lib/server/store/types'
 import { CompleteJobButton } from './complete-job-button'
 import { RentalActions } from './rental-actions'
+import { StartHaulButton } from './start-haul-button'
 import { ListingStatusButton } from '@/components/listings/listing-status-button'
 import { ReviewForm } from '@/components/reviews/review-form'
 import { StarRating } from '@/components/reviews/star-rating'
@@ -138,11 +139,11 @@ function IncomingList({
   render: (submission: Submission) => React.ReactNode
 }) {
   if (items.length === 0)
-    return (
+    return empty ? (
       <p className="mt-4 border-t border-border pt-4 text-xs text-muted-foreground">
         {empty}
       </p>
-    )
+    ) : null
   return (
     <ul className="mt-5 flex flex-col divide-y divide-border border-t border-border">
       {items.map((submission) => (
@@ -458,68 +459,95 @@ export function AccountOverviewView({
               <Empty label="まだありません" />
             ) : (
               <ul className="flex flex-col gap-4">
-                {overview.transportJobs.map(({ job, applications }) => (
-                  <li
-                    key={job.id}
-                    className="rounded-2xl border border-border bg-card p-5"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                          href={`/transport/${job.id}`}
-                          className="font-semibold text-foreground hover:text-primary hover:underline"
-                        >
-                          {job.item}
-                        </Link>
-                        <ModerationBadge status={job.moderationStatus} />
-                        <Badge variant="muted">{job.status}</Badge>
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {job.from} → {job.to}・{formatYen(job.reward)}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex items-center gap-3">
-                      <Link
-                        href={`/transport/${job.id}/edit`}
-                        className="text-xs font-medium text-primary hover:underline"
-                      >
-                        編集
-                      </Link>
-                      {job.status !== '完了' && (
-                        <CompleteJobButton jobId={job.id} />
-                      )}
-                    </div>
-                    <IncomingList
-                      items={applications}
-                      empty="応募はまだありません"
-                      render={(application) => (
-                        <div className="flex flex-col gap-1">
-                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                            <span className="shrink-0 text-muted-foreground">
-                              {receivedAt(application)}
-                            </span>
-                            <span className="shrink-0 font-medium">
-                              {text(application.payload.name)}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {text(application.payload.vehicle)}
-                              {text(application.payload.availableDate) &&
-                                `・${text(application.payload.availableDate)}`}
-                            </span>
-                            <span className="text-foreground">
-                              {text(application.payload.message)}
-                            </span>
-                          </div>
-                          <ThreadMeta
-                            submission={application}
-                            replyCount={getReplyCount(application)}
-                            unread={unread.has(application.id)}
-                          />
+                {overview.transportJobs.map(
+                  ({ job, applications, inquiries }) => (
+                    <li
+                      key={job.id}
+                      className="rounded-2xl border border-border bg-card p-5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={`/transport/${job.id}`}
+                            className="font-semibold text-foreground hover:text-primary hover:underline"
+                          >
+                            {job.item}
+                          </Link>
+                          <ModerationBadge status={job.moderationStatus} />
+                          <Badge variant="muted">{job.status}</Badge>
                         </div>
-                      )}
-                    />
-                  </li>
-                ))}
+                        <span className="text-sm text-muted-foreground">
+                          {job.from} → {job.to}・{formatYen(job.reward)}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex items-center gap-3">
+                        <Link
+                          href={`/transport/${job.id}/edit`}
+                          className="text-xs font-medium text-primary hover:underline"
+                        >
+                          編集
+                        </Link>
+                        {job.status !== '完了' && (
+                          <CompleteJobButton jobId={job.id} />
+                        )}
+                      </div>
+                      <IncomingList
+                        items={inquiries}
+                        empty=""
+                        render={(inquiry) => (
+                          <div className="flex flex-col gap-1">
+                            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                              <span className="shrink-0 text-muted-foreground">
+                                {receivedAt(inquiry)}
+                              </span>
+                              <Badge variant="outline">質問</Badge>
+                              <span className="shrink-0 font-medium">
+                                {text(inquiry.payload.name)}
+                              </span>
+                              <span className="text-foreground">
+                                {text(inquiry.payload.message)}
+                              </span>
+                            </div>
+                            <ThreadMeta
+                              submission={inquiry}
+                              replyCount={getReplyCount(inquiry)}
+                              unread={unread.has(inquiry.id)}
+                            />
+                          </div>
+                        )}
+                      />
+                      <IncomingList
+                        items={applications}
+                        empty="応募はまだありません"
+                        render={(application) => (
+                          <div className="flex flex-col gap-1">
+                            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                              <span className="shrink-0 text-muted-foreground">
+                                {receivedAt(application)}
+                              </span>
+                              <span className="shrink-0 font-medium">
+                                {text(application.payload.name)}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {text(application.payload.vehicle)}
+                                {text(application.payload.availableDate) &&
+                                  `・${text(application.payload.availableDate)}`}
+                              </span>
+                              <span className="text-foreground">
+                                {text(application.payload.message)}
+                              </span>
+                            </div>
+                            <ThreadMeta
+                              submission={application}
+                              replyCount={getReplyCount(application)}
+                              unread={unread.has(application.id)}
+                            />
+                          </div>
+                        )}
+                      />
+                    </li>
+                  ),
+                )}
               </ul>
             )}
           </Section>
@@ -663,6 +691,55 @@ export function AccountOverviewView({
                     <p className="mt-1 text-muted-foreground">
                       {text(submission.payload.vehicle)}・
                       {text(submission.payload.availableDate)}
+                    </p>
+                    {submission.status === 'agreed' &&
+                      job?.status === '調整中' && (
+                        <div className="mt-2">
+                          <StartHaulButton jobId={job.id} />
+                        </div>
+                      )}
+                    <div className="mt-2">
+                      <ThreadMeta
+                        submission={submission}
+                        replyCount={getReplyCount(submission)}
+                        unread={unread.has(submission.id)}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+
+          <Section title="送った質問" count={overview.sentJobInquiries.length}>
+            {overview.sentJobInquiries.length === 0 ? (
+              <Empty label="まだありません" />
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {overview.sentJobInquiries.map(({ submission, job }) => (
+                  <li
+                    key={submission.id}
+                    className="rounded-2xl border border-border bg-card p-5 text-sm sm:p-6"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      {job ? (
+                        <Link
+                          href={`/transport/${job.id}`}
+                          className="font-semibold text-foreground hover:text-primary hover:underline"
+                        >
+                          {job.item}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          削除された案件
+                        </span>
+                      )}
+                      <span className="text-muted-foreground">
+                        {receivedAt(submission)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-foreground">
+                      {text(submission.payload.message)}
                     </p>
                     <div className="mt-2">
                       <ThreadMeta

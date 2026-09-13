@@ -47,5 +47,6 @@ export const dealTabs = [
 export const transportTabs = [
   { href: '/admin/transport', label: '運搬依頼' },
   { href: '/admin/transport/applications', label: '応募' },
+  { href: '/admin/transport/inquiries', label: '質問' },
   { href: '/admin/transport/carriers', label: '運搬者' },
 ]

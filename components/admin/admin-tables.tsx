@@ -6,6 +6,7 @@ import type { AccountSummary, ThreadSummary } from '@/lib/server/admin-overview'
 import type { RentalWithListing } from '@/lib/server/rentals'
 import type { CarrierProfile, Review } from '@/lib/server/store/types'
 import { StarRating } from '@/components/reviews/star-rating'
+import { RentalCancelButton, ThreadCloseButton } from './admin-actions'
 import { AccountStatusButton } from './account-status-button'
 import { AdminDataTable } from './admin-data-table'
 
@@ -23,7 +24,7 @@ export function RentalTable({ items }: { items: RentalWithListing[] }) {
   return (
     <AdminDataTable
       title="レンタル"
-      headers={['農機具', '申込者', '期間', '金額', '状態', '購入価格']}
+      headers={['農機具', '申込者', '期間', '金額', '状態', '購入価格', '']}
       rows={items.map(({ rental, listing }) => ({
         key: rental.id,
         searchText: `${rental.id} ${listing?.name ?? '削除済み'} ${rental.renterUserId} ${rentalStatusLabels[rental.status]} ${rental.startDate} ${rental.endDate}`,
@@ -52,6 +53,11 @@ export function RentalTable({ items }: { items: RentalWithListing[] }) {
           rental.purchasePrice !== undefined
             ? formatYen(rental.purchasePrice)
             : '—',
+          rental.status === 'requested' || rental.status === 'active' ? (
+            <RentalCancelButton key="cancel" rentalId={rental.id} />
+          ) : (
+            ''
+          ),
         ],
       }))}
     />
@@ -97,6 +103,11 @@ export function ThreadTable({ items }: { items: ThreadSummary[] }) {
           >
             開く
           </Link>,
+          thread.status === 'declined' ? (
+            ''
+          ) : (
+            <ThreadCloseButton key="close" threadId={thread.id} />
+          ),
         ],
       }))}
     />
