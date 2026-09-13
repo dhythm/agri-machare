@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 import { SignOutButton } from './sign-out-button'
 
 const linkClass = cn(buttonVariants({ variant: 'ghost' }), 'h-9 px-3')
@@ -28,6 +29,7 @@ export function AccountMenu() {
       <Link href="/account" className={linkClass}>
         マイページ
       </Link>
+      <NotificationBell />
       <span className="hidden text-sm text-muted-foreground sm:inline">
         {session.user.name}
       </span>
