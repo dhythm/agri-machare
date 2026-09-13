@@ -39,6 +39,42 @@ describe('validateListingSubmission', () => {
     })
   })
 
+  it('accepts data-url images within limits', () => {
+    const png = 'data:image/png;base64,iVBORw0KGgo='
+    const ok = validateListingSubmission({
+      ...valid,
+      images: [png, 'data:image/jpeg;base64,/9j/4AAQ'],
+      thumbnail: png,
+    })
+    expect(ok.ok).toBe(true)
+    if (ok.ok) {
+      expect(ok.value.images).toHaveLength(2)
+      expect(ok.value.thumbnail).toBe(png)
+    }
+    const none = validateListingSubmission(valid)
+    expect(none.ok).toBe(true)
+    if (none.ok) {
+      expect(none.value.images).toEqual([])
+      expect(none.value.thumbnail).toBeUndefined()
+    }
+    const bad = validateListingSubmission({
+      ...valid,
+      images: ['https://example.com/a.png'],
+    })
+    expect(bad.ok).toBe(false)
+    if (!bad.ok) expect(bad.errors).toHaveProperty('images')
+    const tooMany = validateListingSubmission({
+      ...valid,
+      images: Array.from({ length: 6 }, () => png),
+    })
+    expect(tooMany.ok).toBe(false)
+    const tooBig = validateListingSubmission({
+      ...valid,
+      images: [`data:image/png;base64,${'A'.repeat(600_001)}`],
+    })
+    expect(tooBig.ok).toBe(false)
+  })
+
   it('requires the credit rate only for rent-to-own and clears it otherwise', () => {
     const missingRate = validateListingSubmission({
       ...valid,

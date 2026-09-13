@@ -7,7 +7,10 @@ import { cn } from '@/lib/utils'
 import { NotificationBell } from '@/components/notifications/notification-bell'
 import { SignOutButton } from './sign-out-button'
 
-const linkClass = cn(buttonVariants({ variant: 'ghost' }), 'h-9 px-3')
+const linkClass = cn(
+  buttonVariants({ variant: 'ghost' }),
+  'h-9 whitespace-nowrap px-2.5',
+)
 
 export function AccountMenu() {
   const { data: session, status } = useSession()
@@ -20,7 +23,7 @@ export function AccountMenu() {
     )
   }
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       {session.user.role === 'admin' && (
         <Link href="/admin" className={linkClass}>
           運営画面
@@ -30,7 +33,7 @@ export function AccountMenu() {
         マイページ
       </Link>
       <NotificationBell />
-      <span className="hidden text-sm text-muted-foreground sm:inline">
+      <span className="hidden whitespace-nowrap text-sm text-muted-foreground xl:inline">
         {session.user.name}
       </span>
       <SignOutButton />

@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils'
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 whitespace-nowrap px-4 sm:px-6">
+        <Link href="/" className="flex shrink-0 items-center gap-2">
           <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Sprout className="size-5" />
           </span>
@@ -17,7 +17,7 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="ml-4 hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
+        <nav className="ml-2 hidden shrink-0 items-center gap-4 text-sm font-medium text-muted-foreground md:flex">
           <Link
             href="/listings"
             className="transition-colors hover:text-foreground"
@@ -38,12 +38,12 @@ export function SiteHeader() {
           </Link>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
           <form
             action="/listings"
             method="get"
             role="search"
-            className="hidden sm:block"
+            className="hidden lg:block"
           >
             <label className="relative block">
               <span className="sr-only">キーワードで探す</span>
@@ -52,7 +52,7 @@ export function SiteHeader() {
                 type="search"
                 name="q"
                 placeholder="キーワードで探す"
-                className="h-9 w-44 rounded-lg border border-border bg-background pl-8 pr-3 text-sm text-foreground outline-none transition-[width] focus-visible:w-64 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 lg:w-56"
+                className="h-9 w-40 rounded-lg border border-border bg-background pl-8 pr-3 text-sm text-foreground outline-none transition-[width] focus-visible:w-56 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
               />
             </label>
           </form>
@@ -61,7 +61,7 @@ export function SiteHeader() {
             aria-label="農機具を探す"
             className={cn(
               buttonVariants({ variant: 'outline', size: 'icon-lg' }),
-              'sm:hidden',
+              'lg:hidden',
             )}
           >
             <Search className="size-4" />

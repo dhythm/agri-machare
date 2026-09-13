@@ -20,6 +20,13 @@ const imageByCategory: Record<string, string> = {
   ドローン: '/equipment/drone.png',
 }
 
+/** Lists carry only the thumbnail; the detail page loads the full pictures. */
+function withoutImages(listing: Listing): Listing {
+  const rest = { ...listing }
+  delete rest.images
+  return rest
+}
+
 function normalize(value: string): string {
   return value.normalize('NFKC').toLowerCase()
 }
@@ -66,9 +73,9 @@ export async function searchListings(
 ): Promise<Listing[]> {
   const terms = keywordTerms(filter.keyword)
   const listings = await getStore().listings.list()
-  return listings.filter(
-    (listing) => isApproved(listing) && matches(listing, filter, terms),
-  )
+  return listings
+    .filter((listing) => isApproved(listing) && matches(listing, filter, terms))
+    .map(withoutImages)
 }
 
 export async function paginateListings(
@@ -89,7 +96,10 @@ export async function paginateListings(
 }
 
 export async function getFeaturedListings(limit: number): Promise<Listing[]> {
-  return (await getStore().listings.list()).filter(isApproved).slice(0, limit)
+  return (await getStore().listings.list())
+    .filter(isApproved)
+    .slice(0, limit)
+    .map(withoutImages)
 }
 
 export function getListing(id: string): Promise<Listing | undefined> {
@@ -109,6 +119,7 @@ export async function getRelatedListings(
         isApproved(candidate),
     )
     .slice(0, limit)
+    .map(withoutImages)
 }
 
 export async function getListingIds(): Promise<string[]> {
@@ -128,7 +139,12 @@ function listingFields(submission: ListingSubmission) {
     condition: submission.condition,
     prefecture: submission.prefecture,
     city: submission.city,
-    image: imageByCategory[submission.category] ?? '/placeholder.svg',
+    image:
+      submission.thumbnail ??
+      submission.images[0] ??
+      imageByCategory[submission.category] ??
+      '/placeholder.svg',
+    images: submission.images,
     summary: submission.summary,
     deals: submission.deals,
     salePrice: submission.salePrice,

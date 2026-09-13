@@ -42,10 +42,61 @@ export type ListingSubmission = {
   rentToOwn: boolean
   rentToOwnCreditRate?: number
   rentToOwnCreditCap?: number
+  /** Data URLs (jpeg / png / webp), largest side about 1200px. */
+  images: string[]
+  /** Small data URL of the first image for lists. */
+  thumbnail?: string
   summary: string
   sellerName: string
   sellerKind: (typeof sellerKinds)[number]
   contactEmail: string
+}
+
+export const maxListingImages = 5
+const maxImageLength = 600_000
+const maxThumbnailLength = 120_000
+const dataUrlPattern = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/
+
+function isImageDataUrl(value: unknown, maxLength: number): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length <= maxLength &&
+    dataUrlPattern.test(value)
+  )
+}
+
+function readImages(
+  errors: FieldErrors,
+  source: Record<string, unknown>,
+): string[] {
+  const raw = source.images
+  if (raw === undefined || raw === null) return []
+  if (!Array.isArray(raw)) {
+    errors.images = '画像の形式が正しくありません。'
+    return []
+  }
+  if (raw.length > maxListingImages) {
+    errors.images = `画像は${maxListingImages}枚までです。`
+    return []
+  }
+  if (!raw.every((item) => isImageDataUrl(item, maxImageLength))) {
+    errors.images = '画像の形式またはサイズが正しくありません。'
+    return []
+  }
+  return raw
+}
+
+function readThumbnail(
+  errors: FieldErrors,
+  source: Record<string, unknown>,
+): string | undefined {
+  const raw = source.thumbnail
+  if (raw === undefined || raw === null || raw === '') return undefined
+  if (!isImageDataUrl(raw, maxThumbnailLength)) {
+    errors.thumbnail = 'サムネイルの形式が正しくありません。'
+    return undefined
+  }
+  return raw
 }
 
 function readDeals(
@@ -134,6 +185,8 @@ export function validateListingSubmission(
       { min: 1, max: 1_000_000_000 },
       false,
     ),
+    images: readImages(errors, source),
+    thumbnail: readThumbnail(errors, source),
     summary: requireText(errors, source, 'summary', '説明', 1000),
     sellerName: requireText(errors, source, 'sellerName', '出品者名', 60),
     sellerKind: requireChoice(

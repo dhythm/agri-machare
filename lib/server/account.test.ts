@@ -21,6 +21,7 @@ vi.mock('server-only', () => ({}))
 beforeEach(() => resetStore())
 
 const listingInput: ListingSubmission = {
+  images: [],
   name: '買い手の出品',
   category: 'トラクター',
   maker: 'クボタ',

@@ -1,7 +1,12 @@
 'use client'
 
+import { useState } from 'react'
+import { X } from 'lucide-react'
+import { resizeImage } from '@/lib/images'
+import { Button } from '@/components/ui/button'
 import {
   listingCategories,
+  maxListingImages,
   listingConditions,
   sellerKinds,
   validateListingSubmission,
@@ -19,6 +24,11 @@ import type { FormContact } from './contact'
 import { SubmitButton } from './submit-button'
 
 type Deal = 'sale' | 'rent'
+
+type Picture = { full: string; thumb: string }
+
+const fullSide = 1200
+const thumbSide = 400
 
 export function ListingForm({ contact }: { contact?: FormContact }) {
   const form = useSubmissionForm({
@@ -39,12 +49,56 @@ export function ListingForm({ contact }: { contact?: FormContact }) {
       rentToOwn: false,
       rentToOwnCreditRate: '',
       rentToOwnCreditCap: '',
+      images: [] as string[],
+      thumbnail: '',
       summary: '',
       sellerName: contact?.name ?? '',
       sellerKind: '',
       contactEmail: contact?.email ?? '',
     },
   })
+  const [pictures, setPictures] = useState<Picture[]>([])
+  const [pictureError, setPictureError] = useState<string>()
+  const [isReading, setIsReading] = useState(false)
+
+  const applyPictures = (next: Picture[]) => {
+    setPictures(next)
+    form.setValue(
+      'images',
+      next.map((picture) => picture.full),
+    )
+    form.setValue('thumbnail', next[0]?.thumb ?? '')
+  }
+
+  const addPictures = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setPictureError(undefined)
+    const room = maxListingImages - pictures.length
+    if (room <= 0) {
+      setPictureError(`写真は${maxListingImages}枚までです。`)
+      return
+    }
+    setIsReading(true)
+    try {
+      const added = await Promise.all(
+        Array.from(files)
+          .slice(0, room)
+          .map(async (file) => ({
+            full: await resizeImage(file, fullSide),
+            thumb: await resizeImage(file, thumbSide),
+          })),
+      )
+      applyPictures([...pictures, ...added])
+    } catch {
+      setPictureError('写真を読み込めませんでした。')
+    } finally {
+      setIsReading(false)
+    }
+  }
+
+  const removePicture = (index: number) =>
+    applyPictures(pictures.filter((_, i) => i !== index))
+
   const canSell = form.values.deals.includes('sale')
   const canRent = form.values.deals.includes('rent')
 
@@ -224,6 +278,56 @@ export function ListingForm({ contact }: { contact?: FormContact }) {
               error={form.errors.rentToOwnCreditCap}
             />
           </div>
+        )}
+      </fieldset>
+
+      <fieldset>
+        <label
+          htmlFor="pictures"
+          className="mb-1.5 block text-sm font-medium text-foreground"
+        >
+          写真（{maxListingImages}枚まで）
+        </label>
+        <input
+          id="pictures"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          disabled={isReading || pictures.length >= maxListingImages}
+          onChange={(event) => {
+            void addPictures(event.target.files)
+            event.target.value = ''
+          }}
+          className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border file:border-border file:bg-card file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-foreground"
+        />
+        {(pictureError || form.errors.images) && (
+          <p className="mt-1 text-xs text-destructive">
+            {pictureError ?? form.errors.images}
+          </p>
+        )}
+        {pictures.length > 0 && (
+          <ul className="mt-3 flex flex-wrap gap-3">
+            {pictures.map((picture, index) => (
+              <li key={`${index}-${picture.thumb.length}`} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={picture.thumb}
+                  alt={`写真 ${index + 1}`}
+                  className="size-24 rounded-xl border border-border object-cover"
+                />
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="outline"
+                  aria-label="削除"
+                  className="absolute -right-2 -top-2 rounded-full"
+                  onClick={() => removePicture(index)}
+                >
+                  <X className="size-3" />
+                </Button>
+              </li>
+            ))}
+          </ul>
         )}
       </fieldset>
 

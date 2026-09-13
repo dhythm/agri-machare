@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Badge } from '@/components/badge'
 import { FormAlert, TextField } from '@/components/forms/fields'
 import { Button } from '@/components/ui/button'
@@ -11,11 +12,22 @@ import {
 } from '@/lib/data'
 
 const filters: { id: ModerationQueueFilter; label: string }[] = [
+  { id: 'all', label: 'すべて' },
   { id: 'pending', label: '審査待ち' },
   { id: 'approved', label: '承認済み' },
   { id: 'rejected', label: '却下済み' },
-  { id: 'all', label: 'すべて' },
 ]
+
+/** Pending rows first so review work is on top of the full list. */
+function pendingFirst<T extends { moderationStatus?: string }>(
+  items: T[],
+): T[] {
+  return [...items].sort(
+    (a, b) =>
+      Number(b.moderationStatus === 'pending') -
+      Number(a.moderationStatus === 'pending'),
+  )
+}
 
 export function AdminQueue({
   kind,
@@ -24,7 +36,7 @@ export function AdminQueue({
   kind: 'listing' | 'transportJob'
   initialQueue: ModerationQueue
 }) {
-  const [status, setStatus] = useState<ModerationQueueFilter>('pending')
+  const [status, setStatus] = useState<ModerationQueueFilter>('all')
   const [queue, setQueue] = useState(initialQueue)
   const [error, setError] = useState<string>()
   const [pendingId, setPendingId] = useState<string>()
@@ -94,8 +106,9 @@ export function AdminQueue({
           title="出品"
           empty="該当なし"
           pendingId={pendingId}
-          items={queue.listings.map((listing) => ({
+          items={pendingFirst(queue.listings).map((listing) => ({
             id: listing.id,
+            image: listing.image,
             title: listing.name,
             meta: `${listing.prefecture} ${listing.city}・${listing.seller.name}`,
             status: listing.moderationStatus ?? 'approved',
@@ -112,7 +125,7 @@ export function AdminQueue({
           title="運搬依頼"
           empty="該当なし"
           pendingId={pendingId}
-          items={queue.transportJobs.map((job) => ({
+          items={pendingFirst(queue.transportJobs).map((job) => ({
             id: job.id,
             title: job.item,
             meta: `${job.from} → ${job.to}・${formatYen(job.reward)}・${job.status}`,
@@ -139,6 +152,7 @@ function QueueSection({
   empty: string
   items: {
     id: string
+    image?: string
     title: string
     meta: string
     status: string
@@ -184,6 +198,7 @@ function QueueItem({
 }: {
   item: {
     id: string
+    image?: string
     title: string
     meta: string
     status: string
@@ -207,14 +222,27 @@ function QueueItem({
   return (
     <li className="rounded-2xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-foreground">{item.title}</h3>
-            <Badge variant={item.status === 'pending' ? 'default' : 'muted'}>
-              {statusLabel}
-            </Badge>
+        <div className="flex items-start gap-3">
+          {item.image && (
+            <span className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
+              <Image
+                src={item.image}
+                alt=""
+                fill
+                sizes="64px"
+                className="object-cover"
+              />
+            </span>
+          )}
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-foreground">{item.title}</h3>
+              <Badge variant={item.status === 'pending' ? 'default' : 'muted'}>
+                {statusLabel}
+              </Badge>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{item.meta}</p>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">{item.meta}</p>
         </div>
         <code className="text-xs text-muted-foreground">{item.id}</code>
       </div>

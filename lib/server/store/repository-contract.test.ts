@@ -32,6 +32,7 @@ const listing = (id: string, name: string): Listing => ({
   rentToOwn: true,
   rentToOwnCreditRate: 50,
   rentToOwnCreditCap: 5_000_000,
+  images: ['data:image/png;base64,iVBORw0KGgo='],
   seller: { name: '中村ファーム', kind: '農業法人', rating: 4.8, reviews: 34 },
   tags: ['キャビン付', '4WD'],
   createdAt: '2026-09-13T00:00:00.000Z',
