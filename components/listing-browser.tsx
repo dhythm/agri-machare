@@ -11,16 +11,19 @@ import {
   parseListingSearchParams,
   type ListingSearchState,
 } from '@/lib/listing-search-params'
-import { CategoryChips, DealFilterToggle } from '@/components/listing-filters'
+import {
+  CategoryChips,
+  DealFilterToggle,
+  SearchRefinements,
+} from '@/components/listing-filters'
 import { ListingResults } from '@/components/listing-results'
 import { Pagination } from '@/components/pagination'
 
 function sameState(a: ListingSearchState, b: ListingSearchState): boolean {
   return (
     a.page === b.page &&
-    a.filter.category === b.filter.category &&
-    a.filter.deal === b.filter.deal &&
-    a.filter.keyword === b.filter.keyword
+    buildListingSearchParams(a.filter, 1) ===
+      buildListingSearchParams(b.filter, 1)
   )
 }
 
@@ -130,6 +133,13 @@ export function ListingBrowser({
           <CategoryChips
             value={state.filter.category}
             onChange={(category) => update({ category })}
+          />
+        </div>
+        <div className="mt-5 border-t border-border pt-5">
+          <SearchRefinements
+            key={buildListingSearchParams(state.filter, 1)}
+            value={state.filter}
+            onChange={(patch) => update(patch)}
           />
         </div>
       </div>

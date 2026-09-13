@@ -1,7 +1,16 @@
 'use client'
 
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { categories, type DealFilter } from '@/lib/data'
+import {
+  categories,
+  isListingSort,
+  listingSortLabels,
+  listingSorts,
+  type DealFilter,
+  type ListingFilter,
+} from '@/lib/data'
+import { prefectureNames } from '@/lib/transport-fee'
 
 const dealFilters: { id: DealFilter; label: string }[] = [
   { id: 'all', label: 'すべて' },
@@ -64,6 +73,166 @@ export function CategoryChips({
           {c}
         </button>
       ))}
+    </div>
+  )
+}
+
+const yenText = (value: number | undefined) =>
+  value === undefined ? '' : String(value)
+
+function readYen(value: string): number | undefined {
+  const digits = value.replace(/[,，]/g, '').trim()
+  return /^\d+$/.test(digits) ? Number(digits) : undefined
+}
+
+const emptyRefinements = {
+  prefecture: undefined,
+  priceMin: undefined,
+  priceMax: undefined,
+  sort: undefined,
+  availableFrom: undefined,
+  availableTo: undefined,
+}
+
+const controlClass =
+  'h-11 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30'
+
+/** Prefecture, price range, sort, and rental dates; each change reports only its own keys. */
+export function SearchRefinements({
+  value,
+  onChange,
+}: {
+  value: ListingFilter
+  onChange: (patch: Partial<ListingFilter>) => void
+}) {
+  const [priceMin, setPriceMin] = useState(yenText(value.priceMin))
+  const [priceMax, setPriceMax] = useState(yenText(value.priceMax))
+  const [from, setFrom] = useState(value.availableFrom ?? '')
+  const [to, setTo] = useState(value.availableTo ?? '')
+  const priceLabel = value.deal === 'rent' ? '日額' : '販売価格'
+  const active =
+    value.prefecture !== undefined ||
+    value.priceMin !== undefined ||
+    value.priceMax !== undefined ||
+    (value.sort !== undefined && value.sort !== 'newest') ||
+    value.availableFrom !== undefined
+
+  const applyDates = (nextFrom: string, nextTo: string) => {
+    setFrom(nextFrom)
+    setTo(nextTo)
+    if (nextFrom && nextTo && nextFrom <= nextTo)
+      onChange({ availableFrom: nextFrom, availableTo: nextTo })
+    else if (!nextFrom && !nextTo)
+      onChange({ availableFrom: undefined, availableTo: undefined })
+  }
+
+  return (
+    <div className="flex flex-wrap items-end gap-4">
+      <label className="flex flex-col gap-1 text-xs font-medium text-foreground">
+        都道府県
+        <select
+          value={value.prefecture ?? ''}
+          onChange={(event) =>
+            onChange({ prefecture: event.target.value || undefined })
+          }
+          className={cn(controlClass, 'w-36')}
+        >
+          <option value="">すべて</option>
+          {prefectureNames.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <form
+        className="flex items-end gap-2"
+        onSubmit={(event) => {
+          event.preventDefault()
+          onChange({ priceMin: readYen(priceMin), priceMax: readYen(priceMax) })
+        }}
+      >
+        <label className="flex flex-col gap-1 text-xs font-medium text-foreground">
+          {priceLabel}の下限
+          <input
+            inputMode="numeric"
+            value={priceMin}
+            onChange={(event) => setPriceMin(event.target.value)}
+            placeholder="円"
+            className={cn(controlClass, 'w-28')}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-medium text-foreground">
+          {priceLabel}の上限
+          <input
+            inputMode="numeric"
+            value={priceMax}
+            onChange={(event) => setPriceMax(event.target.value)}
+            placeholder="円"
+            className={cn(controlClass, 'w-28')}
+          />
+        </label>
+        <button
+          type="submit"
+          className="h-11 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground hover:border-primary/40"
+        >
+          価格で絞り込む
+        </button>
+      </form>
+      <div className="flex items-end gap-2">
+        <label className="flex flex-col gap-1 text-xs font-medium text-foreground">
+          利用開始日
+          <input
+            type="date"
+            value={from}
+            onChange={(event) => applyDates(event.target.value, to)}
+            className={cn(controlClass, 'w-40')}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-medium text-foreground">
+          利用終了日
+          <input
+            type="date"
+            value={to}
+            onChange={(event) => applyDates(from, event.target.value)}
+            className={cn(controlClass, 'w-40')}
+          />
+        </label>
+      </div>
+      <label className="flex flex-col gap-1 text-xs font-medium text-foreground">
+        並び替え
+        <select
+          value={value.sort ?? 'newest'}
+          onChange={(event) => {
+            const sort = event.target.value
+            onChange({
+              sort: isListingSort(sort) && sort !== 'newest' ? sort : undefined,
+            })
+          }}
+          className={cn(controlClass, 'w-44')}
+        >
+          {listingSorts.map((sort) => (
+            <option key={sort} value={sort}>
+              {listingSortLabels[sort]}
+            </option>
+          ))}
+        </select>
+      </label>
+      {active && (
+        <button
+          type="button"
+          onClick={() => {
+            setPriceMin('')
+            setPriceMax('')
+            setFrom('')
+            setTo('')
+            onChange(emptyRefinements)
+          }}
+          className="h-11 text-sm font-medium text-primary hover:underline"
+        >
+          絞り込みを解除
+        </button>
+      )}
     </div>
   )
 }
