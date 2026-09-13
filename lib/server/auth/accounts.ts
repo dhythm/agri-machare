@@ -48,6 +48,15 @@ const accountSources: AccountSource[] = [
     devPassword: 'dev-admin',
   },
   {
+    id: 'demo-seller',
+    name: '出品者デモ',
+    role: 'user',
+    emailEnv: 'DEMO_SELLER_EMAIL',
+    passwordEnv: 'DEMO_SELLER_PASSWORD',
+    devEmail: 'seller@example.com',
+    devPassword: 'dev-seller',
+  },
+  {
     id: 'demo-user',
     name: '利用者デモ',
     role: 'user',
