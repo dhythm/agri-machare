@@ -14,6 +14,7 @@ import { acceptSubmission } from './submissions'
 import { addMessage } from './threads'
 import { createListing } from './listings'
 import { setAccountStatus } from './auth/account-status'
+import { upsertCarrierProfile } from './carriers'
 import { demoSeller, demoUser } from '@/test/mock-auth'
 
 vi.mock('server-only', () => ({}))
@@ -35,12 +36,12 @@ async function seedActivity() {
     { name: '利用者デモ', vehicle: '2tトラック', availableDate: '2026-10-03' },
     { targetId: 'tj-01', userId: 'demo-user' },
   )
-  await acceptSubmission('transportRegistration', {
+  await upsertCarrierProfile(demoUser, {
     name: '高橋運送',
     kind: '法人',
     prefecture: '秋田県',
-    vehicle: '4tトラック',
-    email: 'k@example.com',
+    vehicles: ['4tトラック'],
+    serviceAreas: ['秋田県'],
   })
   await acceptSubmission('contact', { message: 'hello' })
   await requestRental((await getListing('trc-001'))!, demoUser, {
@@ -113,7 +114,7 @@ describe('lists', () => {
     expect(applications[0].targetName).toContain('コンバイン')
     const carriers = await listCarriers()
     expect(carriers).toHaveLength(1)
-    expect(carriers[0].payload.name).toBe('高橋運送')
+    expect(carriers[0].name).toBe('高橋運送')
   })
 
   it('summarizes accounts with their activity', async () => {

@@ -6,6 +6,7 @@ import type { Store, StoreKind } from './types'
 
 export type {
   AccountStatus,
+  CarrierProfile,
   Message,
   Notification,
   NotificationKind,

@@ -104,15 +104,14 @@ describe('admin tables', () => {
       <CarrierTable
         items={[
           {
-            id: 'c-1',
-            kind: 'transportRegistration',
-            receivedAt: '2026-09-13T00:00:00.000Z',
-            payload: {
-              name: '高橋運送',
-              kind: '法人',
-              prefecture: '秋田県',
-              vehicle: '4tトラック',
-            },
+            id: 'demo-user',
+            name: '高橋運送',
+            kind: '法人',
+            prefecture: '秋田県',
+            vehicles: ['4tトラック'],
+            serviceAreas: ['秋田県', '山形県'],
+            createdAt: '2026-09-13T00:00:00.000Z',
+            updatedAt: '2026-09-13T00:00:00.000Z',
           },
         ]}
       />,

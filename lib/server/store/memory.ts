@@ -4,6 +4,7 @@ import { createMemoryRepository } from './memory-repository'
 import type { Repository } from './repository'
 import type {
   AccountStatus,
+  CarrierProfile,
   Message,
   Notification,
   Rental,
@@ -24,6 +25,7 @@ export function createMemoryStore(): Store {
     notifications: createMemoryRepository<Notification>([]),
     reviews: createMemoryRepository<Review>([]),
     threadReads: createMemoryRepository<ThreadRead>([]),
+    carrierProfiles: createMemoryRepository<CarrierProfile>([]),
   }
   const proxy = <T extends { id: string }>(
     pick: () => Repository<T>,
@@ -45,6 +47,7 @@ export function createMemoryStore(): Store {
     notifications: proxy<Notification>(() => store.notifications),
     reviews: proxy<Review>(() => store.reviews),
     threadReads: proxy<ThreadRead>(() => store.threadReads),
+    carrierProfiles: proxy<CarrierProfile>(() => store.carrierProfiles),
     async reset() {
       store = {
         listings: createMemoryRepository(listings),
@@ -56,6 +59,7 @@ export function createMemoryStore(): Store {
         notifications: createMemoryRepository<Notification>([]),
         reviews: createMemoryRepository<Review>([]),
         threadReads: createMemoryRepository<ThreadRead>([]),
+        carrierProfiles: createMemoryRepository<CarrierProfile>([]),
       }
     },
     async close() {},

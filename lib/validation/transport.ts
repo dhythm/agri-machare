@@ -20,50 +20,12 @@ export const vehicleTypes = [
   'トレーラー',
 ] as const
 
-export type TransportRegistration = {
-  name: string
-  kind: (typeof carrierKinds)[number]
-  prefecture: string
-  vehicle: (typeof vehicleTypes)[number]
-  email: string
-  note?: string
-}
-
 export type TransportApplication = {
   name: string
   email: string
   vehicle: (typeof vehicleTypes)[number]
   availableDate: string
   message?: string
-}
-
-export function validateTransportRegistration(
-  input: unknown,
-): ValidationResult<TransportRegistration> {
-  const source = asRecord(input)
-  if (!source) return invalidInput
-  const errors: FieldErrors = {}
-  const value: TransportRegistration = {
-    name: requireText(errors, source, 'name', 'お名前・屋号', 60),
-    kind: requireChoice(
-      errors,
-      source,
-      'kind',
-      '区分',
-      carrierKinds,
-    ) as TransportRegistration['kind'],
-    prefecture: requireText(errors, source, 'prefecture', '拠点の都道府県', 10),
-    vehicle: requireChoice(
-      errors,
-      source,
-      'vehicle',
-      '車両',
-      vehicleTypes,
-    ) as TransportRegistration['vehicle'],
-    email: requireEmail(errors, source, 'email'),
-    note: optionalText(errors, source, 'note', '補足', 1000),
-  }
-  return finish(errors, value)
 }
 
 export function validateTransportApplication(

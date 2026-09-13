@@ -8,6 +8,8 @@ import {
 } from './rentals'
 import { getStore, type Review, type Submission } from './store'
 import { unreadThreadIds } from './thread-reads'
+import { getCarrierProfile, matchJobsForCarrier } from './carriers'
+import type { CarrierProfile } from './store'
 
 export type AccountOverview = {
   listings: { listing: Listing; inquiries: Submission[] }[]
@@ -20,6 +22,8 @@ export type AccountOverview = {
   /** Reviews the user wrote, keyed by `kind:sourceId`. */
   reviewedSources: Record<string, Review>
   unreadThreadIds: string[]
+  /** Present once the user has registered as a carrier. */
+  carrier?: { profile: CarrierProfile; matchingJobs: TransportJob[] }
   summary: {
     unreadThreads: number
     /** Threads on the user's own listings and jobs still marked new. */
@@ -54,6 +58,7 @@ export async function getAccountOverview(
     asOwner,
     reviews,
     unread,
+    carrierProfile,
   ] = await Promise.all([
     store.listings.list(),
     store.transportJobs.list(),
@@ -63,7 +68,14 @@ export async function getAccountOverview(
     listRentalsForOwner(userId),
     store.reviews.list(),
     unreadThreadIds(userId),
+    getCarrierProfile(userId),
   ])
+  const carrier = carrierProfile
+    ? {
+        profile: carrierProfile,
+        matchingJobs: await matchJobsForCarrier(carrierProfile),
+      }
+    : undefined
   const reviewedSources: Record<string, Review> = {}
   for (const review of reviews)
     if (review.reviewerUserId === userId)
@@ -119,6 +131,7 @@ export async function getAccountOverview(
     rentals: { asRenter, asOwner },
     reviewedSources,
     unreadThreadIds: unread,
+    carrier,
     summary: {
       unreadThreads: unread.length,
       openInquiries: incoming.filter(

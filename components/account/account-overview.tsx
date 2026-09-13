@@ -369,6 +369,54 @@ export function AccountOverviewView({
         )}
       </Section>
 
+      {overview.carrier && (
+        <Section title="運搬者プロフィール">
+          <div className="rounded-2xl border border-border bg-card p-5 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium text-foreground">
+                {overview.carrier.profile.name}
+              </span>
+              <Badge variant="muted">{overview.carrier.profile.kind}</Badge>
+              <span className="text-muted-foreground">
+                拠点 {overview.carrier.profile.prefecture}
+              </span>
+              <Link
+                href="/transport/register"
+                className="ml-auto text-xs font-medium text-primary hover:underline"
+              >
+                プロフィールを編集
+              </Link>
+            </div>
+            <p className="mt-2 text-muted-foreground">
+              車両: {overview.carrier.profile.vehicles.join('・')}／対応地域:{' '}
+              {overview.carrier.profile.serviceAreas.join('・')}
+            </p>
+            <h3 className="mt-4 text-sm font-medium text-foreground">
+              対応地域の募集中案件
+            </h3>
+            {overview.carrier.matchingJobs.length === 0 ? (
+              <p className="mt-1 text-muted-foreground">該当なし</p>
+            ) : (
+              <ul className="mt-2 flex flex-col gap-1">
+                {overview.carrier.matchingJobs.map((job) => (
+                  <li key={job.id} className="flex flex-wrap gap-2">
+                    <Link
+                      href={`/transport/${job.id}`}
+                      className="font-medium text-foreground hover:underline"
+                    >
+                      {job.item}
+                    </Link>
+                    <span className="text-muted-foreground">
+                      {job.from} → {job.to}・{formatYen(job.reward)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Section>
+      )}
+
       <Section title="借りている農機具">
         <RentalList
           items={overview.rentals.asRenter}

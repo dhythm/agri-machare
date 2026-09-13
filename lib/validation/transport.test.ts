@@ -1,38 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  validateTransportApplication,
-  validateTransportJob,
-  validateTransportRegistration,
-} from './transport'
-
-describe('validateTransportRegistration', () => {
-  const valid = {
-    name: '佐藤運送',
-    kind: '法人',
-    prefecture: '秋田県',
-    vehicle: '4tトラック',
-    email: 'sato@example.com',
-    note: '週末中心に対応できます。',
-  }
-
-  it('accepts a registration and keeps the note optional', () => {
-    expect(validateTransportRegistration(valid).ok).toBe(true)
-    const noNote = validateTransportRegistration({ ...valid, note: '' })
-    expect(noNote.ok).toBe(true)
-    if (noNote.ok) expect(noNote.value.note).toBeUndefined()
-  })
-
-  it('rejects unknown kinds and vehicles', () => {
-    const result = validateTransportRegistration({
-      ...valid,
-      kind: '団体',
-      vehicle: '自転車',
-    })
-    expect(result.ok).toBe(false)
-    if (!result.ok)
-      expect(Object.keys(result.errors).sort()).toEqual(['kind', 'vehicle'])
-  })
-})
+import { validateTransportApplication, validateTransportJob } from './transport'
 
 describe('validateTransportApplication', () => {
   const valid = {

@@ -5,6 +5,7 @@ import { createMemoryStore } from './memory'
 import { createPgliteStore } from './pglite'
 import type {
   AccountStatus,
+  CarrierProfile,
   Message,
   Notification,
   Rental,
@@ -314,6 +315,27 @@ describe.each(stores)('$name store', { timeout: 20_000 }, ({ store }) => {
     ).toBe('2026-09-13T09:00:00.000Z')
     await store.reset()
     expect(await store.threadReads.list()).toEqual([])
+  })
+
+  it('round-trips carrier profiles', async () => {
+    const profile: CarrierProfile = {
+      id: 'demo-user',
+      name: '高橋運送',
+      kind: '法人',
+      prefecture: '秋田県',
+      vehicles: ['2tトラック', '4tトラック'],
+      serviceAreas: ['秋田県', '山形県'],
+      note: '週末対応可',
+      createdAt: '2026-09-13T09:00:00.000Z',
+      updatedAt: '2026-09-13T09:00:00.000Z',
+    }
+    expect(await store.carrierProfiles.create(profile)).toEqual(profile)
+    expect(
+      (await store.carrierProfiles.update('demo-user', { note: undefined }))
+        ?.note,
+    ).toBeUndefined()
+    await store.reset()
+    expect(await store.carrierProfiles.list()).toEqual([])
   })
 
   it('does not let callers mutate stored data through returned objects', async () => {

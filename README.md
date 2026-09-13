@@ -51,6 +51,7 @@ Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サー
 - `/account`（マイページ）は `lib/server/account.ts` で自分の出品・運搬依頼と届いた問い合わせ・応募、送った問い合わせ・応募をまとめます。
 - 問い合わせと応募はスレッドになります（`lib/server/threads.ts`）。参加者は送信者と対象の所有者で、運営は閲覧のみです。両参加者が返信でき（`messages` テーブル）、対象の所有者が状態（未対応 / 対応中 / 成約 / 見送り）を変えます。応募を成約にすると案件は「調整中」になり、所有者はマイページから「完了」にできます。応募を受け付けるのは「募集中」の案件だけで、「完了」の案件は公開ボードに出ません。
 - 既読管理（`lib/server/thread-reads.ts`、`thread_reads` テーブル）: スレッドページを開くと参加者ごとに `readAt` を記録します。所有者は一度も開いていないスレッドと相手の新しい返信、送信者は所有者の新しい返信を未読とし、マイページに「未読」バッジと概要（未読のやり取り、未対応の問い合わせ・応募、申込中のレンタル、審査待ちの出品）を表示します。
+- 運搬者プロフィール（`lib/server/carriers.ts`、`carrier_profiles` テーブル）: ログインしたユーザーが `/transport/register` で名前・区分・拠点・車両（複数）・対応地域（都道府県、複数）を登録・更新します。案件ページでは所有者と運営に「この案件に合う運搬者」（対応地域に出発地または届け先を含む運搬者。両方含むものを先に。重量が読める案件は積める車両を持つ運搬者だけ）を表示し、マイページには対応地域の募集中案件を表示します。応募フォームの車両はプロフィールの先頭の車両が初期値です。匿名の運搬者登録（submission）は廃止しました。
 - レンタル購入は出品ごとの条件（`rentToOwnCreditRate` %、任意の `rentToOwnCreditCap` 円）で計算します（`lib/rent-to-own.ts`）。詳細ページのシミュレーターで日数から充当額と購入価格を確認でき、期間を指定してレンタルを申し込めます（`lib/server/rentals.ts`、`rentals` テーブル）。申込 → 所有者が承認（レンタル中）または辞退 → 申込者が購入に切り替え（申込時の条件で購入価格を確定）または所有者が返却を確認。申込中・レンタル中の期間は予約済みとして重複申込を 409 で拒否します。運営は閲覧のみです。
 - アプリ内通知（`lib/server/notifications.ts`、`notifications` テーブル）: 問い合わせ / 応募の受信、返信、スレッドの状態変更、レンタルの申込と状態変更、審査結果を相手側のユーザーに通知します。各サービスが `notify()` を呼ぶだけで、メール送信はしません。ヘッダーのベルが未読数を 60 秒ごとに取得し、`/account/notifications` で一覧・既読化できます。
 - レビュー（`lib/server/reviews.ts`、`reviews` テーブル）: 完了または購入に切り替えたレンタルの申込者、成約した問い合わせの送信者が出品者を 1〜5 で評価できます（取引ごとに 1 件）。投稿すると出品者が所有する全出品の `seller.rating` / `seller.reviews` を加重平均で更新し、詳細ページに出品者へのレビューを表示します。運営は取引管理 > レビューで一覧できます。
@@ -84,7 +85,7 @@ Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サー
 | `/listings/[id]/inquiry`       | 出品者への連絡（購入・レンタル・レンタル購入・質問）                                                                                                                                                     |
 | `/transport`                   | 運搬案件ボード                                                                                                                                                                                           |
 | `/transport/[id]`              | 運搬案件の詳細と応募フォーム                                                                                                                                                                             |
-| `/transport/register`          | 運搬者登録フォーム                                                                                                                                                                                       |
+| `/transport/register`          | 運搬者プロフィールの登録・編集（要ログイン）                                                                                                                                                             |
 | `/transport/pricing`           | 運搬料金のめやす                                                                                                                                                                                         |
 | `/guide` / `/faq` / `/contact` | はじめての方へ / よくある質問 / お問い合わせフォーム                                                                                                                                                     |
 | `/login`                       | ログイン（メールアドレスとパスワード）                                                                                                                                                                   |
@@ -144,8 +145,8 @@ CRUD の API は次のとおりです。成功時は作成が HTTP 201、取得�
 | `PATCH /api/transport/jobs/[id]/status`                              | 案件を「完了」にする（所有者・運営のみ）                                                                                   |
 | `GET / PATCH /api/threads/[id]`                                      | スレッドの取得（参加者・運営）と状態変更 `{ status }`（対象の所有者のみ）                                                  |
 | `POST /api/threads/[id]/messages`                                    | 返信 `{ body }`（参加者のみ）。201                                                                                         |
-| `POST /api/transport/registrations`                                  | 運搬者登録を保存                                                                                                           |
 | `POST /api/contact`                                                  | お問い合わせを保存                                                                                                         |
+| `GET / PUT /api/transport/carrier-profile`                           | 自分の運搬者プロフィールの取得・保存（要ログイン）                                                                         |
 | `GET / POST /api/auth/*`                                             | Auth.js のエンドポイント（ログイン・ログアウト・セッション）                                                               |
 | `GET / POST /api/admin/queue`                                        | 審査キュー（運営ロールのみ）。`status=pending\|approved\|rejected\|all`。判定は `{ kind, id, status, note? }`              |
 | `PATCH /api/admin/accounts/[id]`                                     | アカウントの停止 / 解除 `{ status: 'active' \| 'suspended', note? }`（運営のみ。自分自身は 409）                           |

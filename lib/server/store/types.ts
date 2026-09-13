@@ -97,6 +97,21 @@ export type ThreadRead = {
   readAt: string
 }
 
+/** A signed-in user's carrier profile; `id` is the user id. */
+export type CarrierProfile = {
+  id: string
+  name: string
+  kind: '個人' | '法人'
+  /** Base prefecture. */
+  prefecture: string
+  vehicles: string[]
+  /** Prefectures the carrier serves. */
+  serviceAreas: string[]
+  note?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export type StoreKind = 'memory' | 'pglite'
 
 export type Store = {
@@ -110,6 +125,7 @@ export type Store = {
   notifications: Repository<Notification>
   reviews: Repository<Review>
   threadReads: Repository<ThreadRead>
+  carrierProfiles: Repository<CarrierProfile>
   /** Drop every row and load the sample data again. */
   reset(): Promise<void>
   /** Release resources; the store must not be used afterwards. */
