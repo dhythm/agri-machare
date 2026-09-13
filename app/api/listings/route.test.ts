@@ -36,8 +36,32 @@ describe('GET /api/listings', () => {
     expect(body.pageSize).toBe(3)
   })
 
+  it('passes refinements through and rejects invalid ones', async () => {
+    const ok = await GET(
+      new Request(
+        'http://localhost/api/listings?prefecture=新潟県&priceMax=20000000&sort=priceDesc&from=2026-10-01&to=2026-10-07',
+      ),
+    )
+    expect(ok.status).toBe(200)
+    const body = await ok.json()
+    expect(
+      body.items.every(
+        (item: { prefecture: string }) => item.prefecture === '新潟県',
+      ),
+    ).toBe(true)
+    expect(
+      body.items.every(
+        (item: { rentPerDay?: number }) => item.rentPerDay !== undefined,
+      ),
+    ).toBe(true)
+  })
+
   it.each([
     'deal=buy',
+    'prefecture=不明',
+    'priceMin=abc',
+    'sort=random',
+    'from=2026-10-07&to=2026-10-01',
     'category=unknown',
     'deal=',
     'category=',

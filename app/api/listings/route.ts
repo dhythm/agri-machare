@@ -1,4 +1,8 @@
 import { isCategory, isDealFilter } from '@/lib/data'
+import {
+  hasInvalidRefinement,
+  readListingRefinements,
+} from '@/lib/listing-search-params'
 import { badRequest, parseBody } from '@/lib/server/api'
 import { requireUser } from '@/lib/server/auth/session'
 import { createListing, paginateListings } from '@/lib/server/listings'
@@ -61,7 +65,8 @@ export async function GET(request: Request) {
     !isDealFilter(resolvedDeal) ||
     resolvedKeyword.length > maxKeywordLength ||
     page === null ||
-    pageSize === null
+    pageSize === null ||
+    hasInvalidRefinement(query)
   )
     return badRequest('検索条件が不正です。')
 
@@ -71,6 +76,7 @@ export async function GET(request: Request) {
         category: resolvedCategory,
         deal: resolvedDeal,
         keyword: resolvedKeyword,
+        ...readListingRefinements(query),
       },
       { page, pageSize },
     ),

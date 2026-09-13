@@ -47,6 +47,73 @@ describe('parseListingSearchParams', () => {
   })
 })
 
+describe('refinements', () => {
+  it('reads prefecture, price range, sort, and rental dates', () => {
+    expect(
+      parseListingSearchParams({
+        prefecture: '新潟県',
+        priceMin: '100000',
+        priceMax: '2,000,000',
+        sort: 'priceAsc',
+        from: '2026-10-01',
+        to: '2026-10-07',
+      }).filter,
+    ).toMatchObject({
+      prefecture: '新潟県',
+      priceMin: 100_000,
+      priceMax: 2_000_000,
+      sort: 'priceAsc',
+      availableFrom: '2026-10-01',
+      availableTo: '2026-10-07',
+    })
+  })
+
+  it('drops invalid refinements', () => {
+    const { filter } = parseListingSearchParams({
+      prefecture: '不明',
+      priceMin: 'abc',
+      priceMax: '-1',
+      sort: 'random',
+      from: '2026-10-07',
+      to: '2026-10-01',
+    })
+    expect(filter.prefecture).toBeUndefined()
+    expect(filter.priceMin).toBeUndefined()
+    expect(filter.priceMax).toBeUndefined()
+    expect(filter.sort).toBeUndefined()
+    expect(filter.availableFrom).toBeUndefined()
+    expect(filter.availableTo).toBeUndefined()
+  })
+
+  it('round-trips refinements through the query string', () => {
+    const search = buildListingSearchParams(
+      {
+        category: 'すべて',
+        deal: 'rent',
+        keyword: '',
+        prefecture: '新潟県',
+        priceMax: 30_000,
+        sort: 'rentAsc',
+        availableFrom: '2026-10-01',
+        availableTo: '2026-10-07',
+      },
+      1,
+    )
+    expect(
+      parseListingSearchParams(new URLSearchParams(search)).filter,
+    ).toEqual({
+      category: 'すべて',
+      deal: 'rent',
+      keyword: '',
+      prefecture: '新潟県',
+      priceMax: 30_000,
+      sort: 'rentAsc',
+      availableFrom: '2026-10-01',
+      availableTo: '2026-10-07',
+    })
+  })
+})
+
 describe('buildListingSearchParams', () => {
   it('omits default values so URLs stay short', () => {
     expect(
