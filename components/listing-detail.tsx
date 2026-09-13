@@ -16,6 +16,7 @@ import {
   CircleCheckBig,
   ArrowRight,
   Pencil,
+  ArrowUpRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
@@ -336,6 +337,15 @@ export function ListingDetail({
                 <p className="mt-1 text-xs text-muted-foreground">
                   {listing.seller.kind}
                 </p>
+                {listing.ownerUserId && (
+                  <Link
+                    href={`/sellers/${listing.ownerUserId}`}
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    出品者ページ
+                    <ArrowUpRight className="size-3.5" aria-hidden="true" />
+                  </Link>
+                )}
               </div>
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 {listing.seller.reviews > 0 ? (

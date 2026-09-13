@@ -46,4 +46,22 @@ describe('ListingDetail', () => {
       screen.getByRole('link', { name: '出品者に質問する' }),
     ).toHaveAttribute('href', '/listings/trc-001/inquiry?mode=question')
   })
+
+  it('links the seller block to the seller page', async () => {
+    const listing = (await getListing('trc-001'))!
+    render(
+      <ListingDetail
+        listing={listing}
+        modes={buildModes(listing)}
+        related={[]}
+        booked={[]}
+        viewer={{ signedIn: false, isOwner: false }}
+      />,
+    )
+
+    expect(screen.getByRole('link', { name: '出品者ページ' })).toHaveAttribute(
+      'href',
+      '/sellers/demo-seller',
+    )
+  })
 })
