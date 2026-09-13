@@ -28,6 +28,7 @@ describe('migrate', { timeout: 20_000 }, () => {
       'reviews',
       'schema_migrations',
       'submissions',
+      'thread_reads',
       'transport_jobs',
     ])
     expect(await migrate(db)).toEqual([])

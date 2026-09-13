@@ -6,6 +6,7 @@ import type {
   Rental,
   Review,
   Submission,
+  ThreadRead,
 } from '../types'
 import {
   compact,
@@ -371,4 +372,16 @@ export const reviewTable: TableSpec<Review> = {
       comment: (row.comment as string | null) ?? undefined,
       createdAt: isoString(row.created_at) as string,
     }),
+}
+
+export const threadReadTable: TableSpec<ThreadRead> = {
+  table: 'thread_reads',
+  columns: ['id', 'thread_id', 'user_id', 'read_at'],
+  toRow: (read) => [read.id, read.threadId, read.userId, read.readAt],
+  fromRow: (row: Row) => ({
+    id: row.id as string,
+    threadId: row.thread_id as string,
+    userId: row.user_id as string,
+    readAt: isoString(row.read_at) as string,
+  }),
 }

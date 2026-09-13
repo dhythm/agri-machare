@@ -89,6 +89,14 @@ export type Review = {
   createdAt: string
 }
 
+/** When a participant last opened a thread; `id` is `<threadId>:<userId>`. */
+export type ThreadRead = {
+  id: string
+  threadId: string
+  userId: string
+  readAt: string
+}
+
 export type StoreKind = 'memory' | 'pglite'
 
 export type Store = {
@@ -101,6 +109,7 @@ export type Store = {
   accountStatuses: Repository<AccountStatus>
   notifications: Repository<Notification>
   reviews: Repository<Review>
+  threadReads: Repository<ThreadRead>
   /** Drop every row and load the sample data again. */
   reset(): Promise<void>
   /** Release resources; the store must not be used afterwards. */
