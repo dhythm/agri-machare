@@ -8,19 +8,30 @@ const usePathname = vi.hoisted(() => vi.fn())
 vi.mock('next/navigation', () => ({ usePathname }))
 
 describe('AdminNav', () => {
-  it('marks the current section', () => {
-    usePathname.mockReturnValue('/admin')
+  it('lists the operator menus and marks the current one', () => {
+    usePathname.mockReturnValue('/admin/deals/rentals')
     render(<AdminNav />)
-    const review = screen.getByRole('link', { name: '審査' })
-    expect(review).toHaveAttribute('href', '/admin')
-    expect(review).toHaveAttribute('aria-current', 'page')
+    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(
+      ['ダッシュボード', 'アカウント管理', '取引管理', '運搬管理'],
+    )
+    expect(screen.getByRole('link', { name: '取引管理' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(screen.getByRole('link', { name: '取引管理' })).toHaveAttribute(
+      'href',
+      '/admin/deals',
+    )
+    expect(
+      screen.getByRole('link', { name: 'ダッシュボード' }),
+    ).not.toHaveAttribute('aria-current')
   })
 
-  it('treats nested paths as the same section', () => {
-    usePathname.mockReturnValue('/admin/listings/abc')
+  it('marks the dashboard only on its exact path', () => {
+    usePathname.mockReturnValue('/admin')
     render(<AdminNav />)
-    expect(screen.getByRole('link', { name: '審査' })).not.toHaveAttribute(
-      'aria-current',
-    )
+    expect(
+      screen.getByRole('link', { name: 'ダッシュボード' }),
+    ).toHaveAttribute('aria-current', 'page')
   })
 })

@@ -18,8 +18,10 @@ const filters: { id: ModerationQueueFilter; label: string }[] = [
 ]
 
 export function AdminQueue({
+  kind,
   initialQueue,
 }: {
+  kind: 'listing' | 'transportJob'
   initialQueue: ModerationQueue
 }) {
   const [status, setStatus] = useState<ModerationQueueFilter>('pending')
@@ -87,35 +89,41 @@ export function AdminQueue({
         ))}
       </div>
 
-      <QueueSection
-        title="出品"
-        empty="該当なし"
-        pendingId={pendingId}
-        items={queue.listings.map((listing) => ({
-          id: listing.id,
-          title: listing.name,
-          meta: `${listing.prefecture} ${listing.city}・${listing.seller.name}`,
-          status: listing.moderationStatus ?? 'approved',
-          note: listing.moderationNote,
-        }))}
-        onDecide={(id, decision, note) => decide('listing', id, decision, note)}
-      />
+      {kind === 'listing' && (
+        <QueueSection
+          title="出品"
+          empty="該当なし"
+          pendingId={pendingId}
+          items={queue.listings.map((listing) => ({
+            id: listing.id,
+            title: listing.name,
+            meta: `${listing.prefecture} ${listing.city}・${listing.seller.name}`,
+            status: listing.moderationStatus ?? 'approved',
+            note: listing.moderationNote,
+          }))}
+          onDecide={(id, decision, note) =>
+            decide('listing', id, decision, note)
+          }
+        />
+      )}
 
-      <QueueSection
-        title="運搬依頼"
-        empty="該当なし"
-        pendingId={pendingId}
-        items={queue.transportJobs.map((job) => ({
-          id: job.id,
-          title: job.item,
-          meta: `${job.from} → ${job.to}・${formatYen(job.reward)}`,
-          status: job.moderationStatus ?? 'approved',
-          note: job.moderationNote,
-        }))}
-        onDecide={(id, decision, note) =>
-          decide('transportJob', id, decision, note)
-        }
-      />
+      {kind === 'transportJob' && (
+        <QueueSection
+          title="運搬依頼"
+          empty="該当なし"
+          pendingId={pendingId}
+          items={queue.transportJobs.map((job) => ({
+            id: job.id,
+            title: job.item,
+            meta: `${job.from} → ${job.to}・${formatYen(job.reward)}・${job.status}`,
+            status: job.moderationStatus ?? 'approved',
+            note: job.moderationNote,
+          }))}
+          onDecide={(id, decision, note) =>
+            decide('transportJob', id, decision, note)
+          }
+        />
+      )}
     </div>
   )
 }
