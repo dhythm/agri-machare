@@ -53,6 +53,7 @@ Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サー
 - レンタル購入は出品ごとの条件（`rentToOwnCreditRate` %、任意の `rentToOwnCreditCap` 円）で計算します（`lib/rent-to-own.ts`）。詳細ページのシミュレーターで日数から充当額と購入価格を確認でき、期間を指定してレンタルを申し込めます（`lib/server/rentals.ts`、`rentals` テーブル）。申込 → 所有者が承認（レンタル中）または辞退 → 申込者が購入に切り替え（申込時の条件で購入価格を確定）または所有者が返却を確認。申込中・レンタル中の期間は予約済みとして重複申込を 409 で拒否します。運営は閲覧のみです。
 - アプリ内通知（`lib/server/notifications.ts`、`notifications` テーブル）: 問い合わせ / 応募の受信、返信、スレッドの状態変更、レンタルの申込と状態変更、審査結果を相手側のユーザーに通知します。各サービスが `notify()` を呼ぶだけで、メール送信はしません。ヘッダーのベルが未読数を 60 秒ごとに取得し、`/account/notifications` で一覧・既読化できます。
 - レビュー（`lib/server/reviews.ts`、`reviews` テーブル）: 完了または購入に切り替えたレンタルの申込者、成約した問い合わせの送信者が出品者を 1〜5 で評価できます（取引ごとに 1 件）。投稿すると出品者が所有する全出品の `seller.rating` / `seller.reviews` を加重平均で更新し、詳細ページに出品者へのレビューを表示します。運営は取引管理 > レビューで一覧できます。
+- 出品の取り下げ: 所有者または運営が `PATCH /api/listings/[id]/status` `{ status: 'withdrawn' | 'listed' }` で取り下げ・再掲載できます。取り下げ中は公開一覧・詳細・問い合わせ・レンタル申込から外れ（`isApproved()` が `withdrawnAt` も見ます）、審査状態はそのまま残ります。申込中・レンタル中のレンタルがある間は取り下げできません（409）。運営が取り下げると所有者に通知します。
 - 出品の写真は外部ストレージを使わず、ブラウザ側で縮小した JPEG のデータ URL として保存します（`lib/images.ts`）。`Listing.images`（長辺 1200px、最大 5 枚）は詳細ページだけが返し、一覧系は先頭画像のサムネイル（長辺 400px）の `Listing.image` だけを持ちます。写真が無い出品はカテゴリの見本画像です。
 - テストでは `test/mock-auth.ts` で `@/auth` を差し替え、`signInAs()` でログイン状態を切り替えます。
 - 運営審査（`/admin`、`/api/admin/queue`）は「ログイン済みかつ `role === 'admin'`」で許可します。未ログインは 401（ページはログインへリダイレクト）、権限なしは 403 です。
@@ -129,6 +130,7 @@ CRUD の API は次のとおりです。成功時は作成が HTTP 201、取得�
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `POST /api/listings`                                                 | 農機具を作成（要ログイン、`moderationStatus: pending`）。`{ id, receivedAt, listing }`                                     |
 | `GET / PUT / DELETE /api/listings/[id]`                              | 取得は承認済み、または所有者・運営。更新・削除は所有者・運営のみ（問い合わせも削除）                                       |
+| `PATCH /api/listings/[id]/status`                                    | 取り下げ / 再掲載 `{ status: 'withdrawn' \| 'listed' }`（所有者・運営。進行中のレンタルがあれば 409）                      |
 | `GET / POST /api/listings/[id]/rentals`                              | 予約済み期間の取得（公開）と申込 `{ startDate, endDate }`（要ログイン。重複・貸出不可は 409）                              |
 | `PATCH /api/rentals/[id]`                                            | レンタルの状態変更 `{ status }`（所有者: active / cancelled / completed、申込者: cancelled / converted。不正な遷移は 409） |
 | `GET /api/notifications`                                             | 自分の通知（新しい順）と `unreadCount`                                                                                     |

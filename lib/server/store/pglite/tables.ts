@@ -47,6 +47,7 @@ export const listingTable: TableSpec<Listing> = {
     'moderation_status',
     'moderation_note',
     'moderated_at',
+    'withdrawn_at',
   ],
   toRow: (listing) => [
     listing.id,
@@ -78,6 +79,7 @@ export const listingTable: TableSpec<Listing> = {
     nullable(listing.moderationStatus),
     nullable(listing.moderationNote),
     nullable(listing.moderatedAt),
+    nullable(listing.withdrawnAt),
   ],
   fromRow: (row: Row) =>
     compact({
@@ -116,6 +118,7 @@ export const listingTable: TableSpec<Listing> = {
         undefined,
       moderationNote: (row.moderation_note as string | null) ?? undefined,
       moderatedAt: isoString(row.moderated_at),
+      withdrawnAt: isoString(row.withdrawn_at),
     }),
 }
 

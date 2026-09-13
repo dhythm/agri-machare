@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Badge } from '@/components/badge'
 import { FormAlert, TextField } from '@/components/forms/fields'
 import { Button } from '@/components/ui/button'
+import { ListingStatusButton } from '@/components/listings/listing-status-button'
 import {
   formatYen,
   type ModerationQueue,
@@ -109,6 +110,7 @@ export function AdminQueue({
           items={pendingFirst(queue.listings).map((listing) => ({
             id: listing.id,
             image: listing.image,
+            withdrawn: listing.withdrawnAt !== undefined,
             title: listing.name,
             meta: `${listing.prefecture} ${listing.city}・${listing.seller.name}`,
             status: listing.moderationStatus ?? 'approved',
@@ -153,6 +155,7 @@ function QueueSection({
   items: {
     id: string
     image?: string
+    withdrawn?: boolean
     title: string
     meta: string
     status: string
@@ -199,6 +202,7 @@ function QueueItem({
   item: {
     id: string
     image?: string
+    withdrawn?: boolean
     title: string
     meta: string
     status: string
@@ -240,6 +244,7 @@ function QueueItem({
               <Badge variant={item.status === 'pending' ? 'default' : 'muted'}>
                 {statusLabel}
               </Badge>
+              {item.withdrawn && <Badge>取り下げ中</Badge>}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">{item.meta}</p>
           </div>
@@ -270,6 +275,12 @@ function QueueItem({
           >
             却下
           </Button>
+          {item.withdrawn !== undefined && (
+            <ListingStatusButton
+              listingId={item.id}
+              withdrawn={item.withdrawn}
+            />
+          )}
         </div>
       </div>
     </li>

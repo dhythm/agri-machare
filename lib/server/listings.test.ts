@@ -8,8 +8,12 @@ import {
   getRelatedListings,
   paginateListings,
   searchListings,
+  setListingStatus,
   updateListing,
 } from './listings'
+import { listNotifications } from './notifications'
+import { requestRental } from './rentals'
+import { demoAdmin, demoSeller, demoUser } from '@/test/mock-auth'
 import { applyModeration } from './moderation'
 import { resetStore } from './store'
 import type { ListingSubmission } from '@/lib/validation/listing-submission'
@@ -273,6 +277,38 @@ describe('listing CRUD', () => {
     const withoutPictures = await createListing(submission, 'demo-seller')
     expect(withoutPictures.image).toBe('/equipment/tractor.png')
     expect(withoutPictures.images).toEqual([])
+  })
+
+  it('withdraws and republishes a listing, refusing while a rental is open', async () => {
+    const withdrawn = await setListingStatus('trc-001', 'withdrawn', demoSeller)
+    expect(withdrawn.ok && withdrawn.value.withdrawnAt).toEqual(
+      expect.any(String),
+    )
+    expect(await getListingIds()).not.toContain('trc-001')
+    expect((await getFeaturedListings(1))[0].id).not.toBe('trc-001')
+    const republished = await setListingStatus('trc-001', 'listed', demoAdmin)
+    expect(republished.ok && republished.value.withdrawnAt).toBeUndefined()
+    expect(await getListingIds()).toContain('trc-001')
+
+    await requestRental((await getListing('trc-001'))!, demoUser, {
+      startDate: '2026-10-01',
+      endDate: '2026-10-02',
+    })
+    const blocked = await setListingStatus('trc-001', 'withdrawn', demoSeller)
+    expect(!blocked.ok && blocked.reason).toBe('rental_open')
+    const stranger = await setListingStatus('trc-001', 'withdrawn', demoUser)
+    expect(!stranger.ok && stranger.reason).toBe('forbidden')
+    const missing = await setListingStatus('nope', 'withdrawn', demoAdmin)
+    expect(!missing.ok && missing.reason).toBe('not_found')
+  })
+
+  it('notifies the owner when an admin withdraws', async () => {
+    await setListingStatus('trc-001', 'withdrawn', demoAdmin)
+    expect(
+      (await listNotifications('demo-seller')).map((n) => n.title),
+    ).toEqual(['出品が運営により取り下げられました'])
+    await setListingStatus('trc-001', 'listed', demoSeller)
+    expect(await listNotifications('demo-seller')).toHaveLength(1)
   })
 
   it('does not store the contact email on the public listing', async () => {

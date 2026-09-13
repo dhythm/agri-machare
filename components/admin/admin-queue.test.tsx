@@ -6,6 +6,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AdminQueue } from './admin-queue'
 import type { Listing, TransportJob } from '@/lib/data'
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}))
+
 const listing: Listing = {
   id: 'pending-listing',
   name: '審査中トラクター',
@@ -59,6 +63,9 @@ describe('AdminQueue', () => {
     setup('listing')
     expect(screen.getByText('審査中トラクター')).toBeInTheDocument()
     expect(screen.queryByText('審査中コンバイン')).toBeNull()
+    expect(
+      screen.getByRole('button', { name: '取り下げる' }),
+    ).toBeInTheDocument()
   })
 
   it('approves a listing with an optional note', async () => {
