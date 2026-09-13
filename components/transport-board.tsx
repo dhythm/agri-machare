@@ -13,8 +13,8 @@ const steps = [
   '受け取り確認後、報酬をお支払い',
 ]
 
-export function TransportBoard() {
-  const transportJobs = getTransportJobs()
+export async function TransportBoard() {
+  const transportJobs = await getTransportJobs()
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <BackLink href="/" label="トップにもどる" />

@@ -77,11 +77,17 @@ export function ListingCard({ listing }: { listing: Listing }) {
             )}
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Star className="size-3.5 fill-accent text-accent" />
-            <span className="font-medium text-foreground">
-              {listing.seller.rating}
-            </span>
-            <span>({listing.seller.reviews})</span>
+            {listing.seller.reviews > 0 ? (
+              <>
+                <Star className="size-3.5 fill-accent text-accent" />
+                <span className="font-medium text-foreground">
+                  {listing.seller.rating}
+                </span>
+                <span>({listing.seller.reviews})</span>
+              </>
+            ) : (
+              <span>評価なし</span>
+            )}
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import {
   listingCategories,
   listingConditions,
+  sellerKinds,
   validateListingSubmission,
 } from '@/lib/validation/listing-submission'
 import { useSubmissionForm } from './use-submission-form'
@@ -36,6 +37,8 @@ export function ListingForm() {
       rentPerDay: '',
       rentToOwn: false,
       summary: '',
+      sellerName: '',
+      sellerKind: '',
       contactEmail: '',
     },
   })
@@ -57,10 +60,13 @@ export function ListingForm() {
       <ReceiptPanel
         receipt={form.receipt}
         title="出品の申し込み"
-        description="内容を確認のうえ、掲載開始をメールでお知らせします。"
+        description="一覧に掲載しました。内容の確認結果はメールでお知らせします。"
         links={[
+          {
+            href: `/listings/${form.receipt.id}`,
+            label: '出品した農機具を見る',
+          },
           { href: '/listings', label: '出品中の農機具を見る' },
-          { href: '/', label: 'トップへもどる' },
         ]}
       />
     )
@@ -203,6 +209,24 @@ export function ListingForm() {
         onChange={(e) => form.setValue('summary', e.target.value)}
         error={form.errors.summary}
       />
+      <div className="grid gap-5 sm:grid-cols-2">
+        <TextField
+          id="sellerName"
+          label="出品者名"
+          placeholder="例: 中村ファーム"
+          value={form.values.sellerName}
+          onChange={(e) => form.setValue('sellerName', e.target.value)}
+          error={form.errors.sellerName}
+        />
+        <SelectField
+          id="sellerKind"
+          label="出品者の区分"
+          options={sellerKinds}
+          value={form.values.sellerKind}
+          onChange={(e) => form.setValue('sellerKind', e.target.value)}
+          error={form.errors.sellerKind}
+        />
+      </div>
       <TextField
         id="contactEmail"
         label="メールアドレス"

@@ -125,11 +125,17 @@ export function ListingDetail({
               </p>
             </div>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Star className="size-4 fill-accent text-accent" />
-              <span className="font-medium text-foreground">
-                {listing.seller.rating}
-              </span>
-              <span>({listing.seller.reviews})</span>
+              {listing.seller.reviews > 0 ? (
+                <>
+                  <Star className="size-4 fill-accent text-accent" />
+                  <span className="font-medium text-foreground">
+                    {listing.seller.rating}
+                  </span>
+                  <span>({listing.seller.reviews})</span>
+                </>
+              ) : (
+                <span>評価なし</span>
+              )}
             </div>
           </div>
         </div>

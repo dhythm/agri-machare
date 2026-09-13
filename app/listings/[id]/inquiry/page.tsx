@@ -22,7 +22,7 @@ export default async function InquiryPage({
   searchParams: Promise<{ mode?: string | string[] }>
 }) {
   const { id } = await params
-  const listing = getListing(id)
+  const listing = await getListing(id)
   if (!listing) notFound()
 
   const modes = buildModes(listing)

@@ -50,6 +50,8 @@ describe('ListingForm', () => {
     await user.type(screen.getByLabelText('レンタル料（1日）'), '12000')
     await user.click(screen.getByLabelText('レンタル購入を受け付ける'))
     await user.type(screen.getByLabelText('説明'), 'キャビン付き。')
+    await user.type(screen.getByLabelText('出品者名'), 'テスト農園')
+    await user.selectOptions(screen.getByLabelText('出品者の区分'), '農業法人')
     await user.type(
       screen.getByLabelText('メールアドレス'),
       'seller@example.com',
@@ -58,6 +60,9 @@ describe('ListingForm', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(
       '受け付けました',
     )
+    expect(
+      screen.getByRole('link', { name: '出品した農機具を見る' }),
+    ).toHaveAttribute('href', '/listings/r1')
     const body = JSON.parse(
       (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1]
         .body as string,
@@ -67,6 +72,8 @@ describe('ListingForm', () => {
       deals: ['sale', 'rent'],
       salePrice: '1500000',
       rentToOwn: true,
+      sellerName: 'テスト農園',
+      sellerKind: '農業法人',
     })
   })
 })

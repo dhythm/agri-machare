@@ -7,18 +7,19 @@ import { TransportPreview } from '@/components/transport-preview'
 import { featuredListingCount } from '@/lib/data'
 import { paginateListings } from '@/lib/server/listings'
 
-export default function Page() {
+export const dynamic = 'force-dynamic'
+
+export default async function Page() {
+  const featured = await paginateListings(
+    { category: 'すべて', deal: 'all' },
+    { page: 1, pageSize: featuredListingCount },
+  )
   return (
     <PageShell>
       <Hero />
       <RoleChannels />
       <HowItWorks />
-      <Marketplace
-        initialPage={paginateListings(
-          { category: 'すべて', deal: 'all' },
-          { page: 1, pageSize: featuredListingCount },
-        )}
-      />
+      <Marketplace initialPage={featured} />
       <TransportPreview />
     </PageShell>
   )

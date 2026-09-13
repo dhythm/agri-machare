@@ -15,7 +15,7 @@ export default async function ListingsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const state = parseListingSearchParams(await searchParams)
-  const initialPage = paginateListings(state.filter, {
+  const initialPage = await paginateListings(state.filter, {
     page: state.page,
     pageSize: listingPageSize,
   })

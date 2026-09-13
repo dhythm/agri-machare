@@ -1,16 +1,10 @@
 import { notFound } from 'next/navigation'
 import { PageShell } from '@/components/page-shell'
 import { ListingDetail } from '@/components/listing-detail'
-import {
-  getListing,
-  getListingIds,
-  getRelatedListings,
-} from '@/lib/server/listings'
+import { getListing, getRelatedListings } from '@/lib/server/listings'
 import { buildModes, estimateTransport } from '@/lib/server/listing-detail'
 
-export function generateStaticParams() {
-  return getListingIds().map((id) => ({ id }))
-}
+export const dynamic = 'force-dynamic'
 
 export default async function ListingPage({
   params,
@@ -18,7 +12,7 @@ export default async function ListingPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const listing = getListing(id)
+  const listing = await getListing(id)
 
   if (!listing) {
     notFound()
@@ -30,7 +24,7 @@ export default async function ListingPage({
         listing={listing}
         modes={buildModes(listing)}
         transportEstimate={estimateTransport(listing)}
-        related={getRelatedListings(listing, 3)}
+        related={await getRelatedListings(listing, 3)}
       />
     </PageShell>
   )

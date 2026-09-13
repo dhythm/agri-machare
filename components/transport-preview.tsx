@@ -4,8 +4,8 @@ import { Badge } from '@/components/badge'
 import { formatYen } from '@/lib/data'
 import { getTransportJobs } from '@/lib/server/transport'
 
-export function TransportPreview() {
-  const jobs = getTransportJobs().slice(0, 3)
+export async function TransportPreview() {
+  const jobs = (await getTransportJobs()).slice(0, 3)
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">

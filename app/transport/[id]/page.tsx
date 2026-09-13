@@ -6,13 +6,11 @@ import { BackLink } from '@/components/back-link'
 import { Badge } from '@/components/badge'
 import { TransportApplicationForm } from '@/components/forms/transport-application-form'
 import { formatYen } from '@/lib/data'
-import { getTransportJob, getTransportJobIds } from '@/lib/server/transport'
+import { getTransportJob } from '@/lib/server/transport'
 
 export const metadata: Metadata = { title: '運搬案件 | ノウキシェア' }
 
-export function generateStaticParams() {
-  return getTransportJobIds().map((id) => ({ id }))
-}
+export const dynamic = 'force-dynamic'
 
 export default async function TransportJobPage({
   params,
@@ -20,7 +18,7 @@ export default async function TransportJobPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const job = getTransportJob(id)
+  const job = await getTransportJob(id)
   if (!job) notFound()
 
   return (
