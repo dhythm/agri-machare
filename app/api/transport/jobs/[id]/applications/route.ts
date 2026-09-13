@@ -7,10 +7,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params
-  if (!getTransportJob(id)) return notFound('運搬案件が見つかりません。')
+  if (!(await getTransportJob(id)))
+    return notFound('運搬案件が見つかりません。')
   return handleSubmission(
     request,
     'transportApplication',
     validateTransportApplication,
+    { targetId: id },
   )
 }

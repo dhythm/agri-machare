@@ -8,16 +8,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params
-  const listing = getListing(id)
+  const listing = await getListing(id)
   if (!listing) return notFound('農機具が見つかりません。')
   const offered = buildModes(listing).map((mode) => mode.id)
-  return handleSubmission(
-    request,
-    'listingInquiry',
-    validateListingInquiry,
-    (value) =>
+  return handleSubmission(request, 'listingInquiry', validateListingInquiry, {
+    targetId: id,
+    refine: (value) =>
       value.mode !== 'question' && !offered.includes(value.mode)
         ? { mode: 'この農機具では選択できない取引方法です。' }
         : undefined,
-  )
+  })
 }

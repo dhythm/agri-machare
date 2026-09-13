@@ -1,6 +1,6 @@
 import { isCategory, isDealFilter } from '@/lib/data'
-import { badRequest, handleSubmission } from '@/lib/server/api'
-import { paginateListings } from '@/lib/server/listings'
+import { badRequest, parseBody } from '@/lib/server/api'
+import { createListing, paginateListings } from '@/lib/server/listings'
 import { validateListingSubmission } from '@/lib/validation/listing-submission'
 
 const defaultPageSize = 12
@@ -28,7 +28,7 @@ function readPositiveInteger(
   return parsed >= 1 && parsed <= max ? parsed : null
 }
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const query = new URL(request.url).searchParams
   const category = readSingle(query, 'category')
   const deal = readSingle(query, 'deal')
@@ -65,7 +65,7 @@ export function GET(request: Request) {
     return badRequest('検索条件が不正です。')
 
   return Response.json(
-    paginateListings(
+    await paginateListings(
       {
         category: resolvedCategory,
         deal: resolvedDeal,
@@ -76,6 +76,12 @@ export function GET(request: Request) {
   )
 }
 
-export function POST(request: Request) {
-  return handleSubmission(request, 'listing', validateListingSubmission)
+export async function POST(request: Request) {
+  const parsed = await parseBody(request, validateListingSubmission)
+  if (!parsed.ok) return parsed.response
+  const listing = await createListing(parsed.value)
+  return Response.json(
+    { id: listing.id, receivedAt: listing.createdAt, listing },
+    { status: 201 },
+  )
 }

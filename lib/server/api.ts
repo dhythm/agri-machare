@@ -24,17 +24,43 @@ async function readJson(request: Request): Promise<unknown> {
   }
 }
 
+type Parsed<T> = { ok: true; value: T } | { ok: false; response: Response }
+
+/** Read and validate a JSON body, producing the 400 response on failure. */
+export async function parseBody<T>(
+  request: Request,
+  validate: (input: unknown) => ValidationResult<T>,
+  refine?: (value: T) => Record<string, string> | undefined,
+): Promise<Parsed<T>> {
+  const input = await readJson(request)
+  if (input === undefined)
+    return { ok: false, response: badRequest('JSON を読み取れませんでした。') }
+  const result = validate(input)
+  if (!result.ok)
+    return {
+      ok: false,
+      response: badRequest('入力内容に誤りがあります。', result.errors),
+    }
+  const errors = refine?.(result.value)
+  if (errors)
+    return {
+      ok: false,
+      response: badRequest('入力内容に誤りがあります。', errors),
+    }
+  return { ok: true, value: result.value }
+}
+
 export async function handleSubmission<T extends Record<string, unknown>>(
   request: Request,
   kind: SubmissionKind,
   validate: (input: unknown) => ValidationResult<T>,
-  refine?: (value: T) => Record<string, string> | undefined,
+  options: {
+    targetId?: string
+    refine?: (value: T) => Record<string, string> | undefined
+  } = {},
 ): Promise<Response> {
-  const input = await readJson(request)
-  if (input === undefined) return badRequest('JSON を読み取れませんでした。')
-  const result = validate(input)
-  if (!result.ok) return badRequest('入力内容に誤りがあります。', result.errors)
-  const errors = refine?.(result.value)
-  if (errors) return badRequest('入力内容に誤りがあります。', errors)
-  return Response.json(acceptSubmission(kind, result.value), { status: 201 })
+  const parsed = await parseBody(request, validate, options.refine)
+  if (!parsed.ok) return parsed.response
+  const receipt = await acceptSubmission(kind, parsed.value, options.targetId)
+  return Response.json(receipt, { status: 201 })
 }

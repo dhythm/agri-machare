@@ -1,11 +1,14 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GET, POST } from './route'
+import { resetStore } from '@/lib/server/store'
 
 vi.mock('server-only', () => ({}))
 
+beforeEach(() => resetStore())
+
 describe('GET /api/listings', () => {
   it('returns the first page when filters are omitted', async () => {
-    const response = GET(new Request('http://localhost/api/listings'))
+    const response = await GET(new Request('http://localhost/api/listings'))
     expect(response.status).toBe(200)
     const body = await response.json()
     expect(body.items).toHaveLength(12)
@@ -15,7 +18,7 @@ describe('GET /api/listings', () => {
   })
 
   it('returns filtered, searched, and paged listings', async () => {
-    const response = GET(
+    const response = await GET(
       new Request(
         'http://localhost/api/listings?category=トラクター&deal=rent&q=クボタ&page=1&pageSize=3',
       ),
@@ -41,7 +44,9 @@ describe('GET /api/listings', () => {
     'pageSize=1000',
     `q=${'あ'.repeat(101)}`,
   ])('rejects invalid or ambiguous filters: %s', async (query) => {
-    const response = GET(new Request(`http://localhost/api/listings?${query}`))
+    const response = await GET(
+      new Request(`http://localhost/api/listings?${query}`),
+    )
     expect(response.status).toBe(400)
     expect(await response.json()).toHaveProperty('error')
   })
@@ -61,6 +66,8 @@ const submission = {
   rentPerDay: '',
   rentToOwn: false,
   summary: 'キャビン付き。',
+  sellerName: 'テスト農園',
+  sellerKind: '農業法人',
   contactEmail: 'seller@example.com',
 }
 
@@ -75,12 +82,18 @@ function post(body: unknown) {
 }
 
 describe('POST /api/listings', () => {
-  it('accepts a valid submission with a receipt', async () => {
+  it('creates the listing, returns a receipt, and lists it first', async () => {
     const response = await post(submission)
     expect(response.status).toBe(201)
     const body = await response.json()
     expect(body.id).toMatch(/^[0-9a-f-]{36}$/)
     expect(Date.parse(body.receivedAt)).not.toBeNaN()
+    expect(body.listing).toMatchObject({ id: body.id, name: submission.name })
+    expect(JSON.stringify(body)).not.toContain('seller@example.com')
+    const list = await (
+      await GET(new Request('http://localhost/api/listings?pageSize=1'))
+    ).json()
+    expect(list.items[0].id).toBe(body.id)
   })
 
   it('returns field errors for an invalid submission', async () => {
