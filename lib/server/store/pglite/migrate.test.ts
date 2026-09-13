@@ -21,6 +21,7 @@ describe('migrate', { timeout: 20_000 }, () => {
     )
     expect(tables.rows.map((row) => row.table_name)).toEqual([
       'listings',
+      'messages',
       'schema_migrations',
       'submissions',
       'transport_jobs',

@@ -3,7 +3,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Listing, TransportJob } from '@/lib/data'
 import { createMemoryStore } from './memory'
 import { createPgliteStore } from './pglite'
-import type { Store, Submission } from './types'
+import type { Message, Store, Submission } from './types'
 
 vi.mock('server-only', () => ({}))
 
@@ -164,6 +164,31 @@ describe.each(stores)('$name store', { timeout: 20_000 }, ({ store }) => {
     expect(stored[1]).toEqual(submission('s-1'))
     expect(stored[0].targetId).toBe('trc-001')
     expect(await store.submissions.delete('s-1')).toBe(true)
+  })
+
+  it('round-trips a submission status and messages', async () => {
+    await store.submissions.create({ ...submission('s-3'), status: 'agreed' })
+    expect((await store.submissions.get('s-3'))?.status).toBe('agreed')
+    expect(
+      (await store.submissions.update('s-3', { status: 'declined' }))?.status,
+    ).toBe('declined')
+
+    const message: Message = {
+      id: 'm-1',
+      threadId: 's-3',
+      senderUserId: 'demo-seller',
+      body: 'ご連絡ありがとうございます。',
+      createdAt: '2026-09-13T03:00:00.000Z',
+    }
+    expect(await store.messages.create(message)).toEqual(message)
+    await store.messages.create({ ...message, id: 'm-2', body: '二通目' })
+    expect((await store.messages.list()).map((item) => item.id)).toEqual([
+      'm-2',
+      'm-1',
+    ])
+    expect(await store.messages.delete('m-1')).toBe(true)
+    await store.reset()
+    expect(await store.messages.list()).toEqual([])
   })
 
   it('does not let callers mutate stored data through returned objects', async () => {

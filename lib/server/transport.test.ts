@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  completeTransportJob,
   createTransportJob,
   deleteTransportJob,
   getTransportJob,
@@ -68,6 +69,17 @@ describe('transport jobs', () => {
     expect((await getTransportJobs()).map((job) => job.id)).not.toContain(
       created.id,
     )
+  })
+
+  it('completes a job and drops it from the public board', async () => {
+    expect((await getTransportJobs()).map((job) => job.id)).toContain('tj-01')
+    const completed = await completeTransportJob('tj-01')
+    expect(completed?.status).toBe('完了')
+    expect((await getTransportJobs()).map((job) => job.id)).not.toContain(
+      'tj-01',
+    )
+    expect((await getTransportJob('tj-01'))?.status).toBe('完了')
+    expect(await completeTransportJob('missing')).toBeUndefined()
   })
 
   it('updates and deletes a job', async () => {

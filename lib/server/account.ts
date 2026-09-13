@@ -8,6 +8,8 @@ export type AccountOverview = {
   transportJobs: { job: TransportJob; applications: Submission[] }[]
   sentInquiries: { submission: Submission; listing?: Listing }[]
   sentApplications: { submission: Submission; job?: TransportJob }[]
+  /** Number of replies per thread id, for threads that have any. */
+  replyCounts: Record<string, number>
 }
 
 /**
@@ -25,40 +27,57 @@ export async function getAccountOverview(
   userId: string,
 ): Promise<AccountOverview> {
   const store = getStore()
-  const [listings, jobs, submissions] = await Promise.all([
+  const [listings, jobs, submissions, messages] = await Promise.all([
     store.listings.list(),
     store.transportJobs.list(),
     store.submissions.list(),
+    store.messages.list(),
   ])
   const listingById = new Map(listings.map((listing) => [listing.id, listing]))
   const jobById = new Map(jobs.map((job) => [job.id, job]))
   const sent = submissions.filter((submission) => submission.userId === userId)
+  const involved = new Set<string>()
+
+  const ownedListings = listings
+    .filter((listing) => listing.ownerUserId === userId)
+    .map((listing) => ({
+      listing,
+      inquiries: oldestFirst(
+        submissions.filter(
+          (submission) =>
+            submission.kind === 'listingInquiry' &&
+            submission.targetId === listing.id,
+        ),
+      ),
+    }))
+  const ownedJobs = jobs
+    .filter((job) => job.ownerUserId === userId)
+    .map((job) => ({
+      job,
+      applications: oldestFirst(
+        submissions.filter(
+          (submission) =>
+            submission.kind === 'transportApplication' &&
+            submission.targetId === job.id,
+        ),
+      ),
+    }))
+  for (const { inquiries } of ownedListings)
+    for (const inquiry of inquiries) involved.add(inquiry.id)
+  for (const { applications } of ownedJobs)
+    for (const application of applications) involved.add(application.id)
+  for (const submission of sent) involved.add(submission.id)
+
+  const replyCounts: Record<string, number> = {}
+  for (const message of messages) {
+    if (!involved.has(message.threadId)) continue
+    replyCounts[message.threadId] = (replyCounts[message.threadId] ?? 0) + 1
+  }
 
   return {
-    listings: listings
-      .filter((listing) => listing.ownerUserId === userId)
-      .map((listing) => ({
-        listing,
-        inquiries: oldestFirst(
-          submissions.filter(
-            (submission) =>
-              submission.kind === 'listingInquiry' &&
-              submission.targetId === listing.id,
-          ),
-        ),
-      })),
-    transportJobs: jobs
-      .filter((job) => job.ownerUserId === userId)
-      .map((job) => ({
-        job,
-        applications: oldestFirst(
-          submissions.filter(
-            (submission) =>
-              submission.kind === 'transportApplication' &&
-              submission.targetId === job.id,
-          ),
-        ),
-      })),
+    replyCounts,
+    listings: ownedListings,
+    transportJobs: ownedJobs,
     sentInquiries: sent
       .filter((submission) => submission.kind === 'listingInquiry')
       .map((submission) => ({

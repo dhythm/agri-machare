@@ -2,6 +2,7 @@ import 'server-only'
 
 import { randomUUID } from 'node:crypto'
 import { getStore, type Submission, type SubmissionKind } from './store'
+import { deleteMessagesFor } from './threads'
 
 export type { SubmissionKind }
 
@@ -56,9 +57,11 @@ export async function listSubmissionsByUser(
 
 export async function deleteSubmissionsFor(targetId: string): Promise<void> {
   const submissions = await getStore().submissions.list()
+  const related = submissions.filter(
+    (submission) => submission.targetId === targetId,
+  )
+  await deleteMessagesFor(related.map((submission) => submission.id))
   await Promise.all(
-    submissions
-      .filter((submission) => submission.targetId === targetId)
-      .map((submission) => getStore().submissions.delete(submission.id)),
+    related.map((submission) => getStore().submissions.delete(submission.id)),
   )
 }

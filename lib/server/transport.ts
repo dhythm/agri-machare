@@ -6,8 +6,11 @@ import type { TransportJobInput } from '@/lib/validation/transport'
 import { getStore } from './store'
 import { deleteSubmissionsFor } from './submissions'
 
+/** Public board: approved jobs that are not finished. */
 export async function getTransportJobs(): Promise<TransportJob[]> {
-  return (await getStore().transportJobs.list()).filter(isApproved)
+  return (await getStore().transportJobs.list()).filter(
+    (job) => isApproved(job) && job.status !== '完了',
+  )
 }
 
 export function getTransportJob(id: string): Promise<TransportJob | undefined> {
@@ -53,6 +56,15 @@ export function updateTransportJob(
 ): Promise<TransportJob | undefined> {
   return getStore().transportJobs.update(id, {
     ...jobFields(input),
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+export async function completeTransportJob(
+  id: string,
+): Promise<TransportJob | undefined> {
+  return getStore().transportJobs.update(id, {
+    status: '完了',
     updatedAt: new Date().toISOString(),
   })
 }

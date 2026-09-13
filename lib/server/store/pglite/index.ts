@@ -4,7 +4,12 @@ import { listings, transportJobs } from '../../data'
 import type { Store } from '../types'
 import { migrate } from './migrate'
 import { createSqlRepository } from './sql-repository'
-import { listingTable, submissionTable, transportJobTable } from './tables'
+import {
+  listingTable,
+  messageTable,
+  submissionTable,
+  transportJobTable,
+} from './tables'
 
 export type PgliteStoreOptions = {
   /** Directory for the database files, or `memory://` for a volatile one. */
@@ -52,10 +57,11 @@ export function createPgliteStore(options: PgliteStoreOptions): Store {
     listings: createSqlRepository(listingTable, connect),
     transportJobs: createSqlRepository(transportJobTable, connect),
     submissions: createSqlRepository(submissionTable, connect),
+    messages: createSqlRepository(messageTable, connect),
     async reset() {
       const db = await ready
       await db.exec(
-        `truncate listings, transport_jobs, submissions restart identity`,
+        `truncate listings, transport_jobs, submissions, messages restart identity`,
       )
       await seed(db)
     },

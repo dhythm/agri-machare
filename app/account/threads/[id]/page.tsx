@@ -1,0 +1,42 @@
+import type { Metadata } from 'next'
+import { notFound, redirect } from 'next/navigation'
+import { BackLink } from '@/components/back-link'
+import { PageShell } from '@/components/page-shell'
+import { ThreadView } from '@/components/threads/thread-view'
+import { getCurrentUser } from '@/lib/server/auth/session'
+import { getThread } from '@/lib/server/threads'
+
+export const metadata: Metadata = { title: 'やり取り | ノウキシェア' }
+
+export const dynamic = 'force-dynamic'
+
+export default async function ThreadPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  const user = await getCurrentUser()
+  if (!user)
+    redirect(
+      `/login?callbackUrl=${encodeURIComponent(`/account/threads/${id}`)}`,
+    )
+  const result = await getThread(id, user)
+  if (!result.ok) notFound()
+  const title =
+    result.value.submission.kind === 'listingInquiry' ? '問い合わせ' : '応募'
+
+  return (
+    <PageShell>
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+        <BackLink href="/account" label="マイページにもどる" />
+        <h1 className="mt-6 font-display text-2xl font-bold text-foreground">
+          {title}のやり取り
+        </h1>
+        <div className="mt-6">
+          <ThreadView thread={result.value} currentUserId={user.id} />
+        </div>
+      </div>
+    </PageShell>
+  )
+}

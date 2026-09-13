@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
 import { render, screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Listing, TransportJob } from '@/lib/data'
 import type { AccountOverview } from '@/lib/server/account'
 import { AccountOverviewView } from './account-overview'
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}))
 
 const listing = (
   id: string,
@@ -82,6 +86,7 @@ const overview: AccountOverview = {
     },
   ],
   sentApplications: [],
+  replyCounts: { 'i-1': 2 },
 }
 
 describe('AccountOverviewView', () => {
@@ -92,14 +97,25 @@ describe('AccountOverviewView', () => {
     expect(within(mine).getByText('審査待ち')).toBeInTheDocument()
     expect(within(mine).getByText('借りたい')).toBeInTheDocument()
     expect(within(mine).getByText('山田')).toBeInTheDocument()
+    expect(
+      within(mine).getByRole('link', { name: 'スレッドを開く' }),
+    ).toHaveAttribute('href', '/account/threads/i-1')
+    expect(within(mine).getByText('返信 2件')).toBeInTheDocument()
+    expect(within(mine).getByText('未対応')).toBeInTheDocument()
     const jobs = screen.getByRole('region', { name: '自分の運搬依頼' })
     expect(within(jobs).getByText('コンバイン')).toBeInTheDocument()
     expect(within(jobs).getByText('応募はまだありません')).toBeInTheDocument()
+    expect(
+      within(jobs).getByRole('button', { name: '完了にする' }),
+    ).toBeInTheDocument()
     const sent = screen.getByRole('region', { name: '送った問い合わせ' })
     expect(
       within(sent).getByRole('link', { name: 'クボタ 45馬力' }),
     ).toHaveAttribute('href', '/listings/trc-001')
     expect(within(sent).getByText('買いたい')).toBeInTheDocument()
+    expect(
+      within(sent).getByRole('link', { name: 'スレッドを開く' }),
+    ).toHaveAttribute('href', '/account/threads/i-2')
     expect(
       within(screen.getByRole('region', { name: '送った応募' })).getByText(
         'まだありません',

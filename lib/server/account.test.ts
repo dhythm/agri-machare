@@ -3,7 +3,15 @@ import { getAccountOverview } from './account'
 import { createListing } from './listings'
 import { resetStore } from './store'
 import { acceptSubmission } from './submissions'
+import { addMessage } from './threads'
 import { createTransportJob } from './transport'
+import { listSubmissionsByUser } from './submissions'
+import { demoSeller } from '@/test/mock-auth'
+
+async function getAccountOverviewSentInquiryId() {
+  const mine = await listSubmissionsByUser('demo-user')
+  return mine.find((submission) => submission.kind === 'listingInquiry')?.id
+}
 import type { ListingSubmission } from '@/lib/validation/listing-submission'
 import type { TransportJobInput } from '@/lib/validation/transport'
 
@@ -57,6 +65,11 @@ describe('getAccountOverview', () => {
       { mode: 'buy', name: '匿名', message: '昔の問い合わせ' },
       { targetId: 'trc-001' },
     )
+    await addMessage(
+      (await getAccountOverviewSentInquiryId()) ?? '',
+      demoSeller,
+      '在庫あります',
+    )
     const mine = await createListing(listingInput, 'demo-user')
     const myJob = await createTransportJob(jobInput, 'demo-user')
 
@@ -85,6 +98,9 @@ describe('getAccountOverview', () => {
     expect(user.sentInquiries[0].listing?.id).toBe('trc-001')
     expect(user.sentApplications).toHaveLength(1)
     expect(user.sentApplications[0].job?.id).toBe('tj-01')
+    expect(user.replyCounts).toEqual({
+      [user.sentInquiries[0].submission.id]: 1,
+    })
   })
 
   it('is empty for a user with no activity', async () => {
@@ -93,6 +109,7 @@ describe('getAccountOverview', () => {
       transportJobs: [],
       sentInquiries: [],
       sentApplications: [],
+      replyCounts: {},
     })
   })
 })

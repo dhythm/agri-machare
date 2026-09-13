@@ -55,7 +55,7 @@ export type TransportJob = {
   weight: string
   desiredDate: string
   reward: number
-  status: '募集中' | '調整中'
+  status: '募集中' | '調整中' | '完了'
   ownerUserId?: string
   createdAt?: string
   updatedAt?: string
@@ -88,6 +88,23 @@ export type ListingFilter = {
 export type PageRequest = {
   page: number
   pageSize: number
+}
+
+export const threadStatuses = [
+  'new',
+  'in_progress',
+  'agreed',
+  'declined',
+] as const
+
+/** Progress of an inquiry or application thread; unset means `new`. */
+export type ThreadStatus = (typeof threadStatuses)[number]
+
+export const threadStatusLabels: Record<ThreadStatus, string> = {
+  new: '未対応',
+  in_progress: '対応中',
+  agreed: '成約',
+  declined: '見送り',
 }
 
 export type ModerationQueueFilter = ModerationStatus | 'all'

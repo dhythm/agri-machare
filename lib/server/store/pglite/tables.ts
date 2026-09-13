@@ -1,5 +1,5 @@
 import type { Listing, TransportJob } from '@/lib/data'
-import type { Submission } from '../types'
+import type { Message, Submission } from '../types'
 import {
   compact,
   isoString,
@@ -161,7 +161,15 @@ export const transportJobTable: TableSpec<TransportJob> = {
 
 export const submissionTable: TableSpec<Submission> = {
   table: 'submissions',
-  columns: ['id', 'kind', 'target_id', 'user_id', 'received_at', 'payload'],
+  columns: [
+    'id',
+    'kind',
+    'target_id',
+    'user_id',
+    'received_at',
+    'payload',
+    'status',
+  ],
   toRow: (submission) => [
     submission.id,
     submission.kind,
@@ -169,6 +177,7 @@ export const submissionTable: TableSpec<Submission> = {
     nullable(submission.userId),
     submission.receivedAt,
     JSON.stringify(submission.payload),
+    nullable(submission.status),
   ],
   fromRow: (row: Row) =>
     compact({
@@ -178,5 +187,25 @@ export const submissionTable: TableSpec<Submission> = {
       userId: (row.user_id as string | null) ?? undefined,
       receivedAt: isoString(row.received_at) as string,
       payload: row.payload as Record<string, unknown>,
+      status: (row.status as Submission['status'] | null) ?? undefined,
     }),
+}
+
+export const messageTable: TableSpec<Message> = {
+  table: 'messages',
+  columns: ['id', 'thread_id', 'sender_user_id', 'body', 'created_at'],
+  toRow: (message) => [
+    message.id,
+    message.threadId,
+    message.senderUserId,
+    message.body,
+    message.createdAt,
+  ],
+  fromRow: (row: Row) => ({
+    id: row.id as string,
+    threadId: row.thread_id as string,
+    senderUserId: row.sender_user_id as string,
+    body: row.body as string,
+    createdAt: isoString(row.created_at) as string,
+  }),
 }
