@@ -133,6 +133,19 @@ export type Order = {
   updatedAt: string
 }
 
+export type DealKind = 'order' | 'rental' | 'transportJob'
+
+/** One step in a deal's history, appended whenever its status changes. */
+export type DealEvent = {
+  id: string
+  dealKind: DealKind
+  dealId: string
+  actorUserId?: string
+  status: string
+  note?: string
+  createdAt: string
+}
+
 export type StoreKind = 'memory' | 'pglite'
 
 export type Store = {
@@ -148,6 +161,7 @@ export type Store = {
   threadReads: Repository<ThreadRead>
   carrierProfiles: Repository<CarrierProfile>
   orders: Repository<Order>
+  dealEvents: Repository<DealEvent>
   /** Drop every row and load the sample data again. */
   reset(): Promise<void>
   /** Release resources; the store must not be used afterwards. */

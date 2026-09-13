@@ -9,6 +9,7 @@ import {
 } from '@/lib/data'
 import type { OrderRequestInput } from '@/lib/validation/order'
 import type { AuthenticatedUser } from './auth/accounts'
+import { recordDealEvent } from './deal-events'
 import { notify } from './notifications'
 import { getStore, type Order } from './store'
 
@@ -58,6 +59,13 @@ export async function requestOrder(
     createdAt: now,
     updatedAt: now,
   })
+  await recordDealEvent({
+    dealKind: 'order',
+    dealId: order.id,
+    status: 'requested',
+    actorUserId: user.id,
+    note: input.message,
+  })
   await notify({
     userId: listing.ownerUserId,
     kind: 'rental',
@@ -77,7 +85,7 @@ export async function createOrderFromRental(input: {
 }): Promise<Order | undefined> {
   if (!input.listing.ownerUserId) return undefined
   const now = new Date().toISOString()
-  return getStore().orders.create({
+  const order = await getStore().orders.create({
     id: randomUUID(),
     listingId: input.listing.id,
     buyerUserId: input.buyerUserId,
@@ -88,6 +96,14 @@ export async function createOrderFromRental(input: {
     createdAt: now,
     updatedAt: now,
   })
+  await recordDealEvent({
+    dealKind: 'order',
+    dealId: order.id,
+    status: 'delivered',
+    actorUserId: input.buyerUserId,
+    note: 'レンタルから購入に切り替え',
+  })
+  return order
 }
 
 type Party = 'buyer' | 'seller' | 'admin'
@@ -127,6 +143,12 @@ export async function updateOrderStatus(
   const now = new Date().toISOString()
   const updated = await store.orders.update(id, { status, updatedAt: now })
   if (!updated) return fail('not_found')
+  await recordDealEvent({
+    dealKind: 'order',
+    dealId: id,
+    status,
+    actorUserId: user.id,
+  })
   const listing = await store.listings.get(order.listingId)
   if (status === 'completed' && listing && listing.withdrawnAt === undefined)
     await store.listings.update(listing.id, {

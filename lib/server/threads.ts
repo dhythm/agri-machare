@@ -10,6 +10,7 @@ import {
   type TransportJob,
 } from '@/lib/data'
 import type { AuthenticatedUser } from './auth/accounts'
+import { recordDealEvent } from './deal-events'
 import { notify } from './notifications'
 import { getStore, type Message, type Submission } from './store'
 
@@ -184,6 +185,13 @@ export async function updateThreadStatus(
     await store.transportJobs.update(target.job.id, {
       status: '調整中',
       updatedAt: new Date().toISOString(),
+    })
+    await recordDealEvent({
+      dealKind: 'transportJob',
+      dealId: target.job.id,
+      status: '調整中',
+      actorUserId: user.id,
+      note: '応募を成約',
     })
   }
   return { ok: true, value: updated }

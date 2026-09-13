@@ -5,6 +5,7 @@ import { isApproved, type TransportJob } from '@/lib/data'
 import type { TransportJobInput } from '@/lib/validation/transport'
 import type { AuthenticatedUser } from './auth/accounts'
 import { canManage } from './auth/access'
+import { recordDealEvent } from './deal-events'
 import { notify } from './notifications'
 import { getStore } from './store'
 import { deleteSubmissionsFor } from './submissions'
@@ -37,12 +38,12 @@ function jobFields(input: TransportJobInput) {
   }
 }
 
-export function createTransportJob(
+export async function createTransportJob(
   input: TransportJobInput,
   ownerUserId: string,
 ): Promise<TransportJob> {
   const now = new Date().toISOString()
-  return getStore().transportJobs.create({
+  const job = await getStore().transportJobs.create({
     id: randomUUID(),
     ...jobFields(input),
     ownerUserId,
@@ -51,6 +52,13 @@ export function createTransportJob(
     updatedAt: now,
     moderationStatus: 'pending',
   })
+  await recordDealEvent({
+    dealKind: 'transportJob',
+    dealId: job.id,
+    status: '募集中',
+    actorUserId: ownerUserId,
+  })
+  return job
 }
 
 export function updateTransportJob(
@@ -105,6 +113,12 @@ export async function updateTransportJobStatus(
     updatedAt: new Date().toISOString(),
   })
   if (!updated) return { ok: false, reason: 'not_found' }
+  await recordDealEvent({
+    dealKind: 'transportJob',
+    dealId: id,
+    status,
+    actorUserId: user.id,
+  })
   const recipient = status === '運搬中' ? job.ownerUserId : carrier
   if (recipient && recipient !== user.id)
     await notify({
