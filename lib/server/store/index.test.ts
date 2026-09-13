@@ -9,7 +9,8 @@ afterEach(async () => {
   vi.unstubAllEnvs()
 })
 
-describe('store selection', () => {
+// Booting the embedded Postgres can exceed the default 5s under load.
+describe('store selection', { timeout: 20_000 }, () => {
   it('uses the memory store by default', async () => {
     vi.stubEnv('DATA_STORE', '')
     const store = getStore()

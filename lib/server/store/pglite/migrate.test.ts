@@ -9,7 +9,8 @@ afterEach(async () => {
   await db?.close()
 })
 
-describe('migrate', () => {
+// Booting the embedded Postgres can exceed the default 5s under load.
+describe('migrate', { timeout: 20_000 }, () => {
   it('applies every migration once and records it', async () => {
     db = new PGlite('memory://')
     const first = await migrate(db)

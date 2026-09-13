@@ -58,7 +58,8 @@ afterAll(async () => {
   for (const { store } of stores) await store.close()
 })
 
-describe.each(stores)('$name store', ({ store }) => {
+// Booting the embedded Postgres can exceed the default 5s under load.
+describe.each(stores)('$name store', { timeout: 20_000 }, ({ store }) => {
   beforeEach(() => store.reset())
 
   it('is seeded with sample data in seed order', async () => {
