@@ -52,6 +52,13 @@ export function ListingDetail({
 }) {
   const [mode, setMode] = useState<ListingMode>(modes[0].id)
   const active = modes.find((m) => m.id === mode) ?? modes[0]
+  const pictures =
+    listing.images && listing.images.length > 0
+      ? listing.images
+      : [listing.image]
+  const [pictureIndex, setPictureIndex] = useState(0)
+  const mainPicture =
+    pictures[pictureIndex] ?? pictures[0] ?? '/placeholder.svg'
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -61,7 +68,7 @@ export function ListingDetail({
         <div>
           <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-border bg-muted">
             <Image
-              src={listing.image || '/placeholder.svg'}
+              src={mainPicture || '/placeholder.svg'}
               alt={listing.name}
               fill
               priority
@@ -81,6 +88,35 @@ export function ListingDetail({
               )}
             </div>
           </div>
+
+          {pictures.length > 1 && (
+            <ul className="mt-3 flex flex-wrap gap-2" aria-label="写真">
+              {pictures.map((picture, index) => (
+                <li key={index}>
+                  <button
+                    type="button"
+                    aria-label={`写真 ${index + 1}`}
+                    aria-pressed={index === pictureIndex}
+                    onClick={() => setPictureIndex(index)}
+                    className={cn(
+                      'relative size-16 overflow-hidden rounded-xl border transition-colors',
+                      index === pictureIndex
+                        ? 'border-primary ring-1 ring-primary/30'
+                        : 'border-border hover:border-primary/40',
+                    )}
+                  >
+                    <Image
+                      src={picture}
+                      alt=""
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
 
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Spec
