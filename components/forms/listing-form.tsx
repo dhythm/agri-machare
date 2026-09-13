@@ -60,14 +60,8 @@ export function ListingForm() {
       <ReceiptPanel
         receipt={form.receipt}
         title="出品の申し込み"
-        description="一覧に掲載しました。内容の確認結果はメールでお知らせします。"
-        links={[
-          {
-            href: `/listings/${form.receipt.id}`,
-            label: '出品した農機具を見る',
-          },
-          { href: '/listings', label: '出品中の農機具を見る' },
-        ]}
+        description="審査後に掲載します。"
+        links={[{ href: '/listings', label: '出品中の農機具を見る' }]}
       />
     )
   }

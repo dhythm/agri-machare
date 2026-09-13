@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { PageShell } from '@/components/page-shell'
 import { ListingDetail } from '@/components/listing-detail'
+import { isApproved } from '@/lib/data'
 import { getListing, getRelatedListings } from '@/lib/server/listings'
 import { buildModes, estimateTransport } from '@/lib/server/listing-detail'
 
@@ -14,7 +15,7 @@ export default async function ListingPage({
   const { id } = await params
   const listing = await getListing(id)
 
-  if (!listing) {
+  if (!listing || !isApproved(listing)) {
     notFound()
   }
 

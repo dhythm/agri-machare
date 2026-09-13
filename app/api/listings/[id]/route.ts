@@ -1,3 +1,4 @@
+import { isApproved } from '@/lib/data'
 import { notFound, parseBody } from '@/lib/server/api'
 import { deleteListing, getListing, updateListing } from '@/lib/server/listings'
 import { validateListingSubmission } from '@/lib/validation/listing-submission'
@@ -8,7 +9,7 @@ const missing = () => notFound('農機具が見つかりません。')
 
 export async function GET(_request: Request, { params }: Context) {
   const listing = await getListing((await params).id)
-  return listing ? Response.json(listing) : missing()
+  return listing && isApproved(listing) ? Response.json(listing) : missing()
 }
 
 export async function PUT(request: Request, { params }: Context) {

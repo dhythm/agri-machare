@@ -1,3 +1,4 @@
+import { isApproved } from '@/lib/data'
 import { notFound, parseBody } from '@/lib/server/api'
 import {
   deleteTransportJob,
@@ -12,7 +13,7 @@ const missing = () => notFound('運搬案件が見つかりません。')
 
 export async function GET(_request: Request, { params }: Context) {
   const job = await getTransportJob((await params).id)
-  return job ? Response.json(job) : missing()
+  return job && isApproved(job) ? Response.json(job) : missing()
 }
 
 export async function PUT(request: Request, { params }: Context) {

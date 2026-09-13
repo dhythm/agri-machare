@@ -7,6 +7,7 @@ import {
   getTransportJobs,
   updateTransportJob,
 } from './transport'
+import { applyModeration } from './moderation'
 import { resetStore } from './store'
 import type { TransportJobInput } from '@/lib/validation/transport'
 
@@ -38,15 +39,34 @@ describe('transport jobs', () => {
     expect(await getTransportJob('missing')).toBeUndefined()
   })
 
-  it('creates an open job listed first, without the contact email', async () => {
+  it('creates a pending job that stays off the public board', async () => {
     const created = await createTransportJob(input)
     expect(created).toMatchObject({
       item: input.item,
       status: '募集中',
       reward: 14_000,
+      moderationStatus: 'pending',
     })
     expect(JSON.stringify(created)).not.toContain('owner@example.com')
+    expect((await getTransportJobs())[0].id).toBe('tj-01')
+    expect(await getTransportJobIds()).not.toContain(created.id)
+    expect((await getTransportJob(created.id))?.item).toBe(input.item)
+  })
+
+  it('publishes a job after approval and hides a rejected one', async () => {
+    const created = await createTransportJob(input)
+    await applyModeration('transportJob', created.id, { status: 'approved' })
     expect((await getTransportJobs())[0].id).toBe(created.id)
+    await applyModeration('transportJob', created.id, {
+      status: 'rejected',
+      note: '区間が不明瞭',
+    })
+    expect((await getTransportJob(created.id))?.moderationNote).toBe(
+      '区間が不明瞭',
+    )
+    expect((await getTransportJobs()).map((job) => job.id)).not.toContain(
+      created.id,
+    )
   })
 
   it('updates and deletes a job', async () => {

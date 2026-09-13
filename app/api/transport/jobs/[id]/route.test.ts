@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DELETE, GET, PUT } from './route'
 import { POST as apply } from './applications/route'
+import { POST as createJob } from '../route'
 import { listSubmissions } from '@/lib/server/submissions'
 import { resetStore } from '@/lib/server/store'
 
@@ -28,6 +29,19 @@ describe('/api/transport/jobs/[id]', () => {
     ).toBe(200)
     expect(
       (await GET(new Request('http://localhost'), context('missing'))).status,
+    ).toBe(404)
+  })
+
+  it('hides a pending job from the public API', async () => {
+    const created = await createJob(
+      new Request('http://localhost/api/transport/jobs', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    )
+    const { id } = (await created.json()) as { id: string }
+    expect(
+      (await GET(new Request('http://localhost'), context(id))).status,
     ).toBe(404)
   })
 

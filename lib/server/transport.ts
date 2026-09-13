@@ -1,13 +1,13 @@
 import 'server-only'
 
 import { randomUUID } from 'node:crypto'
-import type { TransportJob } from '@/lib/data'
+import { isApproved, type TransportJob } from '@/lib/data'
 import type { TransportJobInput } from '@/lib/validation/transport'
 import { getStore } from './store'
 import { deleteSubmissionsFor } from './submissions'
 
-export function getTransportJobs(): Promise<TransportJob[]> {
-  return getStore().transportJobs.list()
+export async function getTransportJobs(): Promise<TransportJob[]> {
+  return (await getStore().transportJobs.list()).filter(isApproved)
 }
 
 export function getTransportJob(id: string): Promise<TransportJob | undefined> {
@@ -41,6 +41,7 @@ export function createTransportJob(
     status: '募集中',
     createdAt: now,
     updatedAt: now,
+    moderationStatus: 'pending',
   })
 }
 

@@ -82,18 +82,25 @@ function post(body: unknown) {
 }
 
 describe('POST /api/listings', () => {
-  it('creates the listing, returns a receipt, and lists it first', async () => {
+  it('creates a pending listing that is omitted from the public list', async () => {
     const response = await post(submission)
     expect(response.status).toBe(201)
     const body = await response.json()
     expect(body.id).toMatch(/^[0-9a-f-]{36}$/)
     expect(Date.parse(body.receivedAt)).not.toBeNaN()
-    expect(body.listing).toMatchObject({ id: body.id, name: submission.name })
+    expect(body.listing).toMatchObject({
+      id: body.id,
+      name: submission.name,
+      moderationStatus: 'pending',
+    })
     expect(JSON.stringify(body)).not.toContain('seller@example.com')
     const list = await (
       await GET(new Request('http://localhost/api/listings?pageSize=1'))
     ).json()
-    expect(list.items[0].id).toBe(body.id)
+    expect(list.items[0].id).toBe('trc-001')
+    expect(list.items.map((item: { id: string }) => item.id)).not.toContain(
+      body.id,
+    )
   })
 
   it('returns field errors for an invalid submission', async () => {

@@ -1,5 +1,19 @@
 type DealType = 'sale' | 'rent'
 
+export const moderationStatuses = ['pending', 'approved', 'rejected'] as const
+
+export type ModerationStatus = (typeof moderationStatuses)[number]
+
+/** Seeded rows omit a status and stay public. Create flows set `pending`. */
+export function isApproved(entity: {
+  moderationStatus?: ModerationStatus
+}): boolean {
+  return (
+    entity.moderationStatus === undefined ||
+    entity.moderationStatus === 'approved'
+  )
+}
+
 export type Listing = {
   id: string
   name: string
@@ -25,6 +39,9 @@ export type Listing = {
   tags: string[]
   createdAt?: string
   updatedAt?: string
+  moderationStatus?: ModerationStatus
+  moderationNote?: string
+  moderatedAt?: string
 }
 
 export type TransportJob = {
@@ -39,6 +56,9 @@ export type TransportJob = {
   status: '募集中' | '調整中'
   createdAt?: string
   updatedAt?: string
+  moderationStatus?: ModerationStatus
+  moderationNote?: string
+  moderatedAt?: string
 }
 
 export const categories = [
@@ -65,6 +85,13 @@ export type ListingFilter = {
 export type PageRequest = {
   page: number
   pageSize: number
+}
+
+export type ModerationQueueFilter = ModerationStatus | 'all'
+
+export type ModerationQueue = {
+  listings: Listing[]
+  transportJobs: TransportJob[]
 }
 
 export type ListingPage = {

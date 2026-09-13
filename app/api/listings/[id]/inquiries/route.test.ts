@@ -1,7 +1,11 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { POST } from './route'
+import { POST as createListing } from '../../route'
+import { resetStore } from '@/lib/server/store'
 
 vi.mock('server-only', () => ({}))
+
+beforeEach(() => resetStore())
 
 const inquiry = {
   mode: 'rent',
@@ -31,6 +35,34 @@ describe('POST /api/listings/[id]/inquiries', () => {
   it('rejects an inquiry for an unknown listing', async () => {
     const response = await post('missing', inquiry)
     expect(response.status).toBe(404)
+  })
+
+  it('rejects an inquiry for a pending listing', async () => {
+    const created = await createListing(
+      new Request('http://localhost/api/listings', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: '審査中トラクター',
+          category: 'トラクター',
+          maker: 'クボタ',
+          year: '2018',
+          hours: '500',
+          condition: '目立った傷なし',
+          prefecture: '新潟県',
+          city: '長岡市',
+          deals: ['sale'],
+          salePrice: '1000000',
+          rentPerDay: '',
+          rentToOwn: false,
+          summary: '審査中。',
+          sellerName: '審査農園',
+          sellerKind: '農業法人',
+          contactEmail: 'seller@example.com',
+        }),
+      }),
+    )
+    const { id } = (await created.json()) as { id: string }
+    expect((await post(id, inquiry)).status).toBe(404)
   })
 
   it('rejects a mode the listing does not offer', async () => {

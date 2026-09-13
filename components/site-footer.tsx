@@ -43,6 +43,7 @@ export function SiteFooter() {
                 { label: 'はじめての方へ', href: '/guide' },
                 { label: 'よくある質問', href: '/faq' },
                 { label: 'お問い合わせ', href: '/contact' },
+                { label: '運営審査', href: '/admin' },
               ]}
             />
           </div>

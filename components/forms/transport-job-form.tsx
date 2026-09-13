@@ -27,11 +27,8 @@ export function TransportJobForm() {
       <ReceiptPanel
         receipt={form.receipt}
         title="運搬の依頼"
-        description="案件ボードに掲載しました。応募があるとメールでお知らせします。"
-        links={[
-          { href: `/transport/${form.receipt.id}`, label: '案件を見る' },
-          { href: '/transport', label: '案件ボードにもどる' },
-        ]}
+        description="審査後に案件ボードへ掲載します。"
+        links={[{ href: '/transport', label: '案件ボードにもどる' }]}
       />
     )
   }

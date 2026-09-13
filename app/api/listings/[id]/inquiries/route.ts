@@ -1,3 +1,4 @@
+import { isApproved } from '@/lib/data'
 import { handleSubmission, notFound } from '@/lib/server/api'
 import { buildModes } from '@/lib/server/listing-detail'
 import { getListing } from '@/lib/server/listings'
@@ -9,7 +10,8 @@ export async function POST(
 ) {
   const { id } = await params
   const listing = await getListing(id)
-  if (!listing) return notFound('農機具が見つかりません。')
+  if (!listing || !isApproved(listing))
+    return notFound('農機具が見つかりません。')
   const offered = buildModes(listing).map((mode) => mode.id)
   return handleSubmission(request, 'listingInquiry', validateListingInquiry, {
     targetId: id,
