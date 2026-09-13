@@ -82,7 +82,11 @@ export default async function TransportJobPage({
               この案件に応募する
             </h2>
             <div className="mt-5">
-              {user ? (
+              {job.status !== '募集中' ? (
+                <p className="text-sm text-muted-foreground">
+                  この案件は{job.status}のため、応募を受け付けていません。
+                </p>
+              ) : user ? (
                 <TransportApplicationForm
                   job={job}
                   contact={{ name: user.name, email: user.email }}
