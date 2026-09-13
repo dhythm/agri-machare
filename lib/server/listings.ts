@@ -9,6 +9,9 @@ import type {
   PageRequest,
 } from '@/lib/data'
 import type { ListingSubmission } from '@/lib/validation/listing-submission'
+import type { AuthenticatedUser } from './auth/accounts'
+import { canManage } from './auth/access'
+import { notify } from './notifications'
 import { getStore } from './store'
 import { deleteSubmissionsFor } from './submissions'
 
@@ -199,4 +202,48 @@ export async function deleteListing(id: string): Promise<boolean> {
   const deleted = await getStore().listings.delete(id)
   if (deleted) await deleteSubmissionsFor(id)
   return deleted
+}
+
+export type ListingStatusResult =
+  | { ok: true; value: Listing }
+  | { ok: false; reason: 'not_found' | 'forbidden' | 'rental_open' }
+
+/** Take a listing off the site or put it back; the review state is untouched. */
+export async function setListingStatus(
+  id: string,
+  status: 'withdrawn' | 'listed',
+  user: AuthenticatedUser,
+): Promise<ListingStatusResult> {
+  const store = getStore()
+  const listing = await store.listings.get(id)
+  if (!listing) return { ok: false, reason: 'not_found' }
+  if (!canManage(user, listing)) return { ok: false, reason: 'forbidden' }
+  if (status === 'withdrawn') {
+    const rentals = await store.rentals.list()
+    const open = rentals.some(
+      (rental) =>
+        rental.listingId === id &&
+        (rental.status === 'requested' || rental.status === 'active'),
+    )
+    if (open) return { ok: false, reason: 'rental_open' }
+  }
+  const now = new Date().toISOString()
+  const updated = await store.listings.update(id, {
+    withdrawnAt: status === 'withdrawn' ? now : undefined,
+    updatedAt: now,
+  })
+  if (!updated) return { ok: false, reason: 'not_found' }
+  if (
+    status === 'withdrawn' &&
+    listing.ownerUserId &&
+    listing.ownerUserId !== user.id
+  )
+    await notify({
+      userId: listing.ownerUserId,
+      kind: 'moderation',
+      title: '出品が運営により取り下げられました',
+      body: listing.name,
+      href: `/listings/${id}`,
+    })
+  return { ok: true, value: updated }
 }

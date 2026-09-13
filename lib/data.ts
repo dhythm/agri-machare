@@ -4,13 +4,18 @@ export const moderationStatuses = ['pending', 'approved', 'rejected'] as const
 
 export type ModerationStatus = (typeof moderationStatuses)[number]
 
-/** Seeded rows omit a status and stay public. Create flows set `pending`. */
+/**
+ * Seeded rows omit a status and stay public. Create flows set `pending`.
+ * A withdrawn row is never public, whatever its review state.
+ */
 export function isApproved(entity: {
   moderationStatus?: ModerationStatus
+  withdrawnAt?: string
 }): boolean {
   return (
-    entity.moderationStatus === undefined ||
-    entity.moderationStatus === 'approved'
+    entity.withdrawnAt === undefined &&
+    (entity.moderationStatus === undefined ||
+      entity.moderationStatus === 'approved')
   )
 }
 
@@ -50,6 +55,8 @@ export type Listing = {
   moderationStatus?: ModerationStatus
   moderationNote?: string
   moderatedAt?: string
+  /** Set while the owner or an admin has taken the listing off the site. */
+  withdrawnAt?: string
 }
 
 export type TransportJob = {
