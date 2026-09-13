@@ -7,6 +7,7 @@ import {
   type RentalWithListing,
 } from './rentals'
 import { getStore, type Review, type Submission } from './store'
+import { unreadThreadIds } from './thread-reads'
 
 export type AccountOverview = {
   listings: { listing: Listing; inquiries: Submission[] }[]
@@ -18,6 +19,15 @@ export type AccountOverview = {
   rentals: { asRenter: RentalWithListing[]; asOwner: RentalWithListing[] }
   /** Reviews the user wrote, keyed by `kind:sourceId`. */
   reviewedSources: Record<string, Review>
+  unreadThreadIds: string[]
+  summary: {
+    unreadThreads: number
+    /** Threads on the user's own listings and jobs still marked new. */
+    openInquiries: number
+    /** Rental requests waiting for the user's approval. */
+    requestedRentals: number
+    pendingListings: number
+  }
 }
 
 /**
@@ -35,16 +45,25 @@ export async function getAccountOverview(
   userId: string,
 ): Promise<AccountOverview> {
   const store = getStore()
-  const [listings, jobs, submissions, messages, asRenter, asOwner, reviews] =
-    await Promise.all([
-      store.listings.list(),
-      store.transportJobs.list(),
-      store.submissions.list(),
-      store.messages.list(),
-      listRentalsForRenter(userId),
-      listRentalsForOwner(userId),
-      store.reviews.list(),
-    ])
+  const [
+    listings,
+    jobs,
+    submissions,
+    messages,
+    asRenter,
+    asOwner,
+    reviews,
+    unread,
+  ] = await Promise.all([
+    store.listings.list(),
+    store.transportJobs.list(),
+    store.submissions.list(),
+    store.messages.list(),
+    listRentalsForRenter(userId),
+    listRentalsForOwner(userId),
+    store.reviews.list(),
+    unreadThreadIds(userId),
+  ])
   const reviewedSources: Record<string, Review> = {}
   for (const review of reviews)
     if (review.reviewerUserId === userId)
@@ -90,10 +109,28 @@ export async function getAccountOverview(
     replyCounts[message.threadId] = (replyCounts[message.threadId] ?? 0) + 1
   }
 
+  const incoming = [
+    ...ownedListings.flatMap((item) => item.inquiries),
+    ...ownedJobs.flatMap((item) => item.applications),
+  ]
+
   return {
     replyCounts,
     rentals: { asRenter, asOwner },
     reviewedSources,
+    unreadThreadIds: unread,
+    summary: {
+      unreadThreads: unread.length,
+      openInquiries: incoming.filter(
+        (submission) => (submission.status ?? 'new') === 'new',
+      ).length,
+      requestedRentals: asOwner.filter(
+        (item) => item.rental.status === 'requested',
+      ).length,
+      pendingListings: ownedListings.filter(
+        (item) => item.listing.moderationStatus === 'pending',
+      ).length,
+    },
     listings: ownedListings,
     transportJobs: ownedJobs,
     sentInquiries: sent

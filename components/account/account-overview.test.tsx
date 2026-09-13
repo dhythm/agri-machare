@@ -94,6 +94,13 @@ const overview: AccountOverview = {
   sentApplications: [],
   replyCounts: { 'i-1': 2 },
   reviewedSources: {},
+  unreadThreadIds: ['i-1'],
+  summary: {
+    unreadThreads: 1,
+    openInquiries: 2,
+    requestedRentals: 1,
+    pendingListings: 1,
+  },
   rentals: {
     asRenter: [
       {
@@ -185,6 +192,14 @@ describe('AccountOverviewView', () => {
       within(mine).getByRole('link', { name: 'スレッドを開く' }),
     ).toHaveAttribute('href', '/account/threads/i-1')
     expect(within(mine).getByText('返信 2件')).toBeInTheDocument()
+    expect(within(mine).getByText('未読')).toBeInTheDocument()
+    const summary = screen.getByRole('region', { name: '概要' })
+    expect(within(summary).getByText('未読のやり取り')).toBeInTheDocument()
+    expect(
+      within(summary).getByText('未対応の問い合わせ・応募'),
+    ).toBeInTheDocument()
+    expect(within(summary).getAllByText('1件')).toHaveLength(3)
+    expect(within(summary).getByText('2件')).toBeInTheDocument()
     expect(within(mine).getByText('未対応')).toBeInTheDocument()
     const jobs = screen.getByRole('region', { name: '自分の運搬依頼' })
     expect(within(jobs).getByText('コンバイン')).toBeInTheDocument()

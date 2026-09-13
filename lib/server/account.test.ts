@@ -111,6 +111,15 @@ describe('getAccountOverview', () => {
       'trc-001',
     ])
     expect(seller.rentals.asOwner).toHaveLength(1)
+    expect(seller.unreadThreadIds).toHaveLength(3)
+    expect(seller.summary).toEqual({
+      unreadThreads: 3,
+      openInquiries: 3,
+      requestedRentals: 1,
+      pendingListings: 0,
+    })
+    expect(user.unreadThreadIds).toEqual([user.sentInquiries[0].submission.id])
+    expect(user.summary.pendingListings).toBe(1)
   })
 
   it('is empty for a user with no activity', async () => {
@@ -122,6 +131,13 @@ describe('getAccountOverview', () => {
       replyCounts: {},
       rentals: { asRenter: [], asOwner: [] },
       reviewedSources: {},
+      unreadThreadIds: [],
+      summary: {
+        unreadThreads: 0,
+        openInquiries: 0,
+        requestedRentals: 0,
+        pendingListings: 0,
+      },
     })
   })
 })

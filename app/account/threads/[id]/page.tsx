@@ -5,6 +5,7 @@ import { PageShell } from '@/components/page-shell'
 import { ThreadView } from '@/components/threads/thread-view'
 import { getCurrentUser } from '@/lib/server/auth/session'
 import { findReviewForSource } from '@/lib/server/reviews'
+import { markThreadRead } from '@/lib/server/thread-reads'
 import { getThread } from '@/lib/server/threads'
 
 export const metadata: Metadata = { title: 'やり取り | ノウキシェア' }
@@ -24,6 +25,7 @@ export default async function ThreadPage({
     )
   const result = await getThread(id, user)
   if (!result.ok) notFound()
+  if (result.value.role !== 'admin') await markThreadRead(id, user.id)
   const isInquiry = result.value.submission.kind === 'listingInquiry'
   const title = isInquiry ? '問い合わせ' : '応募'
   const canReview =
