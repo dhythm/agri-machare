@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { signOut, useSession } from 'next-auth/react'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { useSession } from 'next-auth/react'
+import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { SignOutButton } from './sign-out-button'
 
 const linkClass = cn(buttonVariants({ variant: 'ghost' }), 'h-9 px-3')
 
@@ -27,14 +28,7 @@ export function AccountMenu() {
       <span className="hidden text-sm text-muted-foreground sm:inline">
         {session.user.name}
       </span>
-      <Button
-        type="button"
-        variant="ghost"
-        className="h-9 px-3"
-        onClick={() => void signOut({ redirectTo: '/' })}
-      >
-        ログアウト
-      </Button>
+      <SignOutButton />
     </div>
   )
 }
