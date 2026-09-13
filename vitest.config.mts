@@ -17,6 +17,7 @@ export default defineConfig({
     setupFiles: ['./test/setup.ts'],
     clearMocks: true,
     testTimeout: usesPglite ? 20_000 : 5_000,
+    hookTimeout: usesPglite ? 20_000 : 10_000,
     restoreMocks: true,
     coverage: {
       provider: 'v8',
