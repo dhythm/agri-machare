@@ -8,6 +8,7 @@ import type {
   CarrierProfile,
   Message,
   Notification,
+  Order,
   Rental,
   Review,
   Store,
@@ -336,6 +337,36 @@ describe.each(stores)('$name store', { timeout: 20_000 }, ({ store }) => {
     ).toBeUndefined()
     await store.reset()
     expect(await store.carrierProfiles.list()).toEqual([])
+  })
+
+  it('round-trips orders', async () => {
+    const order: Order = {
+      id: 'o-1',
+      listingId: 'trc-001',
+      buyerUserId: 'demo-user',
+      sellerUserId: 'demo-seller',
+      price: 18_800_000,
+      status: 'requested',
+      message: '現金で',
+      createdAt: '2026-09-13T10:00:00.000Z',
+      updatedAt: '2026-09-13T10:00:00.000Z',
+    }
+    expect(await store.orders.create(order)).toEqual(order)
+    await store.orders.create({
+      ...order,
+      id: 'o-2',
+      message: undefined,
+      sourceRentalId: 'r-1',
+      status: 'delivered',
+    })
+    const second = await store.orders.get('o-2')
+    expect(second?.message).toBeUndefined()
+    expect(second?.sourceRentalId).toBe('r-1')
+    expect(
+      (await store.orders.update('o-1', { status: 'accepted' }))?.status,
+    ).toBe('accepted')
+    await store.reset()
+    expect(await store.orders.list()).toEqual([])
   })
 
   it('does not let callers mutate stored data through returned objects', async () => {

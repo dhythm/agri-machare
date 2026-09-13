@@ -10,6 +10,7 @@ export type {
   Message,
   Notification,
   NotificationKind,
+  Order,
   Rental,
   Review,
   ReviewSourceKind,

@@ -54,6 +54,24 @@ export function rentalFailure(
   }
 }
 
+/** Map an order service failure to its HTTP response. */
+export function orderFailure(
+  reason: 'not_found' | 'forbidden' | 'conflict' | 'unavailable' | 'transition',
+): Response {
+  switch (reason) {
+    case 'not_found':
+      return notFound('注文が見つかりません。')
+    case 'forbidden':
+      return forbidden('この注文を操作する権限がありません。')
+    case 'conflict':
+      return conflict('他の方の購入手続きが進んでいます。')
+    case 'unavailable':
+      return conflict('この農機具は購入できません。')
+    case 'transition':
+      return conflict('現在の状態ではその操作はできません。')
+  }
+}
+
 /** Map a thread service failure to its HTTP response. */
 export function threadFailure(reason: 'not_found' | 'forbidden'): Response {
   return reason === 'not_found'

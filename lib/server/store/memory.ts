@@ -7,6 +7,7 @@ import type {
   CarrierProfile,
   Message,
   Notification,
+  Order,
   Rental,
   Review,
   Store,
@@ -26,6 +27,7 @@ export function createMemoryStore(): Store {
     reviews: createMemoryRepository<Review>([]),
     threadReads: createMemoryRepository<ThreadRead>([]),
     carrierProfiles: createMemoryRepository<CarrierProfile>([]),
+    orders: createMemoryRepository<Order>([]),
   }
   const proxy = <T extends { id: string }>(
     pick: () => Repository<T>,
@@ -48,6 +50,7 @@ export function createMemoryStore(): Store {
     reviews: proxy<Review>(() => store.reviews),
     threadReads: proxy<ThreadRead>(() => store.threadReads),
     carrierProfiles: proxy<CarrierProfile>(() => store.carrierProfiles),
+    orders: proxy<Order>(() => store.orders),
     async reset() {
       store = {
         listings: createMemoryRepository(listings),
@@ -60,6 +63,7 @@ export function createMemoryStore(): Store {
         reviews: createMemoryRepository<Review>([]),
         threadReads: createMemoryRepository<ThreadRead>([]),
         carrierProfiles: createMemoryRepository<CarrierProfile>([]),
+        orders: createMemoryRepository<Order>([]),
       }
     },
     async close() {},

@@ -33,6 +33,15 @@ async function resolveSource(
         rental.status === 'completed' || rental.status === 'converted',
     }
   }
+  if (kind === 'order') {
+    const order = await store.orders.get(id)
+    if (!order) return undefined
+    return {
+      listingId: order.listingId,
+      reviewerUserId: order.buyerUserId,
+      reviewable: order.status === 'completed',
+    }
+  }
   const submission = await store.submissions.get(id)
   if (
     !submission ||
@@ -116,12 +125,13 @@ export async function listReviewsForSeller(
 /** Rentals and threads of the user that are finished but not yet reviewed. */
 export async function reviewableSources(
   user: AuthenticatedUser,
-): Promise<{ rentals: string[]; threads: string[] }> {
+): Promise<{ rentals: string[]; threads: string[]; orders: string[] }> {
   const store = getStore()
-  const [rentals, submissions, reviews] = await Promise.all([
+  const [rentals, submissions, reviews, orders] = await Promise.all([
     store.rentals.list(),
     store.submissions.list(),
     store.reviews.list(),
+    store.orders.list(),
   ])
   const reviewed = new Set(
     reviews
@@ -146,5 +156,13 @@ export async function reviewableSources(
           !reviewed.has(`thread:${submission.id}`),
       )
       .map((submission) => submission.id),
+    orders: orders
+      .filter(
+        (order) =>
+          order.buyerUserId === user.id &&
+          order.status === 'completed' &&
+          !reviewed.has(`order:${order.id}`),
+      )
+      .map((order) => order.id),
   }
 }

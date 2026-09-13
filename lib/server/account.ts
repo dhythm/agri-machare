@@ -9,6 +9,11 @@ import {
 import { getStore, type Review, type Submission } from './store'
 import { unreadThreadIds } from './thread-reads'
 import { getCarrierProfile, matchJobsForCarrier } from './carriers'
+import {
+  listOrdersForBuyer,
+  listOrdersForSeller,
+  type OrderWithListing,
+} from './orders'
 import type { CarrierProfile } from './store'
 
 export type AccountOverview = {
@@ -30,12 +35,15 @@ export type AccountOverview = {
   unreadThreadIds: string[]
   /** Present once the user has registered as a carrier. */
   carrier?: { profile: CarrierProfile; matchingJobs: TransportJob[] }
+  orders: { asBuyer: OrderWithListing[]; asSeller: OrderWithListing[] }
   summary: {
     unreadThreads: number
     /** Threads on the user's own listings and jobs still marked new. */
     openInquiries: number
     /** Rental requests waiting for the user's approval. */
     requestedRentals: number
+    /** Purchase requests waiting for the user's acceptance. */
+    requestedOrders: number
     pendingListings: number
   }
 }
@@ -65,6 +73,8 @@ export async function getAccountOverview(
     reviews,
     unread,
     carrierProfile,
+    asBuyer,
+    asSeller,
   ] = await Promise.all([
     store.listings.list(),
     store.transportJobs.list(),
@@ -75,6 +85,8 @@ export async function getAccountOverview(
     store.reviews.list(),
     unreadThreadIds(userId),
     getCarrierProfile(userId),
+    listOrdersForBuyer(userId),
+    listOrdersForSeller(userId),
   ])
   const carrier = carrierProfile
     ? {
@@ -147,6 +159,7 @@ export async function getAccountOverview(
     reviewedSources,
     unreadThreadIds: unread,
     carrier,
+    orders: { asBuyer, asSeller },
     summary: {
       unreadThreads: unread.length,
       openInquiries: incoming.filter(
@@ -154,6 +167,9 @@ export async function getAccountOverview(
       ).length,
       requestedRentals: asOwner.filter(
         (item) => item.rental.status === 'requested',
+      ).length,
+      requestedOrders: asSeller.filter(
+        (item) => item.order.status === 'requested',
       ).length,
       pendingListings: ownedListings.filter(
         (item) => item.listing.moderationStatus === 'pending',
