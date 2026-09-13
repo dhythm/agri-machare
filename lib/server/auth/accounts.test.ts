@@ -12,13 +12,14 @@ function clearAccountEnv() {
   vi.stubEnv('DEMO_USER_PASSWORD', '')
   vi.stubEnv('DEMO_SELLER_EMAIL', '')
   vi.stubEnv('DEMO_SELLER_PASSWORD', '')
+  vi.stubEnv('DEMO_PERSONA_PASSWORD', '')
 }
 
 describe('configuredAccounts', () => {
   it('provides demo accounts outside production when unset', () => {
     clearAccountEnv()
     vi.stubEnv('NODE_ENV', 'test')
-    expect(configuredAccounts()).toEqual([
+    expect(configuredAccounts().slice(0, 3)).toEqual([
       expect.objectContaining({
         id: 'demo-admin',
         email: 'admin@example.com',
@@ -45,11 +46,23 @@ describe('configuredAccounts', () => {
     vi.stubEnv('DEMO_SELLER_PASSWORD', 'farm-pass')
     vi.stubEnv('DEMO_USER_EMAIL', 'farmer@example.com')
     vi.stubEnv('DEMO_USER_PASSWORD', 'farmer-pass')
-    expect(configuredAccounts().map((account) => account.email)).toEqual([
-      'ops@example.com',
-      'farm@example.com',
-      'farmer@example.com',
-    ])
+    expect(
+      configuredAccounts()
+        .slice(0, 3)
+        .map((account) => account.email),
+    ).toEqual(['ops@example.com', 'farm@example.com', 'farmer@example.com'])
+  })
+
+  it('lists the demo personas after the environment accounts', () => {
+    clearAccountEnv()
+    vi.stubEnv('NODE_ENV', 'test')
+    const personas = configuredAccounts().slice(3)
+    expect(personas.length).toBeGreaterThanOrEqual(16)
+    expect(personas.map((account) => account.id)).toContain('nakamura-farm')
+    expect(personas.every((account) => account.role === 'user')).toBe(true)
+    expect(new Set(configuredAccounts().map((a) => a.email)).size).toBe(
+      configuredAccounts().length,
+    )
   })
 
   it('disables unset accounts in production', () => {
@@ -57,16 +70,20 @@ describe('configuredAccounts', () => {
     vi.stubEnv('NODE_ENV', 'production')
     vi.stubEnv('DEMO_ADMIN_EMAIL', 'ops@example.com')
     vi.stubEnv('DEMO_ADMIN_PASSWORD', 'ops-pass')
-    expect(configuredAccounts().map((account) => account.id)).toEqual([
-      'demo-admin',
-    ])
+    expect(
+      configuredAccounts()
+        .filter((account) => account.id.startsWith('demo-'))
+        .map((account) => account.id),
+    ).toEqual(['demo-admin'])
   })
 
   it('ignores an account whose password is missing', () => {
     clearAccountEnv()
     vi.stubEnv('NODE_ENV', 'production')
     vi.stubEnv('DEMO_ADMIN_EMAIL', 'ops@example.com')
-    expect(configuredAccounts()).toEqual([])
+    expect(
+      configuredAccounts().filter((account) => account.id.startsWith('demo-')),
+    ).toEqual([])
   })
 })
 
@@ -81,6 +98,33 @@ describe('authenticate', () => {
       name: '運営デモ',
       role: 'admin',
     })
+  })
+
+  it('signs personas in with the shared persona password', () => {
+    clearAccountEnv()
+    vi.stubEnv('NODE_ENV', 'test')
+    expect(authenticate('nakamura-farm@example.com', 'dev-persona')).toEqual({
+      id: 'nakamura-farm',
+      email: 'nakamura-farm@example.com',
+      name: '中村ファーム',
+      role: 'user',
+    })
+    vi.stubEnv('DEMO_PERSONA_PASSWORD', 'shared-pass')
+    expect(
+      authenticate('nakamura-farm@example.com', 'dev-persona'),
+    ).toBeUndefined()
+    expect(
+      authenticate('nakamura-farm@example.com', 'shared-pass'),
+    ).toBeDefined()
+  })
+
+  it('keeps personas listed but not signable in production without a password', () => {
+    clearAccountEnv()
+    vi.stubEnv('NODE_ENV', 'production')
+    expect(configuredAccounts().map((a) => a.id)).toContain('nakamura-farm')
+    expect(
+      authenticate('nakamura-farm@example.com', 'dev-persona'),
+    ).toBeUndefined()
   })
 
   it('rejects a wrong password, unknown email, or empty input', () => {

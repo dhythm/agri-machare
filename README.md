@@ -13,7 +13,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-http://localhost:3000 で確認できます。起動時にサンプル（農機具 48 件・運搬案件 10 件を `lib/server/` で決定的に生成）を投入します。出品と運搬依頼は作成後に審査待ちとなり、運営が承認すると公開されます。問い合わせ・応募・運搬者登録・お問い合わせも保存されます。決済は未実装です。
+http://localhost:3000 で確認できます。起動時にサンプル（農機具 48 件・運搬案件 10 件を `lib/server/` で決定的に生成）に加え、数か月使われた後の状態を模したダミーの取引（`lib/server/demo-activity.ts`: 注文・レンタル・問い合わせと返信・運搬の応募と進行・レビュー・取引イベント・通知・審査待ちの出品と案件・停止中のアカウント）を投入します。`DEMO_ACTIVITY=off` にするとサンプルの出品と案件だけになります（テストはこの状態で走ります）。出品と運搬依頼は作成後に審査待ちとなり、運営が承認すると公開されます。問い合わせ・応募・運搬者登録・お問い合わせも保存されます。決済は未実装です。
 
 ## データストア
 
@@ -39,14 +39,18 @@ http://localhost:3000 で確認できます。起動時にサンプル（農機�
 
 Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サービスなしで動きます。セッションは JWT を Cookie に保存します。ユーザーテーブルは持たず、デモアカウントを環境変数から読みます（`.env.example` 参照）。
 
-| 環境変数                                     | 内容                                                                                          |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `AUTH_SECRET`                                | セッション署名用。本番では必須（未設定だと Auth.js がリクエストを拒否）。非本番は固定値に代替 |
-| `DEMO_ADMIN_EMAIL` / `DEMO_ADMIN_PASSWORD`   | 運営ロール（`admin`）のデモアカウント                                                         |
-| `DEMO_SELLER_EMAIL` / `DEMO_SELLER_PASSWORD` | 出品者役（`user`）のデモアカウント。手書きのサンプル出品 6 件と運搬案件 2 件を所有            |
-| `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD`     | 買い手・運搬者役（`user`）のデモアカウント                                                    |
+| 環境変数                                     | 内容                                                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `AUTH_SECRET`                                | セッション署名用。本番では必須（未設定だと Auth.js がリクエストを拒否）。非本番は固定値に代替                 |
+| `DEMO_ADMIN_EMAIL` / `DEMO_ADMIN_PASSWORD`   | 運営ロール（`admin`）のデモアカウント                                                                         |
+| `DEMO_SELLER_EMAIL` / `DEMO_SELLER_PASSWORD` | 出品者役（`user`）のデモアカウント。サンプル出品の一部（trc-001 / cmb-002 など）と運搬案件を所有              |
+| `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD`     | 買い手・運搬者役（`user`）のデモアカウント                                                                    |
+| `DEMO_PERSONA_PASSWORD`                      | 登場人物アカウント共通のパスワード。非本番は `dev-persona` に代替、本番で未設定なら一覧には出るがログイン不可 |
+| `DEMO_ACTIVITY`                              | `off` でダミーの取引データを投入しない（既定は投入）                                                          |
 
 非本番でアカウントが未設定なら `admin@example.com` / `dev-admin`、`seller@example.com` / `dev-seller`、`user@example.com` / `dev-user` を使えます。本番（Vercel など）ではメールとパスワードの両方を設定したアカウントだけが有効になります。
+
+環境変数のアカウントに加え、`lib/server/auth/accounts.ts` にコード定義の登場人物（出品者 10・買い手 3・運搬者 3、いずれも `user` ロール、メールは `<id>@example.com`）があり、サンプル出品・運搬案件・ダミーの取引の相手役になります。出品者ページの名前と出品の所有者はこの人物に対応しています。
 
 - `auth.ts` が Auth.js の設定（`handlers` / `auth`）です。`app/api/auth/[...nextauth]` が Auth.js のエンドポイントです。
 - `lib/server/auth/accounts.ts` が環境変数からアカウントを読み、定数時間比較で認証します。`lib/server/auth/session.ts` の `getCurrentUser()` / `requireUser()` / `requireAdmin()` / `canManage()` / `canView()` をページと API で使います。

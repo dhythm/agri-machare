@@ -1,5 +1,5 @@
 import type { Listing, TransportJob } from '@/lib/data'
-import { listings, transportJobs } from '../data'
+import { seedRows, type SeedOptions } from './seed'
 import { createMemoryRepository } from './memory-repository'
 import type { Repository } from './repository'
 import type {
@@ -16,21 +16,29 @@ import type {
   ThreadRead,
 } from './types'
 
-export function createMemoryStore(): Store {
-  let store = {
-    listings: createMemoryRepository(listings),
-    transportJobs: createMemoryRepository(transportJobs),
-    submissions: createMemoryRepository<Submission>([]),
-    messages: createMemoryRepository<Message>([]),
-    rentals: createMemoryRepository<Rental>([]),
-    accountStatuses: createMemoryRepository<AccountStatus>([]),
-    notifications: createMemoryRepository<Notification>([]),
-    reviews: createMemoryRepository<Review>([]),
-    threadReads: createMemoryRepository<ThreadRead>([]),
-    carrierProfiles: createMemoryRepository<CarrierProfile>([]),
-    orders: createMemoryRepository<Order>([]),
-    dealEvents: createMemoryRepository<DealEvent>([]),
+export function createMemoryStore(options: SeedOptions = {}): Store {
+  const load = () => {
+    const rows = seedRows(options)
+    return {
+      listings: createMemoryRepository(rows.listings),
+      transportJobs: createMemoryRepository(rows.transportJobs),
+      submissions: createMemoryRepository<Submission>(rows.submissions),
+      messages: createMemoryRepository<Message>(rows.messages),
+      rentals: createMemoryRepository<Rental>(rows.rentals),
+      accountStatuses: createMemoryRepository<AccountStatus>(
+        rows.accountStatuses,
+      ),
+      notifications: createMemoryRepository<Notification>(rows.notifications),
+      reviews: createMemoryRepository<Review>(rows.reviews),
+      threadReads: createMemoryRepository<ThreadRead>(rows.threadReads),
+      carrierProfiles: createMemoryRepository<CarrierProfile>(
+        rows.carrierProfiles,
+      ),
+      orders: createMemoryRepository<Order>(rows.orders),
+      dealEvents: createMemoryRepository<DealEvent>(rows.dealEvents),
+    }
   }
+  let store = load()
   const proxy = <T extends { id: string }>(
     pick: () => Repository<T>,
   ): Repository<T> => ({
@@ -55,20 +63,7 @@ export function createMemoryStore(): Store {
     orders: proxy<Order>(() => store.orders),
     dealEvents: proxy<DealEvent>(() => store.dealEvents),
     async reset() {
-      store = {
-        listings: createMemoryRepository(listings),
-        transportJobs: createMemoryRepository(transportJobs),
-        submissions: createMemoryRepository<Submission>([]),
-        messages: createMemoryRepository<Message>([]),
-        rentals: createMemoryRepository<Rental>([]),
-        accountStatuses: createMemoryRepository<AccountStatus>([]),
-        notifications: createMemoryRepository<Notification>([]),
-        reviews: createMemoryRepository<Review>([]),
-        threadReads: createMemoryRepository<ThreadRead>([]),
-        carrierProfiles: createMemoryRepository<CarrierProfile>([]),
-        orders: createMemoryRepository<Order>([]),
-        dealEvents: createMemoryRepository<DealEvent>([]),
-      }
+      store = load()
     },
     async close() {},
   }

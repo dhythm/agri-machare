@@ -149,17 +149,21 @@ describe('lists', () => {
   it('summarizes accounts with their activity', async () => {
     await seedActivity()
     const accounts = await listAccountSummaries()
-    expect(accounts.map((account) => account.id)).toEqual([
+    expect(accounts.slice(0, 3).map((account) => account.id)).toEqual([
       'demo-admin',
       'demo-seller',
       'demo-user',
     ])
+    expect(accounts.length).toBeGreaterThan(3)
     const seller = accounts.find((account) => account.id === 'demo-seller')
     expect(seller).toMatchObject({
       role: 'user',
-      listingCount: 7,
+      listingCount: 3,
       rentalCount: 0,
     })
+    expect(
+      accounts.find((account) => account.id === 'tamura')?.listingCount,
+    ).toBeGreaterThan(0)
     const user = accounts.find((account) => account.id === 'demo-user')
     expect(user).toMatchObject({ listingCount: 0, rentalCount: 1 })
     expect(JSON.stringify(accounts)).not.toContain('password')

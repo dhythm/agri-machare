@@ -166,6 +166,18 @@ const overview: AccountOverview = {
       counterpart: '出品者デモ',
       updatedAt: '2026-09-13T00:00:00.000Z',
     },
+    {
+      kind: 'transportJob',
+      id: 'tj-01',
+      title: 'コンバイン',
+      href: '/transport/tj-01',
+      amount: 38_000,
+      status: '募集中',
+      statusLabel: '募集中',
+      role: '依頼者',
+      counterpart: '未定',
+      updatedAt: '',
+    },
   ],
   unreadThreadIds: ['i-1'],
   carrier: {
@@ -375,6 +387,7 @@ describe('AccountOverviewView', () => {
     expect(
       within(history).getByRole('link', { name: /ジョンディア 90馬力/ }),
     ).toHaveAttribute('href', '/account/deals/order/o-1')
+    expect(within(history).queryByText('Invalid Date')).not.toBeInTheDocument()
     const sold = screen.getByRole('region', { name: '売った農機具' })
     expect(within(sold).getByText('現金で')).toBeInTheDocument()
     expect(
