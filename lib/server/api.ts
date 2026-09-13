@@ -24,6 +24,17 @@ export function forbidden(error: string): Response {
   return Response.json({ error }, { status: 403 })
 }
 
+export function conflict(error: string): Response {
+  return Response.json({ error }, { status: 409 })
+}
+
+/** Map a thread service failure to its HTTP response. */
+export function threadFailure(reason: 'not_found' | 'forbidden'): Response {
+  return reason === 'not_found'
+    ? notFound('スレッドが見つかりません。')
+    : forbidden('このスレッドを見る権限がありません。')
+}
+
 async function readJson(request: Request): Promise<unknown> {
   try {
     return await request.json()

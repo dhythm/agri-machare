@@ -39,6 +39,14 @@ describe('POST /api/transport/jobs/[id]/applications', () => {
     expect((await post('tj-01', application)).status).toBe(401)
   })
 
+  it('rejects an application unless the job is open', async () => {
+    const response = await post('tj-03', application)
+    expect(response.status).toBe(409)
+    expect((await response.json()).error).toBe(
+      '募集中の案件にのみ応募できます。',
+    )
+  })
+
   it('rejects an unknown job', async () => {
     expect((await post('missing', application)).status).toBe(404)
   })
