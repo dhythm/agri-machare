@@ -263,6 +263,12 @@ export function AccountOverviewView({
                   </div>
                   <span className="flex items-center gap-3 text-sm text-muted-foreground">
                     問い合わせ {inquiries.length}件
+                    <Link
+                      href={`/listings/${listing.id}/edit`}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      編集
+                    </Link>
                     <ListingStatusButton
                       listingId={listing.id}
                       withdrawn={listing.withdrawnAt !== undefined}

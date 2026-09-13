@@ -48,7 +48,7 @@ export function ListingDetail({
   related: Listing[]
   rentToOwnTerms?: RentToOwnTerms
   booked: DateRange[]
-  viewer: { signedIn: boolean; isOwner: boolean }
+  viewer: { signedIn: boolean; isOwner: boolean; canEdit?: boolean }
   sellerReviews?: Review[]
 }) {
   const [mode, setMode] = useState<ListingMode>(modes[0].id)
@@ -63,7 +63,17 @@ export function ListingDetail({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <BackLink href="/listings" label="一覧にもどる" />
+      <div className="flex items-center justify-between gap-4">
+        <BackLink href="/listings" label="一覧にもどる" />
+        {viewer.canEdit && (
+          <Link
+            href={`/listings/${listing.id}/edit`}
+            className={cn(buttonVariants({ variant: 'outline' }), 'h-9')}
+          >
+            編集する
+          </Link>
+        )}
+      </div>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
         <div>
