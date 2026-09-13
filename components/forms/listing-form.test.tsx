@@ -26,6 +26,14 @@ describe('ListingForm', () => {
     )
   })
 
+  it('asks for credit terms only when rent-to-own is enabled', async () => {
+    const user = setup()
+    expect(screen.queryByLabelText('充当率（%）')).toBeNull()
+    await user.click(screen.getByLabelText('レンタル購入を受け付ける'))
+    expect(screen.getByLabelText('充当率（%）')).toHaveValue('50')
+    expect(screen.getByLabelText('充当上限（円）')).toBeInTheDocument()
+  })
+
   it('only asks for prices of the selected deals', async () => {
     const user = setup()
     expect(screen.getByLabelText('販売価格')).toBeInTheDocument()

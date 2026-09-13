@@ -1,4 +1,5 @@
 import type { Listing, ThreadStatus, TransportJob } from '@/lib/data'
+import type { RentalStatus } from '@/lib/rent-to-own'
 import type { Repository } from './repository'
 
 export type SubmissionKind =
@@ -29,6 +30,26 @@ export type Message = {
   createdAt: string
 }
 
+/** A rental agreement; pricing is copied from the listing at request time. */
+export type Rental = {
+  id: string
+  listingId: string
+  renterUserId: string
+  startDate: string
+  endDate: string
+  days: number
+  rentPerDay: number
+  rentTotal: number
+  salePrice?: number
+  creditRate?: number
+  creditCap?: number
+  status: RentalStatus
+  /** Price after the rent credit, set when converted to a purchase. */
+  purchasePrice?: number
+  createdAt: string
+  updatedAt: string
+}
+
 export type StoreKind = 'memory' | 'pglite'
 
 export type Store = {
@@ -37,6 +58,7 @@ export type Store = {
   transportJobs: Repository<TransportJob>
   submissions: Repository<Submission>
   messages: Repository<Message>
+  rentals: Repository<Rental>
   /** Drop every row and load the sample data again. */
   reset(): Promise<void>
   /** Release resources; the store must not be used afterwards. */

@@ -11,6 +11,9 @@ describe('listing detail business rules', () => {
     expect(modes.map((mode) => mode.id)).toEqual(['rent', 'rentToOwn', 'buy'])
     expect(modes[0].price).toBe('¥22,000/日')
     expect(modes[2].price).toBe('¥18,800,000')
+    expect(modes[1].note).toBe(
+      'レンタル料の50%（上限 ¥5,000,000）を購入価格に充当します。試してから決められるので、高額な買い物でも安心です。',
+    )
     expect(JSON.parse(JSON.stringify(modes))).toEqual(modes)
   })
 

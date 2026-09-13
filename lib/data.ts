@@ -30,6 +30,9 @@ export type Listing = {
   salePrice?: number
   rentPerDay?: number
   rentToOwn?: boolean
+  /** Share of paid rent credited on purchase (percent) and its cap (yen). */
+  rentToOwnCreditRate?: number
+  rentToOwnCreditCap?: number
   seller: {
     name: string
     kind: '個人農家' | '法人' | '農業法人' | '販売店'

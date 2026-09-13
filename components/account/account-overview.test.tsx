@@ -87,6 +87,46 @@ const overview: AccountOverview = {
   ],
   sentApplications: [],
   replyCounts: { 'i-1': 2 },
+  rentals: {
+    asRenter: [
+      {
+        rental: {
+          id: 'r-1',
+          listingId: 'trc-001',
+          renterUserId: 'me',
+          startDate: '2026-10-01',
+          endDate: '2026-10-07',
+          days: 7,
+          rentPerDay: 22_000,
+          rentTotal: 154_000,
+          salePrice: 18_800_000,
+          creditRate: 50,
+          status: 'active',
+          createdAt: '2026-09-13T00:00:00.000Z',
+          updatedAt: '2026-09-13T00:00:00.000Z',
+        },
+        listing: listing('trc-001', 'クボタ 45馬力', { rentToOwn: true }),
+      },
+    ],
+    asOwner: [
+      {
+        rental: {
+          id: 'r-2',
+          listingId: 'l-1',
+          renterUserId: 'demo-user',
+          startDate: '2026-11-01',
+          endDate: '2026-11-03',
+          days: 3,
+          rentPerDay: 10_000,
+          rentTotal: 30_000,
+          status: 'requested',
+          createdAt: '2026-09-13T00:00:00.000Z',
+          updatedAt: '2026-09-13T00:00:00.000Z',
+        },
+        listing: listing('l-1', '公開中のトラクター'),
+      },
+    ],
+  },
 }
 
 describe('AccountOverviewView', () => {
@@ -120,6 +160,19 @@ describe('AccountOverviewView', () => {
       within(screen.getByRole('region', { name: '送った応募' })).getByText(
         'まだありません',
       ),
+    ).toBeInTheDocument()
+    const renting = screen.getByRole('region', { name: '借りている農機具' })
+    expect(within(renting).getByText('レンタル中')).toBeInTheDocument()
+    expect(
+      within(renting).getByText('2026-10-01 〜 2026-10-07・7日間・¥154,000'),
+    ).toBeInTheDocument()
+    expect(
+      within(renting).getByRole('button', { name: '購入に切り替える' }),
+    ).toBeInTheDocument()
+    const lending = screen.getByRole('region', { name: '貸している農機具' })
+    expect(within(lending).getByText('申込中')).toBeInTheDocument()
+    expect(
+      within(lending).getByRole('button', { name: '承認する' }),
     ).toBeInTheDocument()
   })
 })

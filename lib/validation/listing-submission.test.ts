@@ -14,6 +14,8 @@ const valid = {
   salePrice: '1500000',
   rentPerDay: '12000',
   rentToOwn: true,
+  rentToOwnCreditRate: '50',
+  rentToOwnCreditCap: '300000',
   summary: 'キャビン付き。まず借りて試せます。',
   sellerName: '中村ファーム',
   sellerKind: '農業法人',
@@ -31,8 +33,40 @@ describe('validateListingSubmission', () => {
       salePrice: 1_500_000,
       rentPerDay: 12_000,
       rentToOwn: true,
+      rentToOwnCreditRate: 50,
+      rentToOwnCreditCap: 300_000,
       deals: ['sale', 'rent'],
     })
+  })
+
+  it('requires the credit rate only for rent-to-own and clears it otherwise', () => {
+    const missingRate = validateListingSubmission({
+      ...valid,
+      rentToOwnCreditRate: '',
+    })
+    expect(missingRate.ok).toBe(false)
+    if (!missingRate.ok)
+      expect(missingRate.errors).toHaveProperty('rentToOwnCreditRate')
+
+    const tooHigh = validateListingSubmission({
+      ...valid,
+      rentToOwnCreditRate: '120',
+    })
+    expect(tooHigh.ok).toBe(false)
+
+    const noCap = validateListingSubmission({
+      ...valid,
+      rentToOwnCreditCap: '',
+    })
+    expect(noCap.ok).toBe(true)
+    if (noCap.ok) expect(noCap.value.rentToOwnCreditCap).toBeUndefined()
+
+    const plain = validateListingSubmission({ ...valid, rentToOwn: false })
+    expect(plain.ok).toBe(true)
+    if (plain.ok) {
+      expect(plain.value.rentToOwnCreditRate).toBeUndefined()
+      expect(plain.value.rentToOwnCreditCap).toBeUndefined()
+    }
   })
 
   it('requires prices for the selected deals only', () => {

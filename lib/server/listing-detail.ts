@@ -13,14 +13,15 @@ export function buildModes(listing: Listing): ListingModeConfig[] {
       cta: 'レンタルを申し込む',
     })
   }
-  if (listing.rentToOwn && listing.rentPerDay) {
+  if (listing.rentToOwn && listing.rentPerDay && listing.rentToOwnCreditRate) {
+    const cap = listing.rentToOwnCreditCap
     modes.push({
       id: 'rentToOwn',
       title: 'レンタルして試す → 購入',
       price: 'まず試す',
       desc: '借りて使ってみて、良ければそのまま購入。支払ったレンタル料の一部を購入価格に充当します。',
       cta: 'お試しレンタルを始める',
-      note: 'レンタル料の最大50%を購入価格に充当できます。試してから決められるので、高額な買い物でも安心です。',
+      note: `レンタル料の${listing.rentToOwnCreditRate}%${cap ? `（上限 ${formatYen(cap)}）` : ''}を購入価格に充当します。試してから決められるので、高額な買い物でも安心です。`,
     })
   }
   if (listing.salePrice) {

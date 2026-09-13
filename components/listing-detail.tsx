@@ -21,6 +21,9 @@ import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/badge'
 import { BackLink } from '@/components/back-link'
 import { ListingCard } from '@/components/listing-card'
+import { RentToOwnSimulator } from '@/components/rent-to-own/rent-to-own-simulator'
+import { RentalRequestForm } from '@/components/rent-to-own/rental-request-form'
+import type { DateRange, RentToOwnTerms } from '@/lib/rent-to-own'
 import {
   type Listing,
   type ListingMode,
@@ -35,11 +38,17 @@ export function ListingDetail({
   modes,
   transportEstimate,
   related,
+  rentToOwnTerms,
+  booked,
+  viewer,
 }: {
   listing: Listing
   modes: ListingModeConfig[]
   transportEstimate: number
   related: Listing[]
+  rentToOwnTerms?: RentToOwnTerms
+  booked: DateRange[]
+  viewer: { signedIn: boolean; isOwner: boolean }
 }) {
   const [mode, setMode] = useState<ListingMode>(modes[0].id)
   const active = modes.find((m) => m.id === mode) ?? modes[0]
@@ -199,14 +208,28 @@ export function ListingDetail({
                 <span>{active.note}</span>
               </div>
             )}
+            {active.id === 'rentToOwn' && rentToOwnTerms && (
+              <div className="mt-4">
+                <RentToOwnSimulator terms={rentToOwnTerms} />
+              </div>
+            )}
 
             <div className="mt-5 flex flex-col gap-2">
-              <Link
-                href={`/listings/${listing.id}/inquiry?mode=${active.id}`}
-                className={cn(buttonVariants(), 'h-11')}
-              >
-                {active.cta}
-              </Link>
+              {active.id !== 'buy' && listing.rentPerDay && !viewer.isOwner ? (
+                <RentalRequestForm
+                  listingId={listing.id}
+                  rentPerDay={listing.rentPerDay}
+                  booked={booked}
+                  signedIn={viewer.signedIn}
+                />
+              ) : (
+                <Link
+                  href={`/listings/${listing.id}/inquiry?mode=${active.id}`}
+                  className={cn(buttonVariants(), 'h-11')}
+                >
+                  {active.cta}
+                </Link>
+              )}
               <Link
                 href={`/listings/${listing.id}/inquiry?mode=question`}
                 className={cn(buttonVariants({ variant: 'outline' }), 'h-11')}

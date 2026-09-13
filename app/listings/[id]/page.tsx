@@ -4,8 +4,27 @@ import { ListingDetail } from '@/components/listing-detail'
 import { canView, getCurrentUser } from '@/lib/server/auth/session'
 import { getListing, getRelatedListings } from '@/lib/server/listings'
 import { buildModes, estimateTransport } from '@/lib/server/listing-detail'
+import { listBookedRanges } from '@/lib/server/rentals'
+import type { RentToOwnTerms } from '@/lib/rent-to-own'
+import type { Listing } from '@/lib/data'
 
 export const dynamic = 'force-dynamic'
+
+function rentToOwnTerms(listing: Listing): RentToOwnTerms | undefined {
+  if (
+    !listing.rentToOwn ||
+    !listing.rentPerDay ||
+    !listing.salePrice ||
+    !listing.rentToOwnCreditRate
+  )
+    return undefined
+  return {
+    rentPerDay: listing.rentPerDay,
+    salePrice: listing.salePrice,
+    creditRate: listing.rentToOwnCreditRate,
+    creditCap: listing.rentToOwnCreditCap,
+  }
+}
 
 export default async function ListingPage({
   params,
@@ -14,8 +33,9 @@ export default async function ListingPage({
 }) {
   const { id } = await params
   const listing = await getListing(id)
+  const user = await getCurrentUser()
 
-  if (!listing || !canView(await getCurrentUser(), listing)) {
+  if (!listing || !canView(user, listing)) {
     notFound()
   }
 
@@ -26,6 +46,12 @@ export default async function ListingPage({
         modes={buildModes(listing)}
         transportEstimate={estimateTransport(listing)}
         related={await getRelatedListings(listing, 3)}
+        rentToOwnTerms={rentToOwnTerms(listing)}
+        booked={await listBookedRanges(listing.id)}
+        viewer={{
+          signedIn: user !== undefined,
+          isOwner: user !== undefined && listing.ownerUserId === user.id,
+        }}
       />
     </PageShell>
   )

@@ -37,6 +37,8 @@ export function ListingForm({ contact }: { contact?: FormContact }) {
       salePrice: '',
       rentPerDay: '',
       rentToOwn: false,
+      rentToOwnCreditRate: '',
+      rentToOwnCreditCap: '',
       summary: '',
       sellerName: contact?.name ?? '',
       sellerKind: '',
@@ -190,9 +192,38 @@ export function ListingForm({ contact }: { contact?: FormContact }) {
             label="レンタル購入を受け付ける"
             className="mt-4"
             checked={form.values.rentToOwn}
-            onChange={(e) => form.setValue('rentToOwn', e.target.checked)}
+            onChange={(e) => {
+              form.setValue('rentToOwn', e.target.checked)
+              if (e.target.checked && !form.values.rentToOwnCreditRate)
+                form.setValue('rentToOwnCreditRate', '50')
+            }}
             error={form.errors.rentToOwn}
           />
+        )}
+        {canSell && canRent && form.values.rentToOwn && (
+          <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            <TextField
+              id="rentToOwnCreditRate"
+              label="充当率（%）"
+              inputMode="numeric"
+              value={form.values.rentToOwnCreditRate}
+              onChange={(e) =>
+                form.setValue('rentToOwnCreditRate', e.target.value)
+              }
+              error={form.errors.rentToOwnCreditRate}
+            />
+            <TextField
+              id="rentToOwnCreditCap"
+              label="充当上限（円）"
+              inputMode="numeric"
+              placeholder="任意"
+              value={form.values.rentToOwnCreditCap}
+              onChange={(e) =>
+                form.setValue('rentToOwnCreditCap', e.target.value)
+              }
+              error={form.errors.rentToOwnCreditCap}
+            />
+          </div>
         )}
       </fieldset>
 

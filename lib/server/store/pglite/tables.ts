@@ -1,5 +1,5 @@
 import type { Listing, TransportJob } from '@/lib/data'
-import type { Message, Submission } from '../types'
+import type { Message, Rental, Submission } from '../types'
 import {
   compact,
   isoString,
@@ -26,6 +26,8 @@ export const listingTable: TableSpec<Listing> = {
     'sale_price',
     'rent_per_day',
     'rent_to_own',
+    'rent_to_own_credit_rate',
+    'rent_to_own_credit_cap',
     'seller_name',
     'seller_kind',
     'seller_rating',
@@ -54,6 +56,8 @@ export const listingTable: TableSpec<Listing> = {
     nullable(listing.salePrice),
     nullable(listing.rentPerDay),
     nullable(listing.rentToOwn),
+    nullable(listing.rentToOwnCreditRate),
+    nullable(listing.rentToOwnCreditCap),
     listing.seller.name,
     listing.seller.kind,
     listing.seller.rating,
@@ -83,6 +87,10 @@ export const listingTable: TableSpec<Listing> = {
       salePrice: (row.sale_price as number | null) ?? undefined,
       rentPerDay: (row.rent_per_day as number | null) ?? undefined,
       rentToOwn: (row.rent_to_own as boolean | null) ?? undefined,
+      rentToOwnCreditRate:
+        (row.rent_to_own_credit_rate as number | null) ?? undefined,
+      rentToOwnCreditCap:
+        (row.rent_to_own_credit_cap as number | null) ?? undefined,
       seller: {
         name: row.seller_name as string,
         kind: row.seller_kind as Listing['seller']['kind'],
@@ -208,4 +216,60 @@ export const messageTable: TableSpec<Message> = {
     body: row.body as string,
     createdAt: isoString(row.created_at) as string,
   }),
+}
+
+export const rentalTable: TableSpec<Rental> = {
+  table: 'rentals',
+  columns: [
+    'id',
+    'listing_id',
+    'renter_user_id',
+    'start_date',
+    'end_date',
+    'days',
+    'rent_per_day',
+    'rent_total',
+    'sale_price',
+    'credit_rate',
+    'credit_cap',
+    'status',
+    'purchase_price',
+    'created_at',
+    'updated_at',
+  ],
+  toRow: (rental) => [
+    rental.id,
+    rental.listingId,
+    rental.renterUserId,
+    rental.startDate,
+    rental.endDate,
+    rental.days,
+    rental.rentPerDay,
+    rental.rentTotal,
+    nullable(rental.salePrice),
+    nullable(rental.creditRate),
+    nullable(rental.creditCap),
+    rental.status,
+    nullable(rental.purchasePrice),
+    rental.createdAt,
+    rental.updatedAt,
+  ],
+  fromRow: (row: Row) =>
+    compact({
+      id: row.id as string,
+      listingId: row.listing_id as string,
+      renterUserId: row.renter_user_id as string,
+      startDate: row.start_date as string,
+      endDate: row.end_date as string,
+      days: row.days as number,
+      rentPerDay: row.rent_per_day as number,
+      rentTotal: row.rent_total as number,
+      salePrice: (row.sale_price as number | null) ?? undefined,
+      creditRate: (row.credit_rate as number | null) ?? undefined,
+      creditCap: (row.credit_cap as number | null) ?? undefined,
+      status: row.status as Rental['status'],
+      purchasePrice: (row.purchase_price as number | null) ?? undefined,
+      createdAt: isoString(row.created_at) as string,
+      updatedAt: isoString(row.updated_at) as string,
+    }),
 }

@@ -48,6 +48,7 @@ Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サー
 - `lib/server/auth/accounts.ts` が環境変数からアカウントを読み、定数時間比較で認証します。`lib/server/auth/session.ts` の `getCurrentUser()` / `requireUser()` / `requireAdmin()` / `canManage()` / `canView()` をページと API で使います。
 - `/account`（マイページ）は `lib/server/account.ts` で自分の出品・運搬依頼と届いた問い合わせ・応募、送った問い合わせ・応募をまとめます。
 - 問い合わせと応募はスレッドになります（`lib/server/threads.ts`）。参加者は送信者と対象の所有者で、運営は閲覧のみです。両参加者が返信でき（`messages` テーブル）、対象の所有者が状態（未対応 / 対応中 / 成約 / 見送り）を変えます。応募を成約にすると案件は「調整中」になり、所有者はマイページから「完了」にできます。応募を受け付けるのは「募集中」の案件だけで、「完了」の案件は公開ボードに出ません。
+- レンタル購入は出品ごとの条件（`rentToOwnCreditRate` %、任意の `rentToOwnCreditCap` 円）で計算します（`lib/rent-to-own.ts`）。詳細ページのシミュレーターで日数から充当額と購入価格を確認でき、期間を指定してレンタルを申し込めます（`lib/server/rentals.ts`、`rentals` テーブル）。申込 → 所有者が承認（レンタル中）または辞退 → 申込者が購入に切り替え（申込時の条件で購入価格を確定）または所有者が返却を確認。申込中・レンタル中の期間は予約済みとして重複申込を 409 で拒否します。運営は閲覧のみです。
 - テストでは `test/mock-auth.ts` で `@/auth` を差し替え、`signInAs()` でログイン状態を切り替えます。
 - 運営審査（`/admin`、`/api/admin/queue`）は「ログイン済みかつ `role === 'admin'`」で許可します。未ログインは 401（ページはログインへリダイレクト）、権限なしは 403 です。
 - `/admin` 以下は `app/admin/layout.tsx` の管理者画面レイアウト（`components/admin/admin-shell.tsx`。サイドバーの運営メニューと上部バー）で描画し、利用者向けのヘッダー・フッターは使いません。認証ゲートはこのレイアウトで行い、配下のページは運営であることを前提にデータ取得だけ行います。管理機能を増やすときは `components/admin/admin-nav.tsx` に項目を追加します。
@@ -66,23 +67,23 @@ Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サー
 
 ## ページ構成
 
-| パス                           | 内容                                                                     |
-| ------------------------------ | ------------------------------------------------------------------------ |
-| `/`                            | トップ。注目の農機具 6 件と運搬案件 3 件を表示                           |
-| `/listings`                    | 農機具一覧。キーワード・カテゴリ・取引条件・ページネーション             |
-| `/listings/new`                | 出品フォーム                                                             |
-| `/listings/[id]`               | 農機具の詳細と同じカテゴリの農機具                                       |
-| `/listings/[id]/inquiry`       | 出品者への連絡（購入・レンタル・レンタル購入・質問）                     |
-| `/transport`                   | 運搬案件ボード                                                           |
-| `/transport/[id]`              | 運搬案件の詳細と応募フォーム                                             |
-| `/transport/register`          | 運搬者登録フォーム                                                       |
-| `/transport/pricing`           | 運搬料金のめやす                                                         |
-| `/guide` / `/faq` / `/contact` | はじめての方へ / よくある質問 / お問い合わせフォーム                     |
-| `/login`                       | ログイン（メールアドレスとパスワード）                                   |
-| `/account`                     | マイページ。自分の出品・運搬依頼と届いた連絡、送った連絡、案件の完了     |
-| `/account/threads/[id]`        | 問い合わせ・応募のやり取り（返信、所有者は状態変更）                     |
-| `/transport/new`               | 運搬依頼フォーム（要ログイン）                                           |
-| `/admin`                       | 運営メニュー（管理者画面レイアウト）。審査の承認・却下（運営ロールのみ） |
+| パス                           | 内容                                                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `/`                            | トップ。注目の農機具 6 件と運搬案件 3 件を表示                                                            |
+| `/listings`                    | 農機具一覧。キーワード・カテゴリ・取引条件・ページネーション                                              |
+| `/listings/new`                | 出品フォーム                                                                                              |
+| `/listings/[id]`               | 農機具の詳細と同じカテゴリの農機具                                                                        |
+| `/listings/[id]/inquiry`       | 出品者への連絡（購入・レンタル・レンタル購入・質問）                                                      |
+| `/transport`                   | 運搬案件ボード                                                                                            |
+| `/transport/[id]`              | 運搬案件の詳細と応募フォーム                                                                              |
+| `/transport/register`          | 運搬者登録フォーム                                                                                        |
+| `/transport/pricing`           | 運搬料金のめやす                                                                                          |
+| `/guide` / `/faq` / `/contact` | はじめての方へ / よくある質問 / お問い合わせフォーム                                                      |
+| `/login`                       | ログイン（メールアドレスとパスワード）                                                                    |
+| `/account`                     | マイページ。自分の出品・運搬依頼と届いた連絡、送った連絡、案件の完了、借りている / 貸している農機具の操作 |
+| `/account/threads/[id]`        | 問い合わせ・応募のやり取り（返信、所有者は状態変更）                                                      |
+| `/transport/new`               | 運搬依頼フォーム（要ログイン）                                                                            |
+| `/admin`                       | 運営メニュー（管理者画面レイアウト）。審査の承認・却下（運営ロールのみ）                                  |
 
 ## 品質チェック
 
@@ -117,21 +118,23 @@ Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サー
 
 CRUD の API は次のとおりです。成功時は作成が HTTP 201、取得・更新が 200、削除が 204、検証エラーは 400 で `{ error, errors }`、対象がない場合は 404 を返します。
 
-| メソッドとパス                                | 内容                                                                                                          |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `POST /api/listings`                          | 農機具を作成（要ログイン、`moderationStatus: pending`）。`{ id, receivedAt, listing }`                        |
-| `GET / PUT / DELETE /api/listings/[id]`       | 取得は承認済み、または所有者・運営。更新・削除は所有者・運営のみ（問い合わせも削除）                          |
-| `POST /api/listings/[id]/inquiries`           | 出品者への連絡を保存（要ログイン）。`{ id, receivedAt }`                                                      |
-| `GET / POST /api/transport/jobs`              | 公開一覧は承認済みのみ。作成は要ログインで審査待ち `{ id, receivedAt, job }`                                  |
-| `GET / PUT / DELETE /api/transport/jobs/[id]` | 取得は承認済み、または所有者・運営。更新・削除は所有者・運営のみ（応募も削除）                                |
-| `POST /api/transport/jobs/[id]/applications`  | 案件への応募を保存（要ログイン、募集中のみ。それ以外は 409）                                                  |
-| `PATCH /api/transport/jobs/[id]/status`       | 案件を「完了」にする（所有者・運営のみ）                                                                      |
-| `GET / PATCH /api/threads/[id]`               | スレッドの取得（参加者・運営）と状態変更 `{ status }`（対象の所有者のみ）                                     |
-| `POST /api/threads/[id]/messages`             | 返信 `{ body }`（参加者のみ）。201                                                                            |
-| `POST /api/transport/registrations`           | 運搬者登録を保存                                                                                              |
-| `POST /api/contact`                           | お問い合わせを保存                                                                                            |
-| `GET / POST /api/auth/*`                      | Auth.js のエンドポイント（ログイン・ログアウト・セッション）                                                  |
-| `GET / POST /api/admin/queue`                 | 審査キュー（運営ロールのみ）。`status=pending\|approved\|rejected\|all`。判定は `{ kind, id, status, note? }` |
+| メソッドとパス                                | 内容                                                                                                                       |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/listings`                          | 農機具を作成（要ログイン、`moderationStatus: pending`）。`{ id, receivedAt, listing }`                                     |
+| `GET / PUT / DELETE /api/listings/[id]`       | 取得は承認済み、または所有者・運営。更新・削除は所有者・運営のみ（問い合わせも削除）                                       |
+| `GET / POST /api/listings/[id]/rentals`       | 予約済み期間の取得（公開）と申込 `{ startDate, endDate }`（要ログイン。重複・貸出不可は 409）                              |
+| `PATCH /api/rentals/[id]`                     | レンタルの状態変更 `{ status }`（所有者: active / cancelled / completed、申込者: cancelled / converted。不正な遷移は 409） |
+| `POST /api/listings/[id]/inquiries`           | 出品者への連絡を保存（要ログイン）。`{ id, receivedAt }`                                                                   |
+| `GET / POST /api/transport/jobs`              | 公開一覧は承認済みのみ。作成は要ログインで審査待ち `{ id, receivedAt, job }`                                               |
+| `GET / PUT / DELETE /api/transport/jobs/[id]` | 取得は承認済み、または所有者・運営。更新・削除は所有者・運営のみ（応募も削除）                                             |
+| `POST /api/transport/jobs/[id]/applications`  | 案件への応募を保存（要ログイン、募集中のみ。それ以外は 409）                                                               |
+| `PATCH /api/transport/jobs/[id]/status`       | 案件を「完了」にする（所有者・運営のみ）                                                                                   |
+| `GET / PATCH /api/threads/[id]`               | スレッドの取得（参加者・運営）と状態変更 `{ status }`（対象の所有者のみ）                                                  |
+| `POST /api/threads/[id]/messages`             | 返信 `{ body }`（参加者のみ）。201                                                                                         |
+| `POST /api/transport/registrations`           | 運搬者登録を保存                                                                                                           |
+| `POST /api/contact`                           | お問い合わせを保存                                                                                                         |
+| `GET / POST /api/auth/*`                      | Auth.js のエンドポイント（ログイン・ログアウト・セッション）                                                               |
+| `GET / POST /api/admin/queue`                 | 審査キュー（運営ロールのみ）。`status=pending\|approved\|rejected\|all`。判定は `{ kind, id, status, note? }`              |
 
 TanStack Query の初期データとキャッシュの構成は [公式 SSR ガイド](https://tanstack.com/query/latest/docs/framework/react/guides/ssr) を参照してください。
 
