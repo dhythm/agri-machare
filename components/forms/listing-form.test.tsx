@@ -5,22 +5,87 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ListingForm } from './listing-form'
 
-const resizeImage = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/images', () => ({ resizeImage }))
+const { resizeImage, resizeDataUrl } = vi.hoisted(() => ({
+  resizeImage: vi.fn(),
+  resizeDataUrl: vi.fn(),
+}))
+vi.mock('@/lib/images', () => ({ resizeImage, resizeDataUrl }))
 
-function setup(contact?: { name: string; email: string }) {
+function setup(
+  contact?: { name: string; email: string },
+  edit?: Parameters<typeof ListingForm>[0]['edit'],
+) {
   const queryClient = new QueryClient()
   render(
     <QueryClientProvider client={queryClient}>
-      <ListingForm contact={contact} />
+      <ListingForm contact={contact} edit={edit} />
     </QueryClientProvider>,
   )
   return userEvent.setup()
 }
 
+const existing = {
+  listingId: 'trc-001',
+  values: {
+    name: 'クボタ トラクター 45馬力',
+    category: 'トラクター',
+    maker: 'クボタ',
+    year: '2019',
+    hours: '620',
+    condition: '目立った傷なし',
+    prefecture: '新潟県',
+    city: '長岡市',
+    deals: ['sale', 'rent'] as ('sale' | 'rent')[],
+    salePrice: '18800000',
+    rentPerDay: '22000',
+    rentToOwn: true,
+    rentToOwnCreditRate: '50',
+    rentToOwnCreditCap: '5000000',
+    summary: 'キャビン付き',
+    sellerName: '中村ファーム',
+    sellerKind: '農業法人',
+    contactEmail: 'seller@example.com',
+  },
+  images: ['data:image/jpeg;base64,one', 'data:image/jpeg;base64,two'],
+  thumbnail: 'data:image/jpeg;base64,thumbone',
+}
+
 afterEach(() => vi.unstubAllGlobals())
 
 describe('ListingForm', () => {
+  it('edits an existing listing with PUT, keeping remaining pictures', async () => {
+    resizeDataUrl.mockResolvedValue('data:image/jpeg;base64,thumbtwo')
+    const fetchMock = vi.fn(async () =>
+      Response.json({ id: 'trc-001', updatedAt: '2026-09-13T00:00:00.000Z' }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const user = setup(undefined, existing)
+    expect(screen.getByLabelText('農機具名')).toHaveValue(
+      'クボタ トラクター 45馬力',
+    )
+    expect(screen.getByLabelText('充当率（%）')).toHaveValue('50')
+    expect(screen.getAllByRole('img', { name: /写真/ })).toHaveLength(2)
+    await user.click(screen.getAllByRole('button', { name: '削除' })[0])
+    await user.clear(screen.getByLabelText('農機具名'))
+    await user.type(screen.getByLabelText('農機具名'), '更新後の名前')
+    await user.click(screen.getByRole('button', { name: '更新する' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('更新しました')
+    expect(
+      screen.getByRole('link', { name: '農機具の詳細を見る' }),
+    ).toHaveAttribute('href', '/listings/trc-001')
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/listings/trc-001',
+      expect.objectContaining({ method: 'PUT' }),
+    )
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1]
+        .body as string,
+    )
+    expect(body.name).toBe('更新後の名前')
+    expect(body.images).toEqual(['data:image/jpeg;base64,two'])
+    expect(body.thumbnail).toBe('data:image/jpeg;base64,thumbtwo')
+  })
+
   it('adds resized pictures, previews them, and submits them with a thumbnail', async () => {
     resizeImage.mockImplementation(async (_file: File, maxSide: number) =>
       maxSide > 500

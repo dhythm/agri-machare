@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
-import { resizeImage } from '@/lib/images'
+import { resizeDataUrl, resizeImage } from '@/lib/images'
 import { Button } from '@/components/ui/button'
 import {
   listingCategories,
@@ -25,39 +25,82 @@ import { SubmitButton } from './submit-button'
 
 type Deal = 'sale' | 'rent'
 
-type Picture = { full: string; thumb: string }
+type Picture = { full: string; thumb?: string }
+
+type ListingFormValues = {
+  name: string
+  category: string
+  maker: string
+  year: string
+  hours: string
+  condition: string
+  prefecture: string
+  city: string
+  deals: Deal[]
+  salePrice: string
+  rentPerDay: string
+  rentToOwn: boolean
+  rentToOwnCreditRate: string
+  rentToOwnCreditCap: string
+  summary: string
+  sellerName: string
+  sellerKind: string
+  contactEmail: string
+}
+
+export type ListingEdit = {
+  listingId: string
+  values: ListingFormValues
+  images: string[]
+  thumbnail?: string
+}
 
 const fullSide = 1200
 const thumbSide = 400
 
-export function ListingForm({ contact }: { contact?: FormContact }) {
+export function ListingForm({
+  contact,
+  edit,
+}: {
+  contact?: FormContact
+  /** Present when editing: prefilled values and the listing's pictures. */
+  edit?: ListingEdit
+}) {
   const form = useSubmissionForm({
-    url: '/api/listings',
+    url: edit ? `/api/listings/${edit.listingId}` : '/api/listings',
+    method: edit ? 'PUT' : 'POST',
     validate: validateListingSubmission,
     initialValues: {
-      name: '',
-      category: '',
-      maker: '',
-      year: '',
-      hours: '',
-      condition: '',
-      prefecture: '',
-      city: '',
-      deals: ['sale', 'rent'] as Deal[],
-      salePrice: '',
-      rentPerDay: '',
-      rentToOwn: false,
-      rentToOwnCreditRate: '',
-      rentToOwnCreditCap: '',
-      images: [] as string[],
-      thumbnail: '',
-      summary: '',
-      sellerName: contact?.name ?? '',
-      sellerKind: '',
-      contactEmail: contact?.email ?? '',
+      ...(edit?.values ?? {
+        name: '',
+        category: '',
+        maker: '',
+        year: '',
+        hours: '',
+        condition: '',
+        prefecture: '',
+        city: '',
+        deals: ['sale', 'rent'] as Deal[],
+        salePrice: '',
+        rentPerDay: '',
+        rentToOwn: false,
+        rentToOwnCreditRate: '',
+        rentToOwnCreditCap: '',
+        summary: '',
+        sellerName: contact?.name ?? '',
+        sellerKind: '',
+        contactEmail: contact?.email ?? '',
+      }),
+      images: edit?.images ?? ([] as string[]),
+      thumbnail: edit?.thumbnail ?? '',
     },
   })
-  const [pictures, setPictures] = useState<Picture[]>([])
+  const [pictures, setPictures] = useState<Picture[]>(() =>
+    (edit?.images ?? []).map((full, index) => ({
+      full,
+      thumb: index === 0 ? edit?.thumbnail : undefined,
+    })),
+  )
   const [pictureError, setPictureError] = useState<string>()
   const [isReading, setIsReading] = useState(false)
 
@@ -99,6 +142,27 @@ export function ListingForm({ contact }: { contact?: FormContact }) {
   const removePicture = (index: number) =>
     applyPictures(pictures.filter((_, i) => i !== index))
 
+  /** Existing pictures carry no thumbnail until one of them moves to the front. */
+  const submit = async (event: React.FormEvent) => {
+    const first = pictures[0]
+    if (first && !first.thumb) {
+      event.preventDefault()
+      try {
+        const thumb = await resizeDataUrl(first.full, thumbSide)
+        setPictures((current) =>
+          current.map((picture, index) =>
+            index === 0 ? { ...picture, thumb } : picture,
+          ),
+        )
+        await form.submit(event, { thumbnail: thumb })
+      } catch {
+        setPictureError('写真を読み込めませんでした。')
+      }
+      return
+    }
+    await form.submit(event)
+  }
+
   const canSell = form.values.deals.includes('sale')
   const canRent = form.values.deals.includes('rent')
 
@@ -116,15 +180,25 @@ export function ListingForm({ contact }: { contact?: FormContact }) {
     return (
       <ReceiptPanel
         receipt={form.receipt}
-        title="出品の申し込み"
-        description="審査後に掲載します。"
-        links={[{ href: '/listings', label: '出品中の農機具を見る' }]}
+        title={edit ? '出品の更新' : '出品の申し込み'}
+        description={edit ? '更新しました。' : '審査後に掲載します。'}
+        links={
+          edit
+            ? [
+                {
+                  href: `/listings/${edit.listingId}`,
+                  label: '農機具の詳細を見る',
+                },
+                { href: '/account', label: 'マイページにもどる' },
+              ]
+            : [{ href: '/listings', label: '出品中の農機具を見る' }]
+        }
       />
     )
   }
 
   return (
-    <form onSubmit={form.submit} noValidate className="flex flex-col gap-5">
+    <form onSubmit={submit} noValidate className="flex flex-col gap-5">
       <FormAlert error={form.failed ? '送信できませんでした。' : undefined} />
 
       <TextField
@@ -308,10 +382,10 @@ export function ListingForm({ contact }: { contact?: FormContact }) {
         {pictures.length > 0 && (
           <ul className="mt-3 flex flex-wrap gap-3">
             {pictures.map((picture, index) => (
-              <li key={`${index}-${picture.thumb.length}`} className="relative">
+              <li key={`${index}-${picture.full.length}`} className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={picture.thumb}
+                  src={picture.thumb ?? picture.full}
                   alt={`写真 ${index + 1}`}
                   className="size-24 rounded-xl border border-border object-cover"
                 />
@@ -366,7 +440,10 @@ export function ListingForm({ contact }: { contact?: FormContact }) {
         error={form.errors.contactEmail}
       />
       <div>
-        <SubmitButton label="出品を申し込む" isSubmitting={form.isSubmitting} />
+        <SubmitButton
+          label={edit ? '更新する' : '出品を申し込む'}
+          isSubmitting={form.isSubmitting}
+        />
       </div>
     </form>
   )

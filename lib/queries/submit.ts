@@ -6,17 +6,32 @@ export type SubmitResult =
   | { ok: true; receipt: Receipt }
   | { ok: false; message: string; errors: Record<string, string> }
 
-async function postJson(
+export type SubmitMethod = 'POST' | 'PUT'
+
+async function sendJson(
   url: string,
+  method: SubmitMethod,
   body: Record<string, unknown>,
 ): Promise<SubmitResult> {
   const response = await fetch(url, {
-    method: 'POST',
+    method,
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (response.status === 201) {
-    return { ok: true, receipt: (await response.json()) as Receipt }
+  if (response.status === 201 || response.status === 200) {
+    const payload = (await response.json()) as {
+      id: string
+      receivedAt?: string
+      updatedAt?: string
+    }
+    return {
+      ok: true,
+      receipt: {
+        id: payload.id,
+        receivedAt:
+          payload.receivedAt ?? payload.updatedAt ?? new Date().toISOString(),
+      },
+    }
   }
   if (response.status === 400) {
     const payload = (await response.json()) as {
@@ -32,8 +47,8 @@ async function postJson(
   throw new Error('送信できませんでした。')
 }
 
-export function useSubmission(url: string) {
+export function useSubmission(url: string, method: SubmitMethod = 'POST') {
   return useMutation({
-    mutationFn: (body: Record<string, unknown>) => postJson(url, body),
+    mutationFn: (body: Record<string, unknown>) => sendJson(url, method, body),
   })
 }
