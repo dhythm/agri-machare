@@ -40,12 +40,13 @@ describe('transport jobs', () => {
   })
 
   it('creates a pending job that stays off the public board', async () => {
-    const created = await createTransportJob(input)
+    const created = await createTransportJob(input, 'demo-seller')
     expect(created).toMatchObject({
       item: input.item,
       status: '募集中',
       reward: 14_000,
       moderationStatus: 'pending',
+      ownerUserId: 'demo-seller',
     })
     expect(JSON.stringify(created)).not.toContain('owner@example.com')
     expect((await getTransportJobs())[0].id).toBe('tj-01')
@@ -54,7 +55,7 @@ describe('transport jobs', () => {
   })
 
   it('publishes a job after approval and hides a rejected one', async () => {
-    const created = await createTransportJob(input)
+    const created = await createTransportJob(input, 'demo-seller')
     await applyModeration('transportJob', created.id, { status: 'approved' })
     expect((await getTransportJobs())[0].id).toBe(created.id)
     await applyModeration('transportJob', created.id, {
@@ -70,7 +71,7 @@ describe('transport jobs', () => {
   })
 
   it('updates and deletes a job', async () => {
-    const created = await createTransportJob(input)
+    const created = await createTransportJob(input, 'demo-seller')
     const updated = await updateTransportJob(created.id, {
       ...input,
       reward: 20_000,

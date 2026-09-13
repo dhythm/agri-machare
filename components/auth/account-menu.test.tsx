@@ -43,6 +43,10 @@ describe('AccountMenu', () => {
       '/admin',
     )
     expect(screen.getByText('運営デモ')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'マイページ' })).toHaveAttribute(
+      'href',
+      '/account',
+    )
     await userEvent
       .setup()
       .click(screen.getByRole('button', { name: 'ログアウト' }))

@@ -27,6 +27,7 @@ const listing = (id: string, name: string): Listing => ({
   tags: ['キャビン付', '4WD'],
   createdAt: '2026-09-13T00:00:00.000Z',
   updatedAt: '2026-09-13T00:00:00.000Z',
+  ownerUserId: 'demo-seller',
 })
 
 const job = (id: string): TransportJob => ({
@@ -39,6 +40,7 @@ const job = (id: string): TransportJob => ({
   desiredDate: '9/28 午前',
   reward: 38_000,
   status: '募集中',
+  ownerUserId: 'demo-seller',
 })
 
 const submission = (id: string): Submission => ({
@@ -47,6 +49,7 @@ const submission = (id: string): Submission => ({
   targetId: undefined,
   receivedAt: '2026-09-13T01:02:03.000Z',
   payload: { message: 'hello', nested: { count: 2 }, list: ['a'] },
+  userId: 'demo-user',
 })
 
 const stores: { name: string; store: Store }[] = [

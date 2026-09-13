@@ -28,6 +28,7 @@ const curatedListings: Listing[] = [
       reviews: 34,
     },
     tags: ['キャビン付', 'ロータリー付', '4WD'],
+    ownerUserId: 'demo-seller',
   },
   {
     id: 'cmb-002',
@@ -48,6 +49,7 @@ const curatedListings: Listing[] = [
     rentToOwn: true,
     seller: { name: '佐藤農機', kind: '販売店', rating: 4.6, reviews: 58 },
     tags: ['4条刈', '整備記録あり', 'シーズン貸し可'],
+    ownerUserId: 'demo-seller',
   },
   {
     id: 'rpl-003',
@@ -68,6 +70,7 @@ const curatedListings: Listing[] = [
     rentToOwn: true,
     seller: { name: '田村さん', kind: '個人農家', rating: 4.9, reviews: 21 },
     tags: ['施肥機付', '6条植', '低稼働'],
+    ownerUserId: 'demo-seller',
   },
   {
     id: 'til-004',
@@ -88,6 +91,7 @@ const curatedListings: Listing[] = [
     rentToOwn: false,
     seller: { name: '小林園芸', kind: '法人', rating: 4.7, reviews: 12 },
     tags: ['小型', '軽トラ積載可', '初心者向け'],
+    ownerUserId: 'demo-seller',
   },
   {
     id: 'drn-005',
@@ -107,6 +111,7 @@ const curatedListings: Listing[] = [
     rentToOwn: false,
     seller: { name: 'スカイアグリ', kind: '法人', rating: 4.5, reviews: 27 },
     tags: ['防除', 'スマート農業', '短期OK'],
+    ownerUserId: 'demo-seller',
   },
   {
     id: 'trc-006',
@@ -126,6 +131,7 @@ const curatedListings: Listing[] = [
     rentToOwn: false,
     seller: { name: '十勝アグリ', kind: '農業法人', rating: 4.4, reviews: 41 },
     tags: ['大規模向け', '90馬力', '要輸送手配'],
+    ownerUserId: 'demo-seller',
   },
 ]
 
@@ -145,6 +151,7 @@ export const transportJobs: TransportJob[] = [
     desiredDate: '9/28 午前',
     reward: 38_000,
     status: '募集中',
+    ownerUserId: 'demo-seller',
   },
   {
     id: 'tj-02',
@@ -156,6 +163,7 @@ export const transportJobs: TransportJob[] = [
     desiredDate: '10/3 終日',
     reward: 22_000,
     status: '募集中',
+    ownerUserId: 'demo-seller',
   },
   {
     id: 'tj-03',

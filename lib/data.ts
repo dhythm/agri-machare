@@ -37,6 +37,8 @@ export type Listing = {
     reviews: number
   }
   tags: string[]
+  /** Id of the signed-in user who created the row; seeded rows may be unowned. */
+  ownerUserId?: string
   createdAt?: string
   updatedAt?: string
   moderationStatus?: ModerationStatus
@@ -54,6 +56,7 @@ export type TransportJob = {
   desiredDate: string
   reward: number
   status: '募集中' | '調整中'
+  ownerUserId?: string
   createdAt?: string
   updatedAt?: string
   moderationStatus?: ModerationStatus

@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GET, POST } from './route'
 import { resetStore } from '@/lib/server/store'
+import { demoSeller, signInAs } from '@/test/mock-auth'
 
 vi.mock('server-only', () => ({}))
+vi.mock('@/auth', () => import('@/test/mock-auth'))
 
-beforeEach(() => resetStore())
+beforeEach(() => {
+  signInAs(demoSeller)
+  return resetStore()
+})
 
 const input = {
   item: 'トラクター 25馬力',
@@ -41,11 +46,17 @@ describe('/api/transport/jobs', () => {
       item: input.item,
       status: '募集中',
       moderationStatus: 'pending',
+      ownerUserId: 'demo-seller',
     })
     expect(JSON.stringify(body)).not.toContain('owner@example.com')
     const listed = await (await GET()).json()
     expect(listed[0].id).toBe('tj-01')
     expect(listed.map((job: { id: string }) => job.id)).not.toContain(body.id)
+  })
+
+  it('requires login', async () => {
+    signInAs(null)
+    expect((await post(input)).status).toBe(401)
   })
 
   it('validates input', async () => {

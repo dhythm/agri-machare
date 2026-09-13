@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GET, POST } from './route'
 import { resetStore } from '@/lib/server/store'
+import { demoSeller, signInAs } from '@/test/mock-auth'
 
 vi.mock('server-only', () => ({}))
+vi.mock('@/auth', () => import('@/test/mock-auth'))
 
-beforeEach(() => resetStore())
+beforeEach(() => {
+  signInAs(demoSeller)
+  return resetStore()
+})
 
 describe('GET /api/listings', () => {
   it('returns the first page when filters are omitted', async () => {
@@ -92,6 +97,7 @@ describe('POST /api/listings', () => {
       id: body.id,
       name: submission.name,
       moderationStatus: 'pending',
+      ownerUserId: 'demo-seller',
     })
     expect(JSON.stringify(body)).not.toContain('seller@example.com')
     const list = await (
@@ -101,6 +107,11 @@ describe('POST /api/listings', () => {
     expect(list.items.map((item: { id: string }) => item.id)).not.toContain(
       body.id,
     )
+  })
+
+  it('requires login', async () => {
+    signInAs(null)
+    expect((await post(submission)).status).toBe(401)
   })
 
   it('returns field errors for an invalid submission', async () => {

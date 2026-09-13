@@ -15,11 +15,12 @@ import {
   TextareaField,
 } from './fields'
 import { ReceiptPanel } from './receipt'
+import type { FormContact } from './contact'
 import { SubmitButton } from './submit-button'
 
 type Deal = 'sale' | 'rent'
 
-export function ListingForm() {
+export function ListingForm({ contact }: { contact?: FormContact }) {
   const form = useSubmissionForm({
     url: '/api/listings',
     validate: validateListingSubmission,
@@ -37,9 +38,9 @@ export function ListingForm() {
       rentPerDay: '',
       rentToOwn: false,
       summary: '',
-      sellerName: '',
+      sellerName: contact?.name ?? '',
       sellerKind: '',
-      contactEmail: '',
+      contactEmail: contact?.email ?? '',
     },
   })
   const canSell = form.values.deals.includes('sale')

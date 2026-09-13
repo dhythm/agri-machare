@@ -29,22 +29,25 @@ http://localhost:3000 で確認できます。起動時にサンプル（農機�
 - `lib/server/store/index.ts` が `listings` / `transportJobs` / `submissions` を `globalThis` 上のシングルトンとして提供します（開発時の HMR で消えません）。テストでは `resetStore()` で初期化します。
 - サービス（`lib/server/listings.ts` / `transport.ts` / `submissions.ts`）はストア経由でのみデータに触れます。
 - 連絡先メールアドレスは公開エンティティに保存せず、農機具・案件の公開フィールドにも含めません。
-- 更新・削除の API は認証がなく誰でも実行できます。本人・運営のみに制限するのは次のタスクです。
+- 出品・運搬依頼・問い合わせ・応募はログインが必要で、作成者の ID を `ownerUserId`（submission は `userId`）として保存します。更新・削除は所有者または運営のみ、審査待ち・却下の行は所有者と運営だけが閲覧できます。
 
 ## 認証
 
 Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サービスなしで動きます。セッションは JWT を Cookie に保存します。ユーザーテーブルは持たず、デモアカウントを環境変数から読みます（`.env.example` 参照）。
 
-| 環境変数                                   | 内容                                                                                          |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| `AUTH_SECRET`                              | セッション署名用。本番では必須（未設定だと Auth.js がリクエストを拒否）。非本番は固定値に代替 |
-| `DEMO_ADMIN_EMAIL` / `DEMO_ADMIN_PASSWORD` | 運営ロール（`admin`）のデモアカウント                                                         |
-| `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD`   | 一般ロール（`user`）のデモアカウント                                                          |
+| 環境変数                                     | 内容                                                                                          |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `AUTH_SECRET`                                | セッション署名用。本番では必須（未設定だと Auth.js がリクエストを拒否）。非本番は固定値に代替 |
+| `DEMO_ADMIN_EMAIL` / `DEMO_ADMIN_PASSWORD`   | 運営ロール（`admin`）のデモアカウント                                                         |
+| `DEMO_SELLER_EMAIL` / `DEMO_SELLER_PASSWORD` | 出品者役（`user`）のデモアカウント。手書きのサンプル出品 6 件と運搬案件 2 件を所有            |
+| `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD`     | 買い手・運搬者役（`user`）のデモアカウント                                                    |
 
-非本番でアカウントが未設定なら `admin@example.com` / `dev-admin` と `user@example.com` / `dev-user` を使えます。本番（Vercel など）ではメールとパスワードの両方を設定したアカウントだけが有効になります。
+非本番でアカウントが未設定なら `admin@example.com` / `dev-admin`、`seller@example.com` / `dev-seller`、`user@example.com` / `dev-user` を使えます。本番（Vercel など）ではメールとパスワードの両方を設定したアカウントだけが有効になります。
 
 - `auth.ts` が Auth.js の設定（`handlers` / `auth`）です。`app/api/auth/[...nextauth]` が Auth.js のエンドポイントです。
-- `lib/server/auth/accounts.ts` が環境変数からアカウントを読み、定数時間比較で認証します。`lib/server/auth/session.ts` の `getCurrentUser()` / `requireAdmin()` をページと API で使います。
+- `lib/server/auth/accounts.ts` が環境変数からアカウントを読み、定数時間比較で認証します。`lib/server/auth/session.ts` の `getCurrentUser()` / `requireUser()` / `requireAdmin()` / `canManage()` / `canView()` をページと API で使います。
+- `/account`（マイページ）は `lib/server/account.ts` で自分の出品・運搬依頼と届いた問い合わせ・応募、送った問い合わせ・応募をまとめます。
+- テストでは `test/mock-auth.ts` で `@/auth` を差し替え、`signInAs()` でログイン状態を切り替えます。
 - 運営審査（`/admin`、`/api/admin/queue`）は「ログイン済みかつ `role === 'admin'`」で許可します。未ログインは 401（ページはログインへリダイレクト）、権限なしは 403 です。
 - `/admin` 以下は `app/admin/layout.tsx` の管理者画面レイアウト（`components/admin/admin-shell.tsx`。サイドバーの運営メニューと上部バー）で描画し、利用者向けのヘッダー・フッターは使いません。認証ゲートはこのレイアウトで行い、配下のページは運営であることを前提にデータ取得だけ行います。管理機能を増やすときは `components/admin/admin-nav.tsx` に項目を追加します。
 - ヘッダーのログイン / ログアウトはクライアント側で `useSession()` を使い、ページの静的レンダリングを壊しません。
@@ -75,6 +78,8 @@ Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サー
 | `/transport/pricing`           | 運搬料金のめやす                                                         |
 | `/guide` / `/faq` / `/contact` | はじめての方へ / よくある質問 / お問い合わせフォーム                     |
 | `/login`                       | ログイン（メールアドレスとパスワード）                                   |
+| `/account`                     | マイページ。自分の出品・運搬依頼と届いた連絡、送った連絡                 |
+| `/transport/new`               | 運搬依頼フォーム（要ログイン）                                           |
 | `/admin`                       | 運営メニュー（管理者画面レイアウト）。審査の承認・却下（運営ロールのみ） |
 
 ## 品質チェック
@@ -112,12 +117,12 @@ CRUD の API は次のとおりです。成功時は作成が HTTP 201、取得�
 
 | メソッドとパス                                | 内容                                                                                                          |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `POST /api/listings`                          | 農機具を作成（`moderationStatus: pending`）。`{ id, receivedAt, listing }`                                    |
-| `GET / PUT / DELETE /api/listings/[id]`       | 公開取得は承認済みのみ。更新・削除（問い合わせも削除）                                                        |
-| `POST /api/listings/[id]/inquiries`           | 出品者への連絡を保存。`{ id, receivedAt }`                                                                    |
-| `GET / POST /api/transport/jobs`              | 公開一覧は承認済みのみ。作成は審査待ち `{ id, receivedAt, job }`                                              |
-| `GET / PUT / DELETE /api/transport/jobs/[id]` | 公開取得は承認済みのみ。更新・削除（応募も削除）                                                              |
-| `POST /api/transport/jobs/[id]/applications`  | 案件への応募を保存                                                                                            |
+| `POST /api/listings`                          | 農機具を作成（要ログイン、`moderationStatus: pending`）。`{ id, receivedAt, listing }`                        |
+| `GET / PUT / DELETE /api/listings/[id]`       | 取得は承認済み、または所有者・運営。更新・削除は所有者・運営のみ（問い合わせも削除）                          |
+| `POST /api/listings/[id]/inquiries`           | 出品者への連絡を保存（要ログイン）。`{ id, receivedAt }`                                                      |
+| `GET / POST /api/transport/jobs`              | 公開一覧は承認済みのみ。作成は要ログインで審査待ち `{ id, receivedAt, job }`                                  |
+| `GET / PUT / DELETE /api/transport/jobs/[id]` | 取得は承認済み、または所有者・運営。更新・削除は所有者・運営のみ（応募も削除）                                |
+| `POST /api/transport/jobs/[id]/applications`  | 案件への応募を保存（要ログイン）                                                                              |
 | `POST /api/transport/registrations`           | 運搬者登録を保存                                                                                              |
 | `POST /api/contact`                           | お問い合わせを保存                                                                                            |
 | `GET / POST /api/auth/*`                      | Auth.js のエンドポイント（ログイン・ログアウト・セッション）                                                  |

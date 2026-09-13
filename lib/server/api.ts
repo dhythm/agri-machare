@@ -64,11 +64,15 @@ export async function handleSubmission<T extends Record<string, unknown>>(
   validate: (input: unknown) => ValidationResult<T>,
   options: {
     targetId?: string
+    userId?: string
     refine?: (value: T) => Record<string, string> | undefined
   } = {},
 ): Promise<Response> {
   const parsed = await parseBody(request, validate, options.refine)
   if (!parsed.ok) return parsed.response
-  const receipt = await acceptSubmission(kind, parsed.value, options.targetId)
+  const receipt = await acceptSubmission(kind, parsed.value, {
+    targetId: options.targetId,
+    userId: options.userId,
+  })
   return Response.json(receipt, { status: 201 })
 }

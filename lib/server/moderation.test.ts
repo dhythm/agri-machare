@@ -41,8 +41,8 @@ const job: TransportJobInput = {
 
 describe('moderation queue', () => {
   it('lists pending marketplace items and applies a decision', async () => {
-    const createdListing = await createListing(listing)
-    const createdJob = await createTransportJob(job)
+    const createdListing = await createListing(listing, 'demo-seller')
+    const createdJob = await createTransportJob(job, 'demo-seller')
     const pending = await getModerationQueue('pending')
     expect(pending.listings.map((item) => item.id)).toEqual([createdListing.id])
     expect(pending.transportJobs.map((item) => item.id)).toEqual([

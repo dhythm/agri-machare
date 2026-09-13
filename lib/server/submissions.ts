@@ -10,19 +10,24 @@ export type Receipt = {
   receivedAt: string
 }
 
-/**
- * Store a validated form submission and issue a receipt. `targetId` links
- * the submission to the listing or transport job it refers to.
- */
+export type SubmissionOptions = {
+  /** Listing or transport job the submission refers to. */
+  targetId?: string
+  /** Signed-in sender, when the form requires login. */
+  userId?: string
+}
+
+/** Store a validated form submission and issue a receipt. */
 export async function acceptSubmission(
   kind: SubmissionKind,
   payload: Record<string, unknown>,
-  targetId?: string,
+  options: SubmissionOptions = {},
 ): Promise<Receipt> {
   const submission: Submission = {
     id: randomUUID(),
     kind,
-    targetId,
+    targetId: options.targetId,
+    userId: options.userId,
     receivedAt: new Date().toISOString(),
     payload,
   }
@@ -40,6 +45,13 @@ export async function listSubmissions(
       submission.kind === kind &&
       (targetId === undefined || submission.targetId === targetId),
   )
+}
+
+export async function listSubmissionsByUser(
+  userId: string,
+): Promise<Submission[]> {
+  const submissions = await getStore().submissions.list()
+  return submissions.filter((submission) => submission.userId === userId)
 }
 
 export async function deleteSubmissionsFor(targetId: string): Promise<void> {

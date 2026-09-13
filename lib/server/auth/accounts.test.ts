@@ -10,6 +10,8 @@ function clearAccountEnv() {
   vi.stubEnv('DEMO_ADMIN_PASSWORD', '')
   vi.stubEnv('DEMO_USER_EMAIL', '')
   vi.stubEnv('DEMO_USER_PASSWORD', '')
+  vi.stubEnv('DEMO_SELLER_EMAIL', '')
+  vi.stubEnv('DEMO_SELLER_PASSWORD', '')
 }
 
 describe('configuredAccounts', () => {
@@ -23,6 +25,12 @@ describe('configuredAccounts', () => {
         role: 'admin',
       }),
       expect.objectContaining({
+        id: 'demo-seller',
+        email: 'seller@example.com',
+        name: '出品者デモ',
+        role: 'user',
+      }),
+      expect.objectContaining({
         id: 'demo-user',
         email: 'user@example.com',
         role: 'user',
@@ -33,10 +41,13 @@ describe('configuredAccounts', () => {
   it('reads accounts from the environment', () => {
     vi.stubEnv('DEMO_ADMIN_EMAIL', 'Ops@Example.com ')
     vi.stubEnv('DEMO_ADMIN_PASSWORD', 'ops-pass')
+    vi.stubEnv('DEMO_SELLER_EMAIL', 'farm@example.com')
+    vi.stubEnv('DEMO_SELLER_PASSWORD', 'farm-pass')
     vi.stubEnv('DEMO_USER_EMAIL', 'farmer@example.com')
-    vi.stubEnv('DEMO_USER_PASSWORD', 'farm-pass')
+    vi.stubEnv('DEMO_USER_PASSWORD', 'farmer-pass')
     expect(configuredAccounts().map((account) => account.email)).toEqual([
       'ops@example.com',
+      'farm@example.com',
       'farmer@example.com',
     ])
   })

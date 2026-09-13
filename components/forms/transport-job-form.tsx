@@ -4,9 +4,10 @@ import { validateTransportJob } from '@/lib/validation/transport'
 import { useSubmissionForm } from './use-submission-form'
 import { FormAlert, TextField } from './fields'
 import { ReceiptPanel } from './receipt'
+import type { FormContact } from './contact'
 import { SubmitButton } from './submit-button'
 
-export function TransportJobForm() {
+export function TransportJobForm({ contact }: { contact?: FormContact }) {
   const form = useSubmissionForm({
     url: '/api/transport/jobs',
     validate: validateTransportJob,
@@ -18,7 +19,7 @@ export function TransportJobForm() {
       weight: '',
       desiredDate: '',
       reward: '',
-      contactEmail: '',
+      contactEmail: contact?.email ?? '',
     },
   })
 

@@ -138,11 +138,15 @@ function listingFields(submission: ListingSubmission) {
   }
 }
 
-export function createListing(submission: ListingSubmission): Promise<Listing> {
+export function createListing(
+  submission: ListingSubmission,
+  ownerUserId: string,
+): Promise<Listing> {
   const now = new Date().toISOString()
   return getStore().listings.create({
     id: randomUUID(),
     ...listingFields(submission),
+    ownerUserId,
     seller: {
       name: submission.sellerName,
       kind: submission.sellerKind,

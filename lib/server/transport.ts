@@ -33,11 +33,13 @@ function jobFields(input: TransportJobInput) {
 
 export function createTransportJob(
   input: TransportJobInput,
+  ownerUserId: string,
 ): Promise<TransportJob> {
   const now = new Date().toISOString()
   return getStore().transportJobs.create({
     id: randomUUID(),
     ...jobFields(input),
+    ownerUserId,
     status: '募集中',
     createdAt: now,
     updatedAt: now,

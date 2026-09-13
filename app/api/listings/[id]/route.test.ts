@@ -4,10 +4,15 @@ import { POST as createInquiry } from './inquiries/route'
 import { POST as createListing } from '../route'
 import { listSubmissions } from '@/lib/server/submissions'
 import { resetStore } from '@/lib/server/store'
+import { demoAdmin, demoSeller, demoUser, signInAs } from '@/test/mock-auth'
 
 vi.mock('server-only', () => ({}))
+vi.mock('@/auth', () => import('@/test/mock-auth'))
 
-beforeEach(() => resetStore())
+beforeEach(() => {
+  signInAs(demoSeller)
+  return resetStore()
+})
 
 const submission = {
   name: '更新後のトラクター',
@@ -40,7 +45,7 @@ describe('GET /api/listings/[id]', () => {
     ).toBe(404)
   })
 
-  it('hides a pending listing from the public API', async () => {
+  it('shows a pending listing only to its owner or an admin', async () => {
     const created = await createListing(
       new Request('http://localhost/api/listings', {
         method: 'POST',
@@ -65,9 +70,15 @@ describe('GET /api/listings/[id]', () => {
       }),
     )
     const { id } = (await created.json()) as { id: string }
-    expect(
-      (await GET(new Request('http://localhost'), context(id))).status,
-    ).toBe(404)
+    const status = async () =>
+      (await GET(new Request('http://localhost'), context(id))).status
+    expect(await status()).toBe(200)
+    signInAs(demoAdmin)
+    expect(await status()).toBe(200)
+    signInAs(demoUser)
+    expect(await status()).toBe(404)
+    signInAs(null)
+    expect(await status()).toBe(404)
   })
 })
 
@@ -104,6 +115,16 @@ describe('PUT /api/listings/[id]', () => {
     expect((await put('trc-001', { ...submission, name: '' })).status).toBe(400)
     expect((await put('missing', submission)).status).toBe(404)
   })
+
+  it('is limited to the owner or an admin', async () => {
+    signInAs(null)
+    expect((await put('trc-001', submission)).status).toBe(401)
+    signInAs(demoUser)
+    expect((await put('trc-001', submission)).status).toBe(403)
+    expect((await put('trc-007', submission)).status).toBe(403)
+    signInAs(demoAdmin)
+    expect((await put('trc-007', submission)).status).toBe(200)
+  })
 })
 
 describe('DELETE /api/listings/[id]', () => {
@@ -134,5 +155,16 @@ describe('DELETE /api/listings/[id]', () => {
       (await DELETE(new Request('http://localhost'), context('trc-001')))
         .status,
     ).toBe(404)
+  })
+
+  it('is limited to the owner or an admin', async () => {
+    const remove = (id: string) =>
+      DELETE(new Request('http://localhost'), context(id))
+    signInAs(null)
+    expect((await remove('trc-002')).status).toBe(401)
+    signInAs(demoUser)
+    expect((await remove('cmb-002')).status).toBe(403)
+    signInAs(demoAdmin)
+    expect((await remove('trc-007')).status).toBe(204)
   })
 })

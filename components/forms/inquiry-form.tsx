@@ -9,24 +9,27 @@ import { cn } from '@/lib/utils'
 import { useSubmissionForm } from './use-submission-form'
 import { FormAlert, TextField, TextareaField } from './fields'
 import { ReceiptPanel } from './receipt'
+import type { FormContact } from './contact'
 import { SubmitButton } from './submit-button'
 
 export function InquiryForm({
   listing,
   modes,
   initialMode,
+  contact,
 }: {
   listing: Listing
   modes: ListingModeConfig[]
   initialMode: InquiryMode
+  contact?: FormContact
 }) {
   const form = useSubmissionForm({
     url: `/api/listings/${listing.id}/inquiries`,
     validate: validateListingInquiry,
     initialValues: {
       mode: initialMode,
-      name: '',
-      email: '',
+      name: contact?.name ?? '',
+      email: contact?.email ?? '',
       preferredDate: '',
       message: '',
     },
