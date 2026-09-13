@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Noto_Sans_JP, Zen_Kaku_Gothic_New } from 'next/font/google'
+import { SessionProvider } from 'next-auth/react'
 import './globals.css'
 import { QueryProvider } from '@/components/query-provider'
 
@@ -38,7 +39,9 @@ export default function RootLayout({
       className={`${notoSansJp.variable} ${zenKaku.variable} bg-background`}
     >
       <body className="font-sans antialiased">
-        <QueryProvider>{children}</QueryProvider>
+        <SessionProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </SessionProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

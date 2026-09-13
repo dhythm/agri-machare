@@ -6,12 +6,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AdminQueue } from './admin-queue'
 import type { Listing, TransportJob } from '@/lib/data'
 
-const refresh = vi.hoisted(() => vi.fn())
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ refresh }),
-}))
-
 const listing: Listing = {
   id: 'pending-listing',
   name: '審査中トラクター',
@@ -57,7 +51,6 @@ function setup() {
 
 afterEach(() => {
   vi.unstubAllGlobals()
-  refresh.mockReset()
 })
 
 describe('AdminQueue', () => {

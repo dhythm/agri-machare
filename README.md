@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-http://localhost:3000 で確認できます。起動時にサンプル（農機具 48 件・運搬案件 10 件を `lib/server/` で決定的に生成）を投入します。出品と運搬依頼は作成後に審査待ちとなり、運営が承認すると公開されます。問い合わせ・応募・運搬者登録・お問い合わせも保存されます。決済と本格的な認証は未実装です。
+http://localhost:3000 で確認できます。起動時にサンプル（農機具 48 件・運搬案件 10 件を `lib/server/` で決定的に生成）を投入します。出品と運搬依頼は作成後に審査待ちとなり、運営が承認すると公開されます。問い合わせ・応募・運搬者登録・お問い合わせも保存されます。決済は未実装です。
 
 ## データストア
 
@@ -29,8 +29,24 @@ http://localhost:3000 で確認できます。起動時にサンプル（農機�
 - `lib/server/store/index.ts` が `listings` / `transportJobs` / `submissions` を `globalThis` 上のシングルトンとして提供します（開発時の HMR で消えません）。テストでは `resetStore()` で初期化します。
 - サービス（`lib/server/listings.ts` / `transport.ts` / `submissions.ts`）はストア経由でのみデータに触れます。
 - 連絡先メールアドレスは公開エンティティに保存せず、農機具・案件の公開フィールドにも含めません。
-- 更新・削除の API は認証がなく誰でも実行できます。本番実装時に認証と合わせて制限します。
-- 運営審査は暫定の共有キー（`ADMIN_SECRET`。未設定かつ非本番では `dev-admin`）です。本番の認証（Clerk 等）に置き換えてください。本番で `ADMIN_SECRET` が未設定のときは審査 API を拒否します。
+- 更新・削除の API は認証がなく誰でも実行できます。本人・運営のみに制限するのは次のタスクです。
+
+## 認証
+
+Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サービスなしで動きます。セッションは JWT を Cookie に保存します。ユーザーテーブルは持たず、デモアカウントを環境変数から読みます（`.env.example` 参照）。
+
+| 環境変数                                   | 内容                                                                                          |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `AUTH_SECRET`                              | セッション署名用。本番では必須（未設定だと Auth.js がリクエストを拒否）。非本番は固定値に代替 |
+| `DEMO_ADMIN_EMAIL` / `DEMO_ADMIN_PASSWORD` | 運営ロール（`admin`）のデモアカウント                                                         |
+| `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD`   | 一般ロール（`user`）のデモアカウント                                                          |
+
+非本番でアカウントが未設定なら `admin@example.com` / `dev-admin` と `user@example.com` / `dev-user` を使えます。本番（Vercel など）ではメールとパスワードの両方を設定したアカウントだけが有効になります。
+
+- `auth.ts` が Auth.js の設定（`handlers` / `auth`）です。`app/api/auth/[...nextauth]` が Auth.js のエンドポイントです。
+- `lib/server/auth/accounts.ts` が環境変数からアカウントを読み、定数時間比較で認証します。`lib/server/auth/session.ts` の `getCurrentUser()` / `requireAdmin()` をページと API で使います。
+- 運営審査（`/admin`、`/api/admin/queue`）は「ログイン済みかつ `role === 'admin'`」で許可します。未ログインは 401（ページはログインへリダイレクト）、権限なしは 403 です。
+- ヘッダーのログイン / ログアウトはクライアント側で `useSession()` を使い、ページの静的レンダリングを壊しません。
 
 ### PGlite の操作
 
@@ -57,7 +73,8 @@ http://localhost:3000 で確認できます。起動時にサンプル（農機�
 | `/transport/register`          | 運搬者登録フォーム                                           |
 | `/transport/pricing`           | 運搬料金のめやす                                             |
 | `/guide` / `/faq` / `/contact` | はじめての方へ / よくある質問 / お問い合わせフォーム         |
-| `/admin`                       | 運営審査。出品と運搬依頼の承認・却下（暫定の共有キー）       |
+| `/login`                       | ログイン（メールアドレスとパスワード）                       |
+| `/admin`                       | 運営審査。出品と運搬依頼の承認・却下（運営ロールのみ）       |
 
 ## 品質チェック
 
@@ -92,18 +109,18 @@ http://localhost:3000 で確認できます。起動時にサンプル（農機�
 
 CRUD の API は次のとおりです。成功時は作成が HTTP 201、取得・更新が 200、削除が 204、検証エラーは 400 で `{ error, errors }`、対象がない場合は 404 を返します。
 
-| メソッドとパス                                | 内容                                                                                        |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `POST /api/listings`                          | 農機具を作成（`moderationStatus: pending`）。`{ id, receivedAt, listing }`                  |
-| `GET / PUT / DELETE /api/listings/[id]`       | 公開取得は承認済みのみ。更新・削除（問い合わせも削除）                                      |
-| `POST /api/listings/[id]/inquiries`           | 出品者への連絡を保存。`{ id, receivedAt }`                                                  |
-| `GET / POST /api/transport/jobs`              | 公開一覧は承認済みのみ。作成は審査待ち `{ id, receivedAt, job }`                            |
-| `GET / PUT / DELETE /api/transport/jobs/[id]` | 公開取得は承認済みのみ。更新・削除（応募も削除）                                            |
-| `POST /api/transport/jobs/[id]/applications`  | 案件への応募を保存                                                                          |
-| `POST /api/transport/registrations`           | 運搬者登録を保存                                                                            |
-| `POST /api/contact`                           | お問い合わせを保存                                                                          |
-| `GET / POST / DELETE /api/admin/session`      | 運営キーの確認・入室（Cookie）・退室                                                        |
-| `GET / POST /api/admin/queue`                 | 審査キュー。`status=pending\|approved\|rejected\|all`。判定は `{ kind, id, status, note? }` |
+| メソッドとパス                                | 内容                                                                                                          |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `POST /api/listings`                          | 農機具を作成（`moderationStatus: pending`）。`{ id, receivedAt, listing }`                                    |
+| `GET / PUT / DELETE /api/listings/[id]`       | 公開取得は承認済みのみ。更新・削除（問い合わせも削除）                                                        |
+| `POST /api/listings/[id]/inquiries`           | 出品者への連絡を保存。`{ id, receivedAt }`                                                                    |
+| `GET / POST /api/transport/jobs`              | 公開一覧は承認済みのみ。作成は審査待ち `{ id, receivedAt, job }`                                              |
+| `GET / PUT / DELETE /api/transport/jobs/[id]` | 公開取得は承認済みのみ。更新・削除（応募も削除）                                                              |
+| `POST /api/transport/jobs/[id]/applications`  | 案件への応募を保存                                                                                            |
+| `POST /api/transport/registrations`           | 運搬者登録を保存                                                                                              |
+| `POST /api/contact`                           | お問い合わせを保存                                                                                            |
+| `GET / POST /api/auth/*`                      | Auth.js のエンドポイント（ログイン・ログアウト・セッション）                                                  |
+| `GET / POST /api/admin/queue`                 | 審査キュー（運営ロールのみ）。`status=pending\|approved\|rejected\|all`。判定は `{ kind, id, status, note? }` |
 
 TanStack Query の初期データとキャッシュの構成は [公式 SSR ガイド](https://tanstack.com/query/latest/docs/framework/react/guides/ssr) を参照してください。
 

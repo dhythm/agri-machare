@@ -1,19 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   readModerationQueueFilter,
-  validateAdminLogin,
   validateModerationInput,
 } from './moderation'
-
-describe('validateAdminLogin', () => {
-  it('requires a secret', () => {
-    expect(validateAdminLogin({ secret: 'dev-admin' })).toEqual({
-      ok: true,
-      value: { secret: 'dev-admin' },
-    })
-    expect(validateAdminLogin({ secret: '' }).ok).toBe(false)
-  })
-})
 
 describe('validateModerationInput', () => {
   const valid = {

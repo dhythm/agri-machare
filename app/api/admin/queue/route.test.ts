@@ -2,21 +2,28 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GET, POST } from './route'
 import { POST as createListing } from '../../listings/route'
 import { POST as createJob } from '../../transport/jobs/route'
-import { adminSecretHeader } from '@/lib/server/admin'
 import { resetStore } from '@/lib/server/store'
 
+const auth = vi.hoisted(() => vi.fn())
+
 vi.mock('server-only', () => ({}))
+vi.mock('@/auth', () => ({ auth }))
+
+const adminUser = {
+  id: 'demo-admin',
+  email: 'admin@example.com',
+  name: '運営デモ',
+  role: 'admin',
+}
 
 beforeEach(() => {
-  vi.stubEnv('ADMIN_SECRET', 'shared-key')
+  auth.mockResolvedValue({ user: adminUser })
   return resetStore()
 })
 
 afterEach(() => {
-  vi.unstubAllEnvs()
+  auth.mockReset()
 })
-
-const headers = { [adminSecretHeader]: 'shared-key' }
 
 const listingBody = {
   name: '審査中トラクター',
@@ -38,38 +45,36 @@ const listingBody = {
 }
 
 function adminGet(url: string) {
-  return GET(new Request(url, { headers }))
+  return GET(new Request(url))
 }
 
 function adminPost(body: unknown) {
   return POST(
     new Request('http://localhost/api/admin/queue', {
       method: 'POST',
-      headers,
       body: JSON.stringify(body),
     }),
   )
 }
 
 describe('/api/admin/queue', () => {
-  it('requires the admin secret', async () => {
-    expect(
-      (await GET(new Request('http://localhost/api/admin/queue'))).status,
-    ).toBe(401)
-    expect(
-      (
-        await POST(
-          new Request('http://localhost/api/admin/queue', {
-            method: 'POST',
-            body: JSON.stringify({
-              kind: 'listing',
-              id: 'trc-001',
-              status: 'approved',
-            }),
-          }),
-        )
-      ).status,
-    ).toBe(401)
+  it('requires a signed-in admin', async () => {
+    const body = JSON.stringify({
+      kind: 'listing',
+      id: 'trc-001',
+      status: 'approved',
+    })
+    auth.mockResolvedValue(null)
+    expect((await adminGet('http://localhost/api/admin/queue')).status).toBe(
+      401,
+    )
+    expect((await adminPost(JSON.parse(body))).status).toBe(401)
+
+    auth.mockResolvedValue({ user: { ...adminUser, role: 'user' } })
+    expect((await adminGet('http://localhost/api/admin/queue')).status).toBe(
+      403,
+    )
+    expect((await adminPost(JSON.parse(body))).status).toBe(403)
   })
 
   it('lists pending items and approves a listing onto the public catalog', async () => {

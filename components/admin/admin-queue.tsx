@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/badge'
 import { FormAlert, TextField } from '@/components/forms/fields'
 import { Button } from '@/components/ui/button'
@@ -23,7 +22,6 @@ export function AdminQueue({
 }: {
   initialQueue: ModerationQueue
 }) {
-  const router = useRouter()
   const [status, setStatus] = useState<ModerationQueueFilter>('pending')
   const [queue, setQueue] = useState(initialQueue)
   const [error, setError] = useState<string>()
@@ -71,23 +69,8 @@ export function AdminQueue({
     }
   }
 
-  const signOut = async () => {
-    await fetch('/api/admin/session', { method: 'DELETE' })
-    router.refresh()
-  }
-
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => void signOut()}
-        >
-          退室
-        </Button>
-      </div>
       <FormAlert error={error} />
       <div className="flex flex-wrap gap-2">
         {filters.map((filter) => (

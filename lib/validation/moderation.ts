@@ -14,22 +14,6 @@ const moderationKinds = ['listing', 'transportJob'] as const
 const moderationDecisions = ['approved', 'rejected'] as const
 const moderationQueueFilters = ['all', ...moderationStatuses] as const
 
-export type AdminLogin = {
-  secret: string
-}
-
-export function validateAdminLogin(
-  input: unknown,
-): ValidationResult<AdminLogin> {
-  const source = asRecord(input)
-  if (!source) return invalidInput
-  const errors: FieldErrors = {}
-  const value: AdminLogin = {
-    secret: requireText(errors, source, 'secret', '運営キー', 200),
-  }
-  return finish(errors, value)
-}
-
 export type ModerationInput = {
   kind: (typeof moderationKinds)[number]
   id: string
