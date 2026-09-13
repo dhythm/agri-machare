@@ -12,6 +12,8 @@ export type Submission = {
   kind: SubmissionKind
   /** Id of the listing or transport job the submission refers to, if any. */
   targetId?: string
+  /** Id of the signed-in user who sent it, when the form required login. */
+  userId?: string
   receivedAt: string
   payload: Record<string, unknown>
 }
