@@ -1,12 +1,16 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   AccountTable,
   CarrierTable,
   RentalTable,
   ThreadTable,
 } from './admin-tables'
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}))
 
 describe('admin tables', () => {
   it('renders rentals with listing, renter, and status', () => {
@@ -99,12 +103,20 @@ describe('admin tables', () => {
             listingCount: 6,
             transportJobCount: 2,
             rentalCount: 0,
+            status: 'suspended',
+            note: '規約違反',
           },
         ]}
+        currentUserId="demo-admin"
       />,
     )
     expect(screen.getByText('出品者デモ')).toBeInTheDocument()
     expect(screen.getByText('一般')).toBeInTheDocument()
+    expect(screen.getByText('停止中')).toBeInTheDocument()
+    expect(screen.getByText('規約違反')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: '停止を解除' }),
+    ).toBeInTheDocument()
     render(<RentalTable items={[]} />)
     expect(screen.getByText('該当なし')).toBeInTheDocument()
   })

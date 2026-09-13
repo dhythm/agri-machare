@@ -6,6 +6,7 @@ import { rentalStatusLabels } from '@/lib/rent-to-own'
 import type { AccountSummary, ThreadSummary } from '@/lib/server/admin-overview'
 import type { RentalWithListing } from '@/lib/server/rentals'
 import type { Submission } from '@/lib/server/store/types'
+import { AccountStatusButton } from './account-status-button'
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value : ''
@@ -152,10 +153,26 @@ export function CarrierTable({ items }: { items: Submission[] }) {
 
 const roleLabels = { admin: '運営', user: '一般' } as const
 
-export function AccountTable({ items }: { items: AccountSummary[] }) {
+export function AccountTable({
+  items,
+  currentUserId,
+}: {
+  items: AccountSummary[]
+  currentUserId: string
+}) {
   return (
     <Table
-      headers={['ID', '名前', 'メール', '役割', '出品', '運搬依頼', 'レンタル']}
+      headers={[
+        'ID',
+        '名前',
+        'メール',
+        '役割',
+        '出品',
+        '運搬依頼',
+        'レンタル',
+        '状態',
+        '',
+      ]}
       rows={items.map((account) => ({
         key: account.id,
         cells: [
@@ -173,6 +190,24 @@ export function AccountTable({ items }: { items: AccountSummary[] }) {
           String(account.listingCount),
           String(account.transportJobCount),
           String(account.rentalCount),
+          <span key="status" className="flex flex-col gap-1">
+            <Badge
+              variant={account.status === 'suspended' ? 'default' : 'muted'}
+            >
+              {account.status === 'suspended' ? '停止中' : '有効'}
+            </Badge>
+            {account.note && (
+              <span className="text-xs text-muted-foreground">
+                {account.note}
+              </span>
+            )}
+          </span>,
+          <AccountStatusButton
+            key="action"
+            userId={account.id}
+            status={account.status}
+            self={account.id === currentUserId}
+          />,
         ],
       }))}
     />

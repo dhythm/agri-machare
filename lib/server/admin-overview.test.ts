@@ -13,6 +13,7 @@ import { resetStore } from './store'
 import { acceptSubmission } from './submissions'
 import { addMessage } from './threads'
 import { createListing } from './listings'
+import { setAccountStatus } from './auth/account-status'
 import { demoSeller, demoUser } from '@/test/mock-auth'
 
 vi.mock('server-only', () => ({}))
@@ -131,5 +132,12 @@ describe('lists', () => {
     const user = accounts.find((account) => account.id === 'demo-user')
     expect(user).toMatchObject({ listingCount: 0, rentalCount: 1 })
     expect(JSON.stringify(accounts)).not.toContain('password')
+    expect(user?.status).toBe('active')
+    await setAccountStatus('demo-user', 'suspended', '規約違反')
+    const after = await listAccountSummaries()
+    expect(after.find((account) => account.id === 'demo-user')).toMatchObject({
+      status: 'suspended',
+      note: '規約違反',
+    })
   })
 })
