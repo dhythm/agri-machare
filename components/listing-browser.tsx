@@ -1,0 +1,138 @@
+'use client'
+
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { Search } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { listingPageSize, type ListingPage } from '@/lib/data'
+import { listingQueryOptions } from '@/lib/queries/listings'
+import {
+  buildListingSearchParams,
+  parseListingSearchParams,
+  type ListingSearchState,
+} from '@/lib/listing-search-params'
+import { CategoryChips, DealFilterToggle } from '@/components/listing-filters'
+import { ListingResults } from '@/components/listing-results'
+import { Pagination } from '@/components/pagination'
+
+function sameState(a: ListingSearchState, b: ListingSearchState): boolean {
+  return (
+    a.page === b.page &&
+    a.filter.category === b.filter.category &&
+    a.filter.deal === b.filter.deal &&
+    a.filter.keyword === b.filter.keyword
+  )
+}
+
+export function ListingBrowser({
+  initialState,
+  initialPage,
+}: {
+  initialState: ListingSearchState
+  initialPage: ListingPage
+}) {
+  const [state, setState] = useState(initialState)
+  const [keywordInput, setKeywordInput] = useState(initialState.filter.keyword)
+
+  const navigate = useCallback((next: ListingSearchState) => {
+    setState(next)
+    const search = buildListingSearchParams(next.filter, next.page)
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}${search ? `?${search}` : ''}`,
+    )
+  }, [])
+
+  useEffect(() => {
+    const sync = () => {
+      const next = parseListingSearchParams(
+        new URLSearchParams(window.location.search),
+      )
+      setState(next)
+      setKeywordInput(next.filter.keyword)
+    }
+    window.addEventListener('popstate', sync)
+    return () => window.removeEventListener('popstate', sync)
+  }, [])
+
+  const query = useQuery({
+    ...listingQueryOptions(state.filter, {
+      page: state.page,
+      pageSize: listingPageSize,
+    }),
+    initialData: sameState(state, initialState) ? initialPage : undefined,
+    placeholderData: (previous) => previous,
+  })
+
+  const update = (patch: Partial<ListingSearchState['filter']>) =>
+    navigate({ filter: { ...state.filter, ...patch }, page: 1 })
+
+  const submitKeyword = (event: FormEvent) => {
+    event.preventDefault()
+    update({ keyword: keywordInput.trim() })
+  }
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <h1 className="text-balance font-display text-3xl font-black tracking-tight text-foreground">
+        農機具を探す
+      </h1>
+
+      <form
+        role="search"
+        onSubmit={submitKeyword}
+        className="mt-6 flex max-w-xl gap-2"
+      >
+        <label className="relative flex-1">
+          <span className="sr-only">キーワード</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            name="q"
+            value={keywordInput}
+            onChange={(event) => setKeywordInput(event.target.value)}
+            placeholder="機種名・メーカー・地域"
+            className="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30"
+          />
+        </label>
+        <button
+          type="submit"
+          className="h-10 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
+        >
+          検索
+        </button>
+      </form>
+
+      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <CategoryChips
+          value={state.filter.category}
+          onChange={(category) => update({ category })}
+        />
+        <DealFilterToggle
+          value={state.filter.deal}
+          onChange={(deal) => update({ deal })}
+        />
+      </div>
+
+      {query.data && (
+        <p className="mt-6 text-sm text-muted-foreground">
+          {query.data.total}件
+          {state.filter.keyword ? `（「${state.filter.keyword}」で検索）` : ''}
+        </p>
+      )}
+
+      <ListingResults query={query} />
+
+      {query.data && (
+        <Pagination
+          page={state.page}
+          pageCount={query.data.pageCount}
+          onChange={(page) => {
+            navigate({ ...state, page })
+            window.scrollTo({ top: 0 })
+          }}
+        />
+      )}
+    </div>
+  )
+}

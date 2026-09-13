@@ -1,33 +1,31 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { cn } from '@/lib/utils'
-import { categories, type DealFilter, type Listing } from '@/lib/data'
+import {
+  featuredListingCount,
+  type DealFilter,
+  type ListingPage,
+} from '@/lib/data'
 import { listingQueryOptions } from '@/lib/queries/listings'
-import { ListingCard } from '@/components/listing-card'
+import { buildListingSearchParams } from '@/lib/listing-search-params'
+import { CategoryChips, DealFilterToggle } from '@/components/listing-filters'
+import { ListingResults } from '@/components/listing-results'
 
-const dealFilters: { id: DealFilter; label: string }[] = [
-  { id: 'all', label: 'すべて' },
-  { id: 'sale', label: '購入できる' },
-  { id: 'rent', label: 'レンタルできる' },
-  { id: 'rentToOwn', label: 'レンタル購入可' },
-]
-
-export function Marketplace({
-  initialListings,
-}: {
-  initialListings: Listing[]
-}) {
+export function Marketplace({ initialPage }: { initialPage: ListingPage }) {
   const [category, setCategory] = useState<string>('すべて')
   const [deal, setDeal] = useState<DealFilter>('all')
+  const filter = { category, deal, keyword: '' }
 
   const query = useQuery({
-    ...listingQueryOptions({ category, deal }),
+    ...listingQueryOptions(filter, { page: 1, pageSize: featuredListingCount }),
     initialData:
-      category === 'すべて' && deal === 'all' ? initialListings : undefined,
+      category === 'すべて' && deal === 'all' ? initialPage : undefined,
   })
-  const filteredListings = query.data ?? []
+  const search = buildListingSearchParams(filter, 1)
+  const allHref = search ? `/listings?${search}` : '/listings'
 
   return (
     <section
@@ -43,74 +41,25 @@ export function Marketplace({
             売買・レンタルをまとめて。気になる1台は、まず借りて試せます。
           </p>
         </div>
-        <div className="inline-flex rounded-xl border border-border bg-card p-1">
-          {dealFilters.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setDeal(f.id)}
-              aria-pressed={deal === f.id}
-              className={cn(
-                'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-                deal === f.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        <DealFilterToggle value={deal} onChange={setDeal} />
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        {categories.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setCategory(c)}
-            aria-pressed={category === c}
-            className={cn(
-              'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
-              category === c
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
-            )}
-          >
-            {c}
-          </button>
-        ))}
+      <div className="mt-6">
+        <CategoryChips value={category} onChange={setCategory} />
       </div>
 
-      {query.isPending ? (
-        <p role="status" className="mt-8 text-muted-foreground">
-          読み込み中…
-        </p>
-      ) : query.isError ? (
-        <div
-          role="alert"
-          className="mt-8 rounded-2xl border border-border bg-card p-6"
+      <ListingResults query={query} />
+
+      <div className="mt-8 flex justify-center">
+        <Link
+          href={allHref}
+          className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
         >
-          <p>農機具を取得できませんでした。</p>
-          <button
-            type="button"
-            onClick={() => void query.refetch()}
-            className="mt-3 font-medium text-primary"
-          >
-            再試行
-          </button>
-        </div>
-      ) : filteredListings.length > 0 ? (
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredListings.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} />
-          ))}
-        </div>
-      ) : (
-        <div className="mt-8 rounded-2xl border border-dashed border-border bg-card p-12 text-center text-muted-foreground">
-          条件に合う農機具が見つかりませんでした。フィルターを変えてお試しください。
-        </div>
-      )}
+          すべての農機具を見る
+          {query.data ? `（${query.data.total}件）` : ''}
+          <ArrowRight className="size-4" />
+        </Link>
+      </div>
     </section>
   )
 }

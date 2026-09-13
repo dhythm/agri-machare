@@ -4,27 +4,43 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Marketplace } from './marketplace'
-import type { Listing } from '@/lib/data'
+import type { Listing, ListingPage } from '@/lib/data'
 
-const initialListings: Listing[] = [
-  {
-    id: 'initial',
-    name: '初期トラクター',
-    category: 'トラクター',
-    maker: 'メーカー',
-    year: 2020,
-    hours: 100,
-    condition: '目立った傷なし',
-    prefecture: '新潟県',
-    city: '長岡市',
-    image: '/equipment/tractor.png',
-    summary: '説明',
-    deals: ['sale'],
-    salePrice: 100000,
-    seller: { name: '農家', kind: '個人農家', rating: 4, reviews: 1 },
-    tags: [],
-  },
-]
+const listing: Listing = {
+  id: 'initial',
+  name: '初期トラクター',
+  category: 'トラクター',
+  maker: 'メーカー',
+  year: 2020,
+  hours: 100,
+  condition: '目立った傷なし',
+  prefecture: '新潟県',
+  city: '長岡市',
+  image: '/equipment/tractor.png',
+  summary: '説明',
+  deals: ['sale'],
+  salePrice: 100000,
+  seller: { name: '農家', kind: '個人農家', rating: 4, reviews: 1 },
+  tags: [],
+}
+
+const initialPage: ListingPage = {
+  items: [listing],
+  total: 48,
+  page: 1,
+  pageSize: 6,
+  pageCount: 8,
+}
+
+function pageWith(items: Listing[], total = items.length): string {
+  return JSON.stringify({
+    items,
+    total,
+    page: 1,
+    pageSize: 6,
+    pageCount: Math.ceil(total / 6),
+  })
+}
 
 function setup() {
   const queryClient = new QueryClient({
@@ -32,7 +48,7 @@ function setup() {
   })
   render(
     <QueryClientProvider client={queryClient}>
-      <Marketplace initialListings={initialListings} />
+      <Marketplace initialPage={initialPage} />
     </QueryClientProvider>,
   )
   return userEvent.setup()
@@ -51,26 +67,42 @@ describe('Marketplace', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('sends both filters to the server and renders the server result', async () => {
-    const fetchMock = vi.fn().mockImplementation(
-      async () =>
-        new Response(
-          JSON.stringify([
-            {
-              ...initialListings[0],
-              id: 'remote',
-              name: 'サーバーの検索結果',
-            },
-          ]),
-        ),
+  it('links to the full listing page with the current filters and total', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(pageWith([listing], 3))),
     )
+    const user = setup()
+    expect(
+      screen.getByRole('link', { name: /すべての農機具を見る/ }),
+    ).toHaveAttribute('href', '/listings')
+    expect(screen.getByRole('link', { name: /48件/ })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'トラクター' }))
+    await user.click(screen.getByRole('button', { name: '購入できる' }))
+    expect(await screen.findByRole('link', { name: /3件/ })).toHaveAttribute(
+      'href',
+      '/listings?category=%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC&deal=sale',
+    )
+  })
+
+  it('sends both filters to the server and renders the server result', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(
+        async () =>
+          new Response(
+            pageWith([
+              { ...listing, id: 'remote', name: 'サーバーの検索結果' },
+            ]),
+          ),
+      )
     vi.stubGlobal('fetch', fetchMock)
     const user = setup()
     await user.click(screen.getByRole('button', { name: 'トラクター' }))
     await user.click(screen.getByRole('button', { name: '購入できる' }))
     await waitFor(() =>
       expect(fetchMock).toHaveBeenLastCalledWith(
-        '/api/listings?category=%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC&deal=sale',
+        '/api/listings?category=%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC&deal=sale&page=1&pageSize=6',
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       ),
     )
@@ -96,7 +128,7 @@ describe('Marketplace', () => {
     const user = setup()
     await user.click(screen.getByRole('button', { name: 'ドローン' }))
     expect(screen.getByRole('status')).toHaveTextContent('読み込み中')
-    resolveResponse(new Response('[]'))
+    resolveResponse(new Response(pageWith([])))
     expect(
       await screen.findByText(/条件に合う農機具が見つかりませんでした/),
     ).toBeInTheDocument()
@@ -106,7 +138,7 @@ describe('Marketplace', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(new Response('', { status: 500 }))
-      .mockResolvedValueOnce(new Response('[]'))
+      .mockResolvedValueOnce(new Response(pageWith([])))
     vi.stubGlobal('fetch', fetchMock)
     const user = setup()
     await user.click(screen.getByRole('button', { name: 'ドローン' }))
