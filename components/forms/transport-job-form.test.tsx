@@ -5,10 +5,10 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TransportJobForm } from './transport-job-form'
 
-function setup() {
+function setup(initial?: Parameters<typeof TransportJobForm>[0]['initial']) {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <TransportJobForm />
+      <TransportJobForm initial={initial} />
     </QueryClientProvider>,
   )
   return userEvent.setup()
@@ -17,6 +17,40 @@ function setup() {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('TransportJobForm', () => {
+  it('fills distance and a suggested reward from the prefectures and category', async () => {
+    const user = setup()
+    await user.selectOptions(screen.getByLabelText('種類'), 'コンバイン')
+    await user.selectOptions(
+      screen.getByLabelText('出発地の都道府県'),
+      '秋田県',
+    )
+    await user.selectOptions(
+      screen.getByLabelText('届け先の都道府県'),
+      '岩手県',
+    )
+    const distance = Number(
+      (screen.getByLabelText('距離（km）') as HTMLInputElement).value,
+    )
+    expect(distance).toBeGreaterThan(100)
+    expect(distance).toBeLessThan(200)
+    expect(screen.getByLabelText('報酬（円）')).toHaveValue('75600')
+  })
+
+  it('prefills from a listing', () => {
+    setup({
+      item: 'クボタ トラクター 45馬力',
+      category: 'トラクター',
+      fromPrefecture: '新潟県',
+      fromCity: '長岡市',
+    })
+    expect(screen.getByLabelText('運ぶもの')).toHaveValue(
+      'クボタ トラクター 45馬力',
+    )
+    expect(screen.getByLabelText('種類')).toHaveValue('トラクター')
+    expect(screen.getByLabelText('出発地の都道府県')).toHaveValue('新潟県')
+    expect(screen.getByLabelText('出発地の市区町村')).toHaveValue('長岡市')
+  })
+
   it('validates before posting', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
@@ -38,11 +72,21 @@ describe('TransportJobForm', () => {
     vi.stubGlobal('fetch', fetchMock)
     const user = setup()
     await user.type(screen.getByLabelText('運ぶもの'), 'トラクター 25馬力')
-    await user.type(screen.getByLabelText('出発地'), '長野県 松本市')
-    await user.type(screen.getByLabelText('届け先'), '長野県 諏訪市')
+    await user.selectOptions(
+      screen.getByLabelText('出発地の都道府県'),
+      '長野県',
+    )
+    await user.type(screen.getByLabelText('出発地の市区町村'), '松本市')
+    await user.selectOptions(
+      screen.getByLabelText('届け先の都道府県'),
+      '長野県',
+    )
+    await user.type(screen.getByLabelText('届け先の市区町村'), '諏訪市')
+    await user.clear(screen.getByLabelText('距離（km）'))
     await user.type(screen.getByLabelText('距離（km）'), '40')
     await user.type(screen.getByLabelText('重量'), '約1.2t')
     await user.type(screen.getByLabelText('希望日'), '相談')
+    await user.clear(screen.getByLabelText('報酬（円）'))
     await user.type(screen.getByLabelText('報酬（円）'), '14000')
     await user.type(
       screen.getByLabelText('メールアドレス'),

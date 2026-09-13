@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   Repeat2,
   ShoppingCart,
-  Truck,
   MessageSquare,
   CircleCheckBig,
 } from 'lucide-react'
@@ -23,12 +22,12 @@ import { BackLink } from '@/components/back-link'
 import { ListingCard } from '@/components/listing-card'
 import { RentToOwnSimulator } from '@/components/rent-to-own/rent-to-own-simulator'
 import { RentalRequestForm } from '@/components/rent-to-own/rental-request-form'
+import { TransportEstimate } from '@/components/transport/transport-estimate'
 import type { DateRange, RentToOwnTerms } from '@/lib/rent-to-own'
 import {
   type Listing,
   type ListingMode,
   type ListingModeConfig,
-  formatYen,
 } from '@/lib/data'
 
 const modeIcon = { buy: ShoppingCart, rent: Calendar, rentToOwn: Repeat2 }
@@ -36,7 +35,6 @@ const modeIcon = { buy: ShoppingCart, rent: Calendar, rentToOwn: Repeat2 }
 export function ListingDetail({
   listing,
   modes,
-  transportEstimate,
   related,
   rentToOwnTerms,
   booked,
@@ -44,7 +42,6 @@ export function ListingDetail({
 }: {
   listing: Listing
   modes: ListingModeConfig[]
-  transportEstimate: number
   related: Listing[]
   rentToOwnTerms?: RentToOwnTerms
   booked: DateRange[]
@@ -275,14 +272,11 @@ export function ListingDetail({
               </Link>
             </div>
 
-            <div className="mt-5 flex items-start gap-2 border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
-              <Truck className="mt-0.5 size-4 shrink-0" />
-              <span>
-                {listing.prefecture}
-                {listing.city}
-                発。運搬チャネルで配送を手配できます（目安{' '}
-                {formatYen(transportEstimate)}〜）。
-              </span>
+            <div className="mt-5 border-t border-border pt-4">
+              <TransportEstimate
+                category={listing.category}
+                fromPrefecture={listing.prefecture}
+              />
             </div>
             <div className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
               <ShieldCheck className="mt-0.5 size-4 shrink-0" />

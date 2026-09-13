@@ -116,6 +116,18 @@ describe('ThreadView', () => {
     expect(refresh).toHaveBeenCalled()
   })
 
+  it('offers a transport request once an inquiry is agreed', () => {
+    render(
+      <ThreadView
+        thread={{ ...thread, status: 'agreed' }}
+        currentUserId="demo-user"
+      />,
+    )
+    expect(
+      screen.getByRole('link', { name: '運搬を依頼する' }),
+    ).toHaveAttribute('href', '/transport/new?listingId=trc-001')
+  })
+
   it('hides the reply form from admins', () => {
     render(
       <ThreadView

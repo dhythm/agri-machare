@@ -3,18 +3,12 @@ import Link from 'next/link'
 import { PageIntro, PageShell } from '@/components/page-shell'
 import { formatYen } from '@/lib/data'
 import {
+  distanceBands,
   transportBaseRates,
   transportDefaultRate,
-} from '@/lib/server/listing-detail'
+} from '@/lib/transport-fee'
 
 export const metadata: Metadata = { title: '運搬料金のめやす | ノウキシェア' }
-
-const distanceGuides = [
-  { range: '〜50km', rate: 1.0 },
-  { range: '50〜100km', rate: 1.3 },
-  { range: '100〜200km', rate: 1.8 },
-  { range: '200km〜', rate: 2.5 },
-]
 
 export default function TransportPricingPage() {
   return (
@@ -69,12 +63,12 @@ export default function TransportPricingPage() {
             距離による倍率
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
-            {distanceGuides.map((guide) => (
+            {distanceBands.map((guide) => (
               <div
-                key={guide.range}
+                key={guide.label}
                 className="rounded-2xl border border-border bg-card p-4"
               >
-                <p className="text-xs text-muted-foreground">{guide.range}</p>
+                <p className="text-xs text-muted-foreground">{guide.label}</p>
                 <p className="mt-1 font-display text-2xl font-bold text-foreground">
                   ×{guide.rate.toFixed(1)}
                 </p>

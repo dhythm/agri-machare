@@ -3,7 +3,7 @@ import { PageShell } from '@/components/page-shell'
 import { ListingDetail } from '@/components/listing-detail'
 import { canView, getCurrentUser } from '@/lib/server/auth/session'
 import { getListing, getRelatedListings } from '@/lib/server/listings'
-import { buildModes, estimateTransport } from '@/lib/server/listing-detail'
+import { buildModes } from '@/lib/server/listing-detail'
 import { listBookedRanges } from '@/lib/server/rentals'
 import type { RentToOwnTerms } from '@/lib/rent-to-own'
 import type { Listing } from '@/lib/data'
@@ -44,7 +44,6 @@ export default async function ListingPage({
       <ListingDetail
         listing={listing}
         modes={buildModes(listing)}
-        transportEstimate={estimateTransport(listing)}
         related={await getRelatedListings(listing, 3)}
         rentToOwnTerms={rentToOwnTerms(listing)}
         booked={await listBookedRanges(listing.id)}

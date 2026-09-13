@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/badge'
 import { FormAlert, TextareaField } from '@/components/forms/fields'
 import { SubmitButton } from '@/components/forms/submit-button'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import {
   formatYen,
   threadStatusLabels,
@@ -209,6 +209,16 @@ export function ThreadView({
         )}
       </div>
       <TargetCard target={thread.target} />
+      {thread.status === 'agreed' &&
+        thread.target?.kind === 'listing' &&
+        thread.role !== 'admin' && (
+          <Link
+            href={`/transport/new?listingId=${thread.target.listing.id}`}
+            className={cn(buttonVariants({ variant: 'outline' }), 'self-start')}
+          >
+            運搬を依頼する
+          </Link>
+        )}
       <FormAlert error={error} />
       <OpeningMessage thread={thread} />
       <ol className="flex flex-col gap-3">
