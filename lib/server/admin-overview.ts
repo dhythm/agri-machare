@@ -8,6 +8,10 @@ import {
   type TransportJob,
 } from '@/lib/data'
 import { configuredAccounts, type UserRole } from './auth/accounts'
+import { listRecentDealEvents } from './deal-events'
+import type { DealKind } from './store'
+import { orderStatusLabels } from '@/lib/data'
+import { rentalStatusLabels } from '@/lib/rent-to-own'
 import type { AccountStatus } from './store'
 import type { RentalWithListing } from './rentals'
 import {
@@ -21,8 +25,22 @@ export type AdminCounts = {
   pendingListings: number
   pendingTransportJobs: number
   requestedRentals: number
+  activeRentals: number
+  requestedOrders: number
+  haulingJobs: number
   openThreads: number
   carriers: number
+}
+
+export type ActivityItem = {
+  id: string
+  kind: DealKind
+  dealId: string
+  title: string
+  statusLabel: string
+  actorName?: string
+  createdAt: string
+  href: string
 }
 
 export type ThreadSummary = {
@@ -59,18 +77,25 @@ function isPending(entity: { moderationStatus?: string }): boolean {
 
 export async function getAdminCounts(): Promise<AdminCounts> {
   const store = getStore()
-  const [listings, jobs, rentals, submissions, carriers] = await Promise.all([
-    store.listings.list(),
-    store.transportJobs.list(),
-    store.rentals.list(),
-    store.submissions.list(),
-    store.carrierProfiles.list(),
-  ])
+  const [listings, jobs, rentals, submissions, carriers, orders] =
+    await Promise.all([
+      store.listings.list(),
+      store.transportJobs.list(),
+      store.rentals.list(),
+      store.submissions.list(),
+      store.carrierProfiles.list(),
+      store.orders.list(),
+    ])
   return {
     pendingListings: listings.filter(isPending).length,
     pendingTransportJobs: jobs.filter(isPending).length,
     requestedRentals: rentals.filter((rental) => rental.status === 'requested')
       .length,
+    activeRentals: rentals.filter((rental) => rental.status === 'active')
+      .length,
+    requestedOrders: orders.filter((order) => order.status === 'requested')
+      .length,
+    haulingJobs: jobs.filter((job) => job.status === '運搬中').length,
     openThreads: submissions.filter(
       (submission) =>
         isThreadKind(submission.kind) && (submission.status ?? 'new') === 'new',
@@ -185,4 +210,72 @@ export async function listAllReviews(): Promise<
     review,
     listingName: nameById.get(review.listingId) ?? '（削除済み）',
   }))
+}
+
+const jobEventLabels: Record<string, string> = {
+  approved: '承認',
+  rejected: '却下',
+}
+
+function eventStatusLabel(kind: DealKind, status: string): string {
+  if (kind === 'order')
+    return orderStatusLabels[status as keyof typeof orderStatusLabels] ?? status
+  if (kind === 'rental')
+    return (
+      rentalStatusLabels[status as keyof typeof rentalStatusLabels] ?? status
+    )
+  return jobEventLabels[status] ?? status
+}
+
+/** The newest deal events with their target names and actors, for the dashboard. */
+export async function listRecentActivity(
+  limit: number,
+): Promise<ActivityItem[]> {
+  const store = getStore()
+  const [events, orders, rentals, jobs, listings] = await Promise.all([
+    listRecentDealEvents(limit),
+    store.orders.list(),
+    store.rentals.list(),
+    store.transportJobs.list(),
+    store.listings.list(),
+  ])
+  const listingName = new Map(
+    listings.map((listing) => [listing.id, listing.name]),
+  )
+  const orderListing = new Map(
+    orders.map((order) => [order.id, order.listingId]),
+  )
+  const rentalListing = new Map(
+    rentals.map((rental) => [rental.id, rental.listingId]),
+  )
+  const jobItem = new Map(jobs.map((job) => [job.id, job.item]))
+  const accountName = new Map(
+    configuredAccounts().map((account) => [account.id, account.name]),
+  )
+  return events.map((event) => {
+    const title =
+      event.dealKind === 'transportJob'
+        ? jobItem.get(event.dealId)
+        : listingName.get(
+            (event.dealKind === 'order' ? orderListing : rentalListing).get(
+              event.dealId,
+            ) ?? '',
+          )
+    return {
+      id: event.id,
+      kind: event.dealKind,
+      dealId: event.dealId,
+      title: title ?? '（削除済み）',
+      statusLabel: eventStatusLabel(event.dealKind, event.status),
+      actorName: event.actorUserId
+        ? (accountName.get(event.actorUserId) ?? event.actorUserId)
+        : undefined,
+      createdAt: event.createdAt,
+      href: `/account/deals/${event.dealKind}/${event.dealId}`,
+    }
+  })
+}
+
+export async function listRecentReviews(limit: number) {
+  return (await listAllReviews()).slice(0, limit)
 }

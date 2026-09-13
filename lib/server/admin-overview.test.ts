@@ -4,6 +4,7 @@ import {
   listAccountSummaries,
   listAllRentals,
   listCarriers,
+  listRecentActivity,
   listThreadSummaries,
   listTransportApplications,
 } from './admin-overview'
@@ -15,6 +16,7 @@ import { addMessage } from './threads'
 import { createListing } from './listings'
 import { setAccountStatus } from './auth/account-status'
 import { upsertCarrierProfile } from './carriers'
+import { requestOrder } from './orders'
 import { demoSeller, demoUser } from '@/test/mock-auth'
 
 vi.mock('server-only', () => ({}))
@@ -75,13 +77,40 @@ async function seedActivity() {
 describe('getAdminCounts', () => {
   it('counts what needs attention', async () => {
     await seedActivity()
+    await requestOrder((await getListing('cmb-002'))!, demoUser, {})
     expect(await getAdminCounts()).toEqual({
       pendingListings: 1,
       pendingTransportJobs: 0,
       requestedRentals: 1,
+      activeRentals: 0,
+      requestedOrders: 1,
+      haulingJobs: 0,
       openThreads: 2,
       carriers: 1,
     })
+  })
+})
+
+describe('recent activity', () => {
+  it('resolves the newest deal events to titles, actors, and history links', async () => {
+    await seedActivity()
+    await requestOrder((await getListing('cmb-002'))!, demoUser, {
+      message: '現金で',
+    })
+    const activity = await listRecentActivity(8)
+    expect(activity[0]).toMatchObject({
+      kind: 'order',
+      title: expect.stringContaining('ヤンマー'),
+      statusLabel: '申込中',
+      actorName: '利用者デモ',
+    })
+    expect(activity[0].href).toMatch(/^\/account\/deals\/order\//)
+    expect(
+      activity.some(
+        (item) => item.kind === 'rental' && item.statusLabel === '申込中',
+      ),
+    ).toBe(true)
+    expect(activity.length).toBeLessThanOrEqual(8)
   })
 })
 

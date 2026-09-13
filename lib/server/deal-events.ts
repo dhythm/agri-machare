@@ -30,3 +30,10 @@ export async function listDealEvents(
     .reverse()
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
 }
+
+/** Newest first across every deal, for the operator dashboard. */
+export async function listRecentDealEvents(
+  limit: number,
+): Promise<DealEvent[]> {
+  return (await getStore().dealEvents.list()).slice(0, limit)
+}
