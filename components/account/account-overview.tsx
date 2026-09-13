@@ -335,11 +335,17 @@ export function AccountOverviewView({
                     {job.from} → {job.to}・{formatYen(job.reward)}
                   </span>
                 </div>
-                {job.status !== '完了' && (
-                  <div className="mt-3">
+                <div className="mt-3 flex items-center gap-3">
+                  <Link
+                    href={`/transport/${job.id}/edit`}
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    編集
+                  </Link>
+                  {job.status !== '完了' && (
                     <CompleteJobButton jobId={job.id} />
-                  </div>
-                )}
+                  )}
+                </div>
                 <IncomingList
                   items={applications}
                   empty="応募はまだありません"

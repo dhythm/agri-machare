@@ -7,6 +7,7 @@ import {
   estimateDistanceKm,
   estimateTransportFee,
   prefectureNames,
+  prefectureOf,
 } from '@/lib/transport-fee'
 import { useSubmissionForm } from './use-submission-form'
 import { FormAlert, SelectField, TextField } from './fields'
@@ -20,6 +21,25 @@ export type TransportJobInitial = {
   fromPrefecture?: string
   fromCity?: string
   weight?: string
+}
+
+export type TransportJobEdit = {
+  jobId: string
+  values: {
+    item: string
+    from: string
+    to: string
+    distanceKm: string
+    weight: string
+    desiredDate: string
+    reward: string
+    contactEmail: string
+  }
+}
+
+function splitPlace(place: string): { prefecture: string; city: string } {
+  const prefecture = prefectureOf(place) ?? ''
+  return { prefecture, city: place.replace(prefecture, '').trim() }
 }
 
 type Places = {
@@ -37,21 +57,27 @@ function joinPlace(prefecture: string, city: string): string {
 export function TransportJobForm({
   contact,
   initial,
+  edit,
 }: {
   contact?: FormContact
   initial?: TransportJobInitial
+  /** Present when editing an existing job. */
+  edit?: TransportJobEdit
 }) {
+  const editFrom = edit ? splitPlace(edit.values.from) : undefined
+  const editTo = edit ? splitPlace(edit.values.to) : undefined
   const [places, setPlaces] = useState<Places>({
     category: initial?.category ?? '',
-    fromPrefecture: initial?.fromPrefecture ?? '',
-    fromCity: initial?.fromCity ?? '',
-    toPrefecture: '',
-    toCity: '',
+    fromPrefecture: editFrom?.prefecture ?? initial?.fromPrefecture ?? '',
+    fromCity: editFrom?.city ?? initial?.fromCity ?? '',
+    toPrefecture: editTo?.prefecture ?? '',
+    toCity: editTo?.city ?? '',
   })
   const form = useSubmissionForm({
-    url: '/api/transport/jobs',
+    url: edit ? `/api/transport/jobs/${edit.jobId}` : '/api/transport/jobs',
+    method: edit ? 'PUT' : 'POST',
     validate: validateTransportJob,
-    initialValues: {
+    initialValues: edit?.values ?? {
       item: initial?.item ?? '',
       from: joinPlace(initial?.fromPrefecture ?? '', initial?.fromCity ?? ''),
       to: '',
@@ -91,9 +117,18 @@ export function TransportJobForm({
     return (
       <ReceiptPanel
         receipt={form.receipt}
-        title="運搬の依頼"
-        description="審査後に案件ボードへ掲載します。"
-        links={[{ href: '/transport', label: '案件ボードにもどる' }]}
+        title={edit ? '運搬依頼の更新' : '運搬の依頼'}
+        description={
+          edit ? '更新しました。' : '審査後に案件ボードへ掲載します。'
+        }
+        links={
+          edit
+            ? [
+                { href: `/transport/${edit.jobId}`, label: '案件の詳細を見る' },
+                { href: '/account', label: 'マイページにもどる' },
+              ]
+            : [{ href: '/transport', label: '案件ボードにもどる' }]
+        }
       />
     )
   }
@@ -205,7 +240,10 @@ export function TransportJobForm({
         error={form.errors.contactEmail}
       />
       <div>
-        <SubmitButton label="運搬を依頼する" isSubmitting={form.isSubmitting} />
+        <SubmitButton
+          label={edit ? '更新する' : '運搬を依頼する'}
+          isSubmitting={form.isSubmitting}
+        />
       </div>
     </form>
   )
