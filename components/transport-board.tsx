@@ -46,6 +46,12 @@ export async function TransportBoard() {
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
+              href="/transport/new"
+              className={cn(buttonVariants(), 'h-11 px-5')}
+            >
+              運搬を依頼する
+            </Link>
+            <Link
               href="/transport/register"
               className={cn(buttonVariants(), 'h-11 px-5')}
             >

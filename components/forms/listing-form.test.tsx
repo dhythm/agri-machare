@@ -5,11 +5,11 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ListingForm } from './listing-form'
 
-function setup() {
+function setup(contact?: { name: string; email: string }) {
   const queryClient = new QueryClient()
   render(
     <QueryClientProvider client={queryClient}>
-      <ListingForm />
+      <ListingForm contact={contact} />
     </QueryClientProvider>,
   )
   return userEvent.setup()
@@ -18,6 +18,14 @@ function setup() {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('ListingForm', () => {
+  it('prefills the seller from the signed-in user', () => {
+    setup({ name: '出品者デモ', email: 'seller@example.com' })
+    expect(screen.getByLabelText('出品者名')).toHaveValue('出品者デモ')
+    expect(screen.getByLabelText('メールアドレス')).toHaveValue(
+      'seller@example.com',
+    )
+  })
+
   it('only asks for prices of the selected deals', async () => {
     const user = setup()
     expect(screen.getByLabelText('販売価格')).toBeInTheDocument()

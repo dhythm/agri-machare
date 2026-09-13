@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { CalendarClock, MapPin, Route, Scale } from 'lucide-react'
+import { LoginPrompt } from '@/components/auth/login-prompt'
 import { PageShell } from '@/components/page-shell'
 import { BackLink } from '@/components/back-link'
 import { Badge } from '@/components/badge'
 import { TransportApplicationForm } from '@/components/forms/transport-application-form'
-import { formatYen, isApproved } from '@/lib/data'
+import { formatYen } from '@/lib/data'
+import { canView, getCurrentUser } from '@/lib/server/auth/session'
 import { getTransportJob } from '@/lib/server/transport'
 
 export const metadata: Metadata = { title: '運搬案件 | ノウキシェア' }
@@ -19,7 +21,8 @@ export default async function TransportJobPage({
 }) {
   const { id } = await params
   const job = await getTransportJob(id)
-  if (!job || !isApproved(job)) notFound()
+  const user = await getCurrentUser()
+  if (!job || !canView(user, job)) notFound()
 
   return (
     <PageShell>
@@ -79,7 +82,17 @@ export default async function TransportJobPage({
               この案件に応募する
             </h2>
             <div className="mt-5">
-              <TransportApplicationForm job={job} />
+              {user ? (
+                <TransportApplicationForm
+                  job={job}
+                  contact={{ name: user.name, email: user.email }}
+                />
+              ) : (
+                <LoginPrompt
+                  action="応募する"
+                  callbackUrl={`/transport/${job.id}`}
+                />
+              )}
             </div>
           </div>
         </div>

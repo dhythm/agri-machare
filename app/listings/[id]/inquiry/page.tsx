@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
+import { LoginPrompt } from '@/components/auth/login-prompt'
 import { PageShell } from '@/components/page-shell'
 import { BackLink } from '@/components/back-link'
 import { InquiryForm } from '@/components/forms/inquiry-form'
-import { formatYen } from '@/lib/data'
+import { formatYen, isApproved } from '@/lib/data'
+import { getCurrentUser } from '@/lib/server/auth/session'
 import { getListing } from '@/lib/server/listings'
 import { buildModes } from '@/lib/server/listing-detail'
 import {
@@ -13,6 +15,8 @@ import {
 } from '@/lib/validation/listing-inquiry'
 
 export const metadata: Metadata = { title: '出品者に連絡する | ノウキシェア' }
+
+export const dynamic = 'force-dynamic'
 
 export default async function InquiryPage({
   params,
@@ -23,7 +27,8 @@ export default async function InquiryPage({
 }) {
   const { id } = await params
   const listing = await getListing(id)
-  if (!listing) notFound()
+  if (!listing || !isApproved(listing)) notFound()
+  const user = await getCurrentUser()
 
   const modes = buildModes(listing)
   const requested = (await searchParams).mode
@@ -73,11 +78,19 @@ export default async function InquiryPage({
           出品者に連絡する
         </h2>
         <div className="mt-6">
-          <InquiryForm
-            listing={listing}
-            modes={modes}
-            initialMode={initialMode}
-          />
+          {user ? (
+            <InquiryForm
+              listing={listing}
+              modes={modes}
+              initialMode={initialMode}
+              contact={{ name: user.name, email: user.email }}
+            />
+          ) : (
+            <LoginPrompt
+              action="出品者に連絡する"
+              callbackUrl={`/listings/${listing.id}/inquiry?mode=${initialMode}`}
+            />
+          )}
         </div>
       </div>
     </PageShell>

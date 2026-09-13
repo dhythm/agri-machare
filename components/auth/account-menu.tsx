@@ -25,6 +25,9 @@ export function AccountMenu() {
           運営審査
         </Link>
       )}
+      <Link href="/account" className={linkClass}>
+        マイページ
+      </Link>
       <span className="hidden text-sm text-muted-foreground sm:inline">
         {session.user.name}
       </span>

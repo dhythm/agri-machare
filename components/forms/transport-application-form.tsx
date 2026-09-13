@@ -8,15 +8,22 @@ import {
 import { useSubmissionForm } from './use-submission-form'
 import { FormAlert, SelectField, TextField, TextareaField } from './fields'
 import { ReceiptPanel } from './receipt'
+import type { FormContact } from './contact'
 import { SubmitButton } from './submit-button'
 
-export function TransportApplicationForm({ job }: { job: TransportJob }) {
+export function TransportApplicationForm({
+  job,
+  contact,
+}: {
+  job: TransportJob
+  contact?: FormContact
+}) {
   const form = useSubmissionForm({
     url: `/api/transport/jobs/${job.id}/applications`,
     validate: validateTransportApplication,
     initialValues: {
-      name: '',
-      email: '',
+      name: contact?.name ?? '',
+      email: contact?.email ?? '',
       vehicle: '',
       availableDate: '',
       message: '',
