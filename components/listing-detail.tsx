@@ -24,6 +24,7 @@ import { BackLink } from '@/components/back-link'
 import { ListingCard } from '@/components/listing-card'
 import { RentToOwnSimulator } from '@/components/rent-to-own/rent-to-own-simulator'
 import { RentalRequestForm } from '@/components/rent-to-own/rental-request-form'
+import { OrderRequestForm } from '@/components/orders/order-request-form'
 import { TransportEstimate } from '@/components/transport/transport-estimate'
 import { StarRating } from '@/components/reviews/star-rating'
 import type { Review } from '@/lib/server/store/types'
@@ -46,6 +47,7 @@ export function ListingDetail({
   booked,
   viewer,
   sellerReviews = [],
+  purchaseAvailable = true,
 }: {
   listing: Listing
   modes: ListingModeConfig[]
@@ -54,6 +56,8 @@ export function ListingDetail({
   booked: DateRange[]
   viewer: { signedIn: boolean; isOwner: boolean; canEdit?: boolean }
   sellerReviews?: Review[]
+  /** False while another buyer's order holds the listing. */
+  purchaseAvailable?: boolean
 }) {
   const [mode, setMode] = useState<ListingMode>(modes[0].id)
   const active = modes.find((item) => item.id === mode) ?? modes[0]
@@ -253,6 +257,15 @@ export function ListingDetail({
                     rentPerDay={listing.rentPerDay}
                     booked={booked}
                     signedIn={viewer.signedIn}
+                  />
+                ) : active.id === 'buy' &&
+                  listing.salePrice &&
+                  !viewer.isOwner ? (
+                  <OrderRequestForm
+                    listingId={listing.id}
+                    price={listing.salePrice}
+                    signedIn={viewer.signedIn}
+                    available={purchaseAvailable}
                   />
                 ) : (
                   <Link

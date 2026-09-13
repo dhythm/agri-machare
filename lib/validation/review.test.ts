@@ -27,6 +27,12 @@ describe('validateReview', () => {
     expect(bare.ok && bare.value.comment).toBeUndefined()
   })
 
+  it('accepts the order source', () => {
+    expect(
+      validateReview({ sourceKind: 'order', sourceId: 'o', rating: 3 }).ok,
+    ).toBe(true)
+  })
+
   it('rejects unknown sources and ratings outside 1-5', () => {
     expect(
       validateReview({ sourceKind: 'x', sourceId: 'r', rating: 3 }).ok,

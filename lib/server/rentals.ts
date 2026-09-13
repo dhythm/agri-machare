@@ -12,6 +12,7 @@ import {
 } from '@/lib/rent-to-own'
 import type { AuthenticatedUser } from './auth/accounts'
 import { notify } from './notifications'
+import { createOrderFromRental } from './orders'
 import { getStore, type Rental } from './store'
 
 export type RentalResult<T> =
@@ -138,6 +139,13 @@ export async function updateRentalStatus(
   const updated = await store.rentals.update(id, patch)
   if (!updated) return fail('not_found')
   const listing = await store.listings.get(rental.listingId)
+  if (status === 'converted' && listing && patch.purchasePrice !== undefined)
+    await createOrderFromRental({
+      listing,
+      buyerUserId: rental.renterUserId,
+      price: patch.purchasePrice,
+      rentalId: rental.id,
+    })
   const recipients =
     party === 'admin'
       ? [rental.renterUserId, listing?.ownerUserId]

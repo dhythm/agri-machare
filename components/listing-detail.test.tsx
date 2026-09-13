@@ -40,8 +40,8 @@ describe('ListingDetail', () => {
 
     expect(purchase).toHaveAttribute('aria-pressed', 'true')
     expect(
-      screen.getByRole('link', { name: '購入手続きへ進む' }),
-    ).toHaveAttribute('href', '/listings/trc-001/inquiry?mode=buy')
+      screen.getByRole('link', { name: 'ログインして購入を申し込む' }),
+    ).toHaveAttribute('href', '/login?callbackUrl=%2Flistings%2Ftrc-001')
     expect(
       screen.getByRole('link', { name: '出品者に質問する' }),
     ).toHaveAttribute('href', '/listings/trc-001/inquiry?mode=question')

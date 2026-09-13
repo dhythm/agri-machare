@@ -1,4 +1,9 @@
-import type { Listing, ThreadStatus, TransportJob } from '@/lib/data'
+import type {
+  Listing,
+  OrderStatus,
+  ThreadStatus,
+  TransportJob,
+} from '@/lib/data'
 import type { RentalStatus } from '@/lib/rent-to-own'
 import type { Repository } from './repository'
 
@@ -74,7 +79,7 @@ export type Notification = {
   readAt?: string
 }
 
-export type ReviewSourceKind = 'rental' | 'thread'
+export type ReviewSourceKind = 'rental' | 'thread' | 'order'
 
 /** A buyer's or renter's rating of the seller after one finished deal. */
 export type Review = {
@@ -113,6 +118,21 @@ export type CarrierProfile = {
   updatedAt: string
 }
 
+/** A purchase; the price is copied from the listing (or the rental credit) when opened. */
+export type Order = {
+  id: string
+  listingId: string
+  buyerUserId: string
+  sellerUserId: string
+  price: number
+  status: OrderStatus
+  message?: string
+  /** Set when the order came from a rent-to-own conversion. */
+  sourceRentalId?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export type StoreKind = 'memory' | 'pglite'
 
 export type Store = {
@@ -127,6 +147,7 @@ export type Store = {
   reviews: Repository<Review>
   threadReads: Repository<ThreadRead>
   carrierProfiles: Repository<CarrierProfile>
+  orders: Repository<Order>
   /** Drop every row and load the sample data again. */
   reset(): Promise<void>
   /** Release resources; the store must not be used afterwards. */

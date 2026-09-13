@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getAccountOverview } from './account'
 import { createListing, getListing } from './listings'
 import { requestRental } from './rentals'
+import { requestOrder } from './orders'
 import { resetStore } from './store'
 import { acceptSubmission } from './submissions'
 import { addMessage } from './threads'
@@ -76,6 +77,7 @@ describe('getAccountOverview', () => {
       startDate: '2026-10-01',
       endDate: '2026-10-07',
     })
+    await requestOrder((await getListing('cmb-002'))!, demoUser, {})
     const mine = await createListing(listingInput, 'demo-user')
     const myJob = await createTransportJob(jobInput, 'demo-user')
 
@@ -116,8 +118,11 @@ describe('getAccountOverview', () => {
       unreadThreads: 3,
       openInquiries: 3,
       requestedRentals: 1,
+      requestedOrders: 1,
       pendingListings: 0,
     })
+    expect(seller.orders.asSeller).toHaveLength(1)
+    expect(user.orders.asBuyer[0].listing?.id).toBe('cmb-002')
     expect(user.unreadThreadIds).toEqual([user.sentInquiries[0].submission.id])
     expect(user.summary.pendingListings).toBe(1)
     await acceptSubmission(
@@ -144,10 +149,12 @@ describe('getAccountOverview', () => {
       unreadThreadIds: [],
       sentJobInquiries: [],
       carrier: undefined,
+      orders: { asBuyer: [], asSeller: [] },
       summary: {
         unreadThreads: 0,
         openInquiries: 0,
         requestedRentals: 0,
+        requestedOrders: 0,
         pendingListings: 0,
       },
     })

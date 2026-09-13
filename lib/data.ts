@@ -160,6 +160,24 @@ export function isThreadKind(kind: string): kind is ThreadKind {
   return (threadKinds as readonly string[]).includes(kind)
 }
 
+export const orderStatuses = [
+  'requested',
+  'accepted',
+  'delivered',
+  'completed',
+  'cancelled',
+] as const
+
+export type OrderStatus = (typeof orderStatuses)[number]
+
+export const orderStatusLabels: Record<OrderStatus, string> = {
+  requested: '申込中',
+  accepted: '承諾',
+  delivered: '引き渡し済み',
+  completed: '完了',
+  cancelled: 'キャンセル',
+}
+
 export const threadStatusLabels: Record<ThreadStatus, string> = {
   new: '未対応',
   in_progress: '対応中',

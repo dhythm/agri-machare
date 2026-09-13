@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   AccountTable,
   CarrierTable,
+  OrderTable,
   RentalTable,
   ReviewTable,
   ThreadTable,
@@ -73,6 +74,31 @@ describe('admin tables', () => {
     expect(screen.getByRole('button', { name: '終了する' })).toBeInTheDocument()
     expect(screen.getByText('対応中')).toBeInTheDocument()
     expect(screen.getByText('3')).toBeInTheDocument()
+  })
+
+  it('renders orders with a cancel action while open', () => {
+    render(
+      <OrderTable
+        items={[
+          {
+            order: {
+              id: 'o-1',
+              listingId: 'trc-001',
+              buyerUserId: 'demo-user',
+              sellerUserId: 'demo-seller',
+              price: 18_800_000,
+              status: 'accepted',
+              createdAt: '2026-09-13T00:00:00.000Z',
+              updatedAt: '2026-09-13T00:00:00.000Z',
+            },
+            listing: undefined,
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByText('¥18,800,000')).toBeInTheDocument()
+    expect(screen.getByText('承諾')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '取り消す' })).toBeInTheDocument()
   })
 
   it('renders reviews', () => {

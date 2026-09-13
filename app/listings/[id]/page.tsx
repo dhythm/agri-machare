@@ -5,6 +5,7 @@ import { canManage, canView, getCurrentUser } from '@/lib/server/auth/session'
 import { getListing, getRelatedListings } from '@/lib/server/listings'
 import { buildModes } from '@/lib/server/listing-detail'
 import { listBookedRanges } from '@/lib/server/rentals'
+import { listingHasOpenOrder } from '@/lib/server/orders'
 import { listReviewsForSeller } from '@/lib/server/reviews'
 import type { RentToOwnTerms } from '@/lib/rent-to-own'
 import type { Listing } from '@/lib/data'
@@ -58,6 +59,7 @@ export default async function ListingPage({
           isOwner: user !== undefined && listing.ownerUserId === user.id,
           canEdit: canManage(user, listing),
         }}
+        purchaseAvailable={!(await listingHasOpenOrder(listing.id))}
       />
     </PageShell>
   )

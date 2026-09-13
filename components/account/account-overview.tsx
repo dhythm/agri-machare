@@ -29,6 +29,9 @@ import { ReviewForm } from '@/components/reviews/review-form'
 import { StarRating } from '@/components/reviews/star-rating'
 import type { Review } from '@/lib/server/store/types'
 import { rentalStatusLabels } from '@/lib/rent-to-own'
+import { orderStatusLabels } from '@/lib/data'
+import type { OrderWithListing } from '@/lib/server/orders'
+import { OrderActions } from './order-actions'
 import type { RentalWithListing } from '@/lib/server/rentals'
 
 const moderationLabels: Record<ModerationStatus, string> = {
@@ -163,6 +166,78 @@ function WrittenReview({ review }: { review: Review }) {
         <p className="mt-1 text-foreground">{review.comment}</p>
       )}
     </div>
+  )
+}
+
+function OrderList({
+  items,
+  party,
+  reviewedSources,
+}: {
+  items: OrderWithListing[]
+  party: 'buyer' | 'seller'
+  reviewedSources: Record<string, Review>
+}) {
+  if (items.length === 0) return <Empty label="まだありません" />
+  return (
+    <ul className="flex flex-col gap-3">
+      {items.map(({ order, listing }) => (
+        <li
+          key={order.id}
+          className="rounded-2xl border border-border bg-card p-5 text-sm sm:p-6"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            {listing ? (
+              <Link
+                href={`/listings/${listing.id}`}
+                className="font-semibold text-foreground hover:text-primary hover:underline"
+              >
+                {listing.name}
+              </Link>
+            ) : (
+              <span className="text-muted-foreground">削除された農機具</span>
+            )}
+            <Badge variant={order.status === 'requested' ? 'default' : 'muted'}>
+              {orderStatusLabels[order.status]}
+            </Badge>
+            <span className="text-muted-foreground">
+              {formatYen(order.price)}
+              {order.sourceRentalId && '（レンタルから切替）'}
+            </span>
+          </div>
+          {order.message && (
+            <p className="mt-1 text-foreground">{order.message}</p>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <OrderActions
+              orderId={order.id}
+              status={order.status}
+              party={party}
+            />
+            {party === 'buyer' &&
+              listing &&
+              (order.status === 'delivered' ||
+                order.status === 'completed') && (
+                <Link
+                  href={`/transport/new?listingId=${listing.id}`}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
+                  運搬を依頼する
+                </Link>
+              )}
+          </div>
+          {party === 'buyer' &&
+            order.status === 'completed' &&
+            (reviewedSources[`order:${order.id}`] ? (
+              <WrittenReview review={reviewedSources[`order:${order.id}`]} />
+            ) : (
+              <div className="mt-3 border-t border-border pt-3">
+                <ReviewForm sourceKind="order" sourceId={order.id} />
+              </div>
+            ))}
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -412,6 +487,30 @@ export function AccountOverviewView({
                 ))}
               </ul>
             )}
+          </Section>
+
+          <Section
+            id="purchases"
+            title="買った農機具"
+            count={overview.orders.asBuyer.length}
+          >
+            <OrderList
+              items={overview.orders.asBuyer}
+              party="buyer"
+              reviewedSources={overview.reviewedSources}
+            />
+          </Section>
+
+          <Section
+            id="sales"
+            title="売った農機具"
+            count={overview.orders.asSeller.length}
+          >
+            <OrderList
+              items={overview.orders.asSeller}
+              party="seller"
+              reviewedSources={overview.reviewedSources}
+            />
           </Section>
 
           <Section
