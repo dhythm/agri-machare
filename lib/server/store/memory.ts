@@ -10,6 +10,7 @@ import type {
   Review,
   Store,
   Submission,
+  ThreadRead,
 } from './types'
 
 export function createMemoryStore(): Store {
@@ -22,6 +23,7 @@ export function createMemoryStore(): Store {
     accountStatuses: createMemoryRepository<AccountStatus>([]),
     notifications: createMemoryRepository<Notification>([]),
     reviews: createMemoryRepository<Review>([]),
+    threadReads: createMemoryRepository<ThreadRead>([]),
   }
   const proxy = <T extends { id: string }>(
     pick: () => Repository<T>,
@@ -42,6 +44,7 @@ export function createMemoryStore(): Store {
     accountStatuses: proxy<AccountStatus>(() => store.accountStatuses),
     notifications: proxy<Notification>(() => store.notifications),
     reviews: proxy<Review>(() => store.reviews),
+    threadReads: proxy<ThreadRead>(() => store.threadReads),
     async reset() {
       store = {
         listings: createMemoryRepository(listings),
@@ -52,6 +55,7 @@ export function createMemoryStore(): Store {
         accountStatuses: createMemoryRepository<AccountStatus>([]),
         notifications: createMemoryRepository<Notification>([]),
         reviews: createMemoryRepository<Review>([]),
+        threadReads: createMemoryRepository<ThreadRead>([]),
       }
     },
     async close() {},

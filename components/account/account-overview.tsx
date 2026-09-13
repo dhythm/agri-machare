@@ -38,13 +38,16 @@ function text(value: unknown): string {
 function ThreadMeta({
   submission,
   replyCount,
+  unread = false,
 }: {
   submission: Submission
   replyCount: number
+  unread?: boolean
 }) {
   const status = submission.status ?? 'new'
   return (
     <span className="flex flex-wrap items-center gap-2">
+      {unread && <Badge variant="accent">未読</Badge>}
       <Badge variant={status === 'new' ? 'default' : 'muted'}>
         {threadStatusLabels[status]}
       </Badge>
@@ -207,8 +210,36 @@ export function AccountOverviewView({
 }) {
   const replies = (submission: Submission) =>
     overview.replyCounts[submission.id] ?? 0
+  const unread = new Set(overview.unreadThreadIds)
+  const summaryCards = [
+    { label: '未読のやり取り', value: overview.summary.unreadThreads },
+    {
+      label: '未対応の問い合わせ・応募',
+      value: overview.summary.openInquiries,
+    },
+    { label: '申込中のレンタル', value: overview.summary.requestedRentals },
+    { label: '審査待ちの出品', value: overview.summary.pendingListings },
+  ]
   return (
     <div className="flex flex-col gap-10">
+      <section aria-labelledby="section-summary">
+        <h2 id="section-summary" className="sr-only">
+          概要
+        </h2>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {summaryCards.map((card) => (
+            <li
+              key={card.label}
+              className="rounded-2xl border border-border bg-card p-4"
+            >
+              <p className="text-xs text-muted-foreground">{card.label}</p>
+              <p className="mt-1 font-display text-2xl font-bold text-foreground">
+                {card.value}件
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
       <Section title="自分の出品">
         {overview.listings.length === 0 ? (
           <Empty label="まだありません" />
@@ -262,6 +293,7 @@ export function AccountOverviewView({
                       <ThreadMeta
                         submission={inquiry}
                         replyCount={replies(inquiry)}
+                        unread={unread.has(inquiry.id)}
                       />
                     </div>
                   )}
@@ -326,6 +358,7 @@ export function AccountOverviewView({
                       <ThreadMeta
                         submission={application}
                         replyCount={replies(application)}
+                        unread={unread.has(application.id)}
                       />
                     </div>
                   )}
@@ -386,6 +419,7 @@ export function AccountOverviewView({
                   <ThreadMeta
                     submission={submission}
                     replyCount={replies(submission)}
+                    unread={unread.has(submission.id)}
                   />
                 </div>
               </li>
@@ -430,6 +464,7 @@ export function AccountOverviewView({
                   <ThreadMeta
                     submission={submission}
                     replyCount={replies(submission)}
+                    unread={unread.has(submission.id)}
                   />
                 </div>
               </li>

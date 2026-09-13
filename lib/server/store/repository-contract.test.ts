@@ -11,6 +11,7 @@ import type {
   Review,
   Store,
   Submission,
+  ThreadRead,
 } from './types'
 
 vi.mock('server-only', () => ({}))
@@ -294,6 +295,25 @@ describe.each(stores)('$name store', { timeout: 20_000 }, ({ store }) => {
     expect((await store.reviews.get('rv-2'))?.comment).toBeUndefined()
     await store.reset()
     expect(await store.reviews.list()).toEqual([])
+  })
+
+  it('round-trips thread reads', async () => {
+    const read: ThreadRead = {
+      id: 't-1:demo-user',
+      threadId: 't-1',
+      userId: 'demo-user',
+      readAt: '2026-09-13T08:00:00.000Z',
+    }
+    expect(await store.threadReads.create(read)).toEqual(read)
+    expect(
+      (
+        await store.threadReads.update('t-1:demo-user', {
+          readAt: '2026-09-13T09:00:00.000Z',
+        })
+      )?.readAt,
+    ).toBe('2026-09-13T09:00:00.000Z')
+    await store.reset()
+    expect(await store.threadReads.list()).toEqual([])
   })
 
   it('does not let callers mutate stored data through returned objects', async () => {
