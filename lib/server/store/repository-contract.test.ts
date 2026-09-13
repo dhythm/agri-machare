@@ -6,6 +6,7 @@ import { createPgliteStore } from './pglite'
 import type {
   AccountStatus,
   CarrierProfile,
+  DealEvent,
   Message,
   Notification,
   Order,
@@ -367,6 +368,28 @@ describe.each(stores)('$name store', { timeout: 20_000 }, ({ store }) => {
     ).toBe('accepted')
     await store.reset()
     expect(await store.orders.list()).toEqual([])
+  })
+
+  it('round-trips deal events', async () => {
+    const event: DealEvent = {
+      id: 'e-1',
+      dealKind: 'order',
+      dealId: 'o-1',
+      actorUserId: 'demo-user',
+      status: 'requested',
+      note: '現金で',
+      createdAt: '2026-09-13T11:00:00.000Z',
+    }
+    expect(await store.dealEvents.create(event)).toEqual(event)
+    await store.dealEvents.create({
+      ...event,
+      id: 'e-2',
+      actorUserId: undefined,
+      note: undefined,
+    })
+    expect((await store.dealEvents.get('e-2'))?.actorUserId).toBeUndefined()
+    await store.reset()
+    expect(await store.dealEvents.list()).toEqual([])
   })
 
   it('does not let callers mutate stored data through returned objects', async () => {

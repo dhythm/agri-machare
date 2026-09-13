@@ -59,11 +59,17 @@ export function RentalTable({ items }: { items: RentalWithListing[] }) {
           rental.purchasePrice !== undefined
             ? formatYen(rental.purchasePrice)
             : '—',
-          rental.status === 'requested' || rental.status === 'active' ? (
-            <RentalCancelButton key="cancel" rentalId={rental.id} />
-          ) : (
-            ''
-          ),
+          <span key="actions" className="inline-flex items-center gap-2">
+            <Link
+              href={`/account/deals/rental/${rental.id}`}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              履歴
+            </Link>
+            {(rental.status === 'requested' || rental.status === 'active') && (
+              <RentalCancelButton rentalId={rental.id} />
+            )}
+          </span>,
         ],
       }))}
     />
@@ -281,11 +287,17 @@ export function OrderTable({ items }: { items: OrderWithListing[] }) {
             {orderStatusLabels[order.status]}
           </Badge>,
           new Date(order.createdAt).toLocaleString('ja-JP'),
-          order.status === 'completed' || order.status === 'cancelled' ? (
-            ''
-          ) : (
-            <OrderCancelButton key="cancel" orderId={order.id} />
-          ),
+          <span key="actions" className="inline-flex items-center gap-2">
+            <Link
+              href={`/account/deals/order/${order.id}`}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              履歴
+            </Link>
+            {order.status !== 'completed' && order.status !== 'cancelled' && (
+              <OrderCancelButton orderId={order.id} />
+            )}
+          </span>,
         ],
       }))}
     />

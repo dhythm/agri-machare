@@ -489,6 +489,43 @@ export function AccountOverviewView({
             )}
           </Section>
 
+          <Section id="deals" title="取引の履歴" count={overview.deals.length}>
+            {overview.deals.length === 0 ? (
+              <Empty label="まだありません" />
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {overview.deals.map((deal) => (
+                  <li
+                    key={`${deal.kind}-${deal.id}`}
+                    className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-sm"
+                  >
+                    <Badge variant="outline">
+                      {deal.kind === 'order'
+                        ? '注文'
+                        : deal.kind === 'rental'
+                          ? 'レンタル'
+                          : '運搬'}
+                    </Badge>
+                    <Link
+                      href={`/account/deals/${deal.kind}/${deal.id}`}
+                      className="font-semibold text-foreground hover:text-primary hover:underline"
+                    >
+                      {deal.title}
+                    </Link>
+                    <Badge variant="muted">{deal.statusLabel}</Badge>
+                    <span className="text-muted-foreground">
+                      {deal.role}・相手: {deal.counterpart}・
+                      {formatYen(deal.amount)}
+                    </span>
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {new Date(deal.updatedAt).toLocaleString('ja-JP')}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+
           <Section
             id="purchases"
             title="買った農機具"

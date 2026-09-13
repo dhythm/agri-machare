@@ -22,6 +22,7 @@ describe('migrate', { timeout: 20_000 }, () => {
     expect(tables.rows.map((row) => row.table_name)).toEqual([
       'account_statuses',
       'carrier_profiles',
+      'deal_events',
       'listings',
       'messages',
       'notifications',

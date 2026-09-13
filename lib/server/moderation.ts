@@ -8,6 +8,7 @@ import {
   type ModerationStatus,
   type TransportJob,
 } from '@/lib/data'
+import { recordDealEvent } from './deal-events'
 import { notify } from './notifications'
 import { getStore } from './store'
 
@@ -58,6 +59,13 @@ export async function applyModeration(
     kind === 'listing'
       ? await store.listings.update(id, patch)
       : await store.transportJobs.update(id, patch)
+  if (updated && kind === 'transportJob')
+    await recordDealEvent({
+      dealKind: 'transportJob',
+      dealId: id,
+      status: decision.status,
+      note: decision.note,
+    })
   if (updated?.ownerUserId) {
     const label = kind === 'listing' ? '出品' : '運搬依頼'
     const name = 'name' in updated ? updated.name : updated.item

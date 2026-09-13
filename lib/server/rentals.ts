@@ -11,6 +11,7 @@ import {
   type RentalStatus,
 } from '@/lib/rent-to-own'
 import type { AuthenticatedUser } from './auth/accounts'
+import { recordDealEvent } from './deal-events'
 import { notify } from './notifications'
 import { createOrderFromRental } from './orders'
 import { getStore, type Rental } from './store'
@@ -77,6 +78,13 @@ export async function requestRental(
     createdAt: now,
     updatedAt: now,
   })
+  await recordDealEvent({
+    dealKind: 'rental',
+    dealId: rental.id,
+    status: 'requested',
+    actorUserId: user.id,
+    note: `${range.startDate} 〜 ${range.endDate}`,
+  })
   if (listing.ownerUserId)
     await notify({
       userId: listing.ownerUserId,
@@ -138,6 +146,12 @@ export async function updateRentalStatus(
   }
   const updated = await store.rentals.update(id, patch)
   if (!updated) return fail('not_found')
+  await recordDealEvent({
+    dealKind: 'rental',
+    dealId: id,
+    status,
+    actorUserId: user.id,
+  })
   const listing = await store.listings.get(rental.listingId)
   if (status === 'converted' && listing && patch.purchasePrice !== undefined)
     await createOrderFromRental({

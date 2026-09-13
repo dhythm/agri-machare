@@ -2,6 +2,7 @@ import type { Listing, TransportJob } from '@/lib/data'
 import type {
   AccountStatus,
   CarrierProfile,
+  DealEvent,
   Message,
   Notification,
   Order,
@@ -464,5 +465,37 @@ export const orderTable: TableSpec<Order> = {
       sourceRentalId: (row.source_rental_id as string | null) ?? undefined,
       createdAt: isoString(row.created_at) as string,
       updatedAt: isoString(row.updated_at) as string,
+    }),
+}
+
+export const dealEventTable: TableSpec<DealEvent> = {
+  table: 'deal_events',
+  columns: [
+    'id',
+    'deal_kind',
+    'deal_id',
+    'actor_user_id',
+    'status',
+    'note',
+    'created_at',
+  ],
+  toRow: (event) => [
+    event.id,
+    event.dealKind,
+    event.dealId,
+    nullable(event.actorUserId),
+    event.status,
+    nullable(event.note),
+    event.createdAt,
+  ],
+  fromRow: (row: Row) =>
+    compact({
+      id: row.id as string,
+      dealKind: row.deal_kind as DealEvent['dealKind'],
+      dealId: row.deal_id as string,
+      actorUserId: (row.actor_user_id as string | null) ?? undefined,
+      status: row.status as string,
+      note: (row.note as string | null) ?? undefined,
+      createdAt: isoString(row.created_at) as string,
     }),
 }
