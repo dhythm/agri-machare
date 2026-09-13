@@ -153,6 +153,20 @@ const overview: AccountOverview = {
       },
     ],
   },
+  deals: [
+    {
+      kind: 'order',
+      id: 'o-1',
+      title: 'ジョンディア 90馬力',
+      href: '/listings/trc-006',
+      amount: 21_000_000,
+      status: 'delivered',
+      statusLabel: '引き渡し済み',
+      role: '買い手',
+      counterpart: '出品者デモ',
+      updatedAt: '2026-09-13T00:00:00.000Z',
+    },
+  ],
   unreadThreadIds: ['i-1'],
   carrier: {
     profile: {
@@ -357,6 +371,10 @@ describe('AccountOverviewView', () => {
     expect(
       within(bought).getByRole('link', { name: '運搬を依頼する' }),
     ).toHaveAttribute('href', '/transport/new?listingId=trc-006')
+    const history = screen.getByRole('region', { name: '取引の履歴' })
+    expect(
+      within(history).getByRole('link', { name: /ジョンディア 90馬力/ }),
+    ).toHaveAttribute('href', '/account/deals/order/o-1')
     const sold = screen.getByRole('region', { name: '売った農機具' })
     expect(within(sold).getByText('現金で')).toBeInTheDocument()
     expect(

@@ -47,13 +47,21 @@ export default async function TransportJobPage({
         <div className="flex items-center justify-between gap-4">
           <BackLink href="/transport" label="運搬案件にもどる" />
           {manages && (
-            <Link
-              href={`/transport/${job.id}/edit`}
-              className={cn(buttonVariants({ variant: 'outline' }), 'h-9')}
-            >
-              <Pencil className="size-3.5" />
-              編集する
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/transport/${job.id}/edit`}
+                className={cn(buttonVariants({ variant: 'outline' }), 'h-9')}
+              >
+                <Pencil className="size-3.5" />
+                編集する
+              </Link>
+              <Link
+                href={`/account/deals/transportJob/${job.id}`}
+                className={cn(buttonVariants({ variant: 'outline' }), 'h-9')}
+              >
+                取引の履歴
+              </Link>
+            </div>
           )}
         </div>
         <header className="mt-8 border-b border-border pb-7">

@@ -150,6 +150,7 @@ describe('getAccountOverview', () => {
       sentJobInquiries: [],
       carrier: undefined,
       orders: { asBuyer: [], asSeller: [] },
+      deals: [],
       summary: {
         unreadThreads: 0,
         openInquiries: 0,

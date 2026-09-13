@@ -9,6 +9,7 @@ import {
 import { getStore, type Review, type Submission } from './store'
 import { unreadThreadIds } from './thread-reads'
 import { getCarrierProfile, matchJobsForCarrier } from './carriers'
+import { listDealsForUser, type DealSummary } from './deals'
 import {
   listOrdersForBuyer,
   listOrdersForSeller,
@@ -36,6 +37,8 @@ export type AccountOverview = {
   /** Present once the user has registered as a carrier. */
   carrier?: { profile: CarrierProfile; matchingJobs: TransportJob[] }
   orders: { asBuyer: OrderWithListing[]; asSeller: OrderWithListing[] }
+  /** Every order, rental, and job the user is part of, newest change first. */
+  deals: DealSummary[]
   summary: {
     unreadThreads: number
     /** Threads on the user's own listings and jobs still marked new. */
@@ -75,6 +78,7 @@ export async function getAccountOverview(
     carrierProfile,
     asBuyer,
     asSeller,
+    deals,
   ] = await Promise.all([
     store.listings.list(),
     store.transportJobs.list(),
@@ -87,6 +91,7 @@ export async function getAccountOverview(
     getCarrierProfile(userId),
     listOrdersForBuyer(userId),
     listOrdersForSeller(userId),
+    listDealsForUser(userId),
   ])
   const carrier = carrierProfile
     ? {
@@ -160,6 +165,7 @@ export async function getAccountOverview(
     unreadThreadIds: unread,
     carrier,
     orders: { asBuyer, asSeller },
+    deals,
     summary: {
       unreadThreads: unread.length,
       openInquiries: incoming.filter(

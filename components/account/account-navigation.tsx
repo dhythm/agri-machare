@@ -7,10 +7,12 @@ import {
   Send,
   Tractor,
   Truck,
+  History,
 } from 'lucide-react'
 
 const navigationItems = [
   { label: '確認すること', href: '#activity', icon: Inbox },
+  { label: '取引の履歴', href: '#deals', icon: History },
   { label: '出品管理', href: '#equipment', icon: Tractor },
   { label: 'レンタル管理', href: '#rentals', icon: CalendarDays },
   { label: '運搬管理', href: '#transport', icon: Truck },
