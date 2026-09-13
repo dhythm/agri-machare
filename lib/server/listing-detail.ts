@@ -35,13 +35,16 @@ export function buildModes(listing: Listing): ListingModeConfig[] {
   return modes
 }
 
+export const transportBaseRates: Record<string, number> = {
+  トラクター: 30_000,
+  コンバイン: 42_000,
+  田植機: 18_000,
+  耕運機: 6_000,
+  ドローン: 4_000,
+}
+
+export const transportDefaultRate = 20_000
+
 export function estimateTransport(listing: Listing): number {
-  const base: Record<string, number> = {
-    トラクター: 30_000,
-    コンバイン: 42_000,
-    田植機: 18_000,
-    耕運機: 6_000,
-    ドローン: 4_000,
-  }
-  return base[listing.category] ?? 20_000
+  return transportBaseRates[listing.category] ?? transportDefaultRate
 }

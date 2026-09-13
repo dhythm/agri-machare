@@ -55,6 +55,36 @@ export type DealFilter = 'all' | 'sale' | 'rent' | 'rentToOwn'
 export type ListingFilter = {
   category: string
   deal: DealFilter
+  keyword?: string
+}
+
+export type PageRequest = {
+  page: number
+  pageSize: number
+}
+
+export type ListingPage = {
+  items: Listing[]
+  total: number
+  page: number
+  pageSize: number
+  pageCount: number
+}
+
+const dealFilters = ['all', 'sale', 'rent', 'rentToOwn'] as const
+
+export const listingPageSize = 12
+
+export const featuredListingCount = 6
+
+export function isDealFilter(value: string): value is DealFilter {
+  return (dealFilters as readonly string[]).includes(value)
+}
+
+export function isCategory(
+  value: string,
+): value is (typeof categories)[number] {
+  return (categories as readonly string[]).includes(value)
 }
 
 export type ListingMode = 'buy' | 'rent' | 'rentToOwn'

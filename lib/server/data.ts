@@ -1,8 +1,9 @@
 import 'server-only'
 
 import type { Listing, TransportJob } from '@/lib/data'
+import { generateListings } from './generated-listings'
 
-export const listings: Listing[] = [
+const curatedListings: Listing[] = [
   {
     id: 'trc-001',
     name: 'クボタ トラクター 45馬力 GLシリーズ',
@@ -128,6 +129,11 @@ export const listings: Listing[] = [
   },
 ]
 
+export const listings: Listing[] = [
+  ...curatedListings,
+  ...generateListings(42, curatedListings.length + 1),
+]
+
 export const transportJobs: TransportJob[] = [
   {
     id: 'tj-01',
@@ -171,6 +177,72 @@ export const transportJobs: TransportJob[] = [
     weight: '約120kg',
     desiredDate: '相談',
     reward: 6_000,
+    status: '募集中',
+  },
+  {
+    id: 'tj-05',
+    item: 'トラクター 75馬力（キャビン付）',
+    from: '北海道 帯広市',
+    to: '北海道 旭川市',
+    distanceKm: 180,
+    weight: '約3.2t',
+    desiredDate: '10/12 午前',
+    reward: 52_000,
+    status: '募集中',
+  },
+  {
+    id: 'tj-06',
+    item: '農業用ドローン 一式',
+    from: '福岡県 筑後市',
+    to: '佐賀県 武雄市',
+    distanceKm: 45,
+    weight: '約60kg',
+    desiredDate: '10/9 午後',
+    reward: 8_000,
+    status: '募集中',
+  },
+  {
+    id: 'tj-07',
+    item: 'コンバイン 2条刈',
+    from: '滋賀県 長浜市',
+    to: '兵庫県 丹波篠山市',
+    distanceKm: 110,
+    weight: '約1.4t',
+    desiredDate: '10/15 終日',
+    reward: 30_000,
+    status: '調整中',
+  },
+  {
+    id: 'tj-08',
+    item: '田植機 8条植',
+    from: '宮城県 登米市',
+    to: '岩手県 花巻市',
+    distanceKm: 95,
+    weight: '約1.1t',
+    desiredDate: '相談',
+    reward: 24_000,
+    status: '募集中',
+  },
+  {
+    id: 'tj-09',
+    item: '耕運機 2台まとめて',
+    from: '静岡県 掛川市',
+    to: '愛知県 豊橋市',
+    distanceKm: 70,
+    weight: '約200kg',
+    desiredDate: '10/20 午前',
+    reward: 9_000,
+    status: '募集中',
+  },
+  {
+    id: 'tj-10',
+    item: 'トラクター 33馬力',
+    from: '岡山県 真庭市',
+    to: '広島県 東広島市',
+    distanceKm: 130,
+    weight: '約1.6t',
+    desiredDate: '10/25 終日',
+    reward: 36_000,
     status: '募集中',
   },
 ]
