@@ -70,6 +70,12 @@ const overview: AccountOverview = {
       }),
       inquiries: [],
     },
+    {
+      listing: listing('l-3', '取り下げ中の田植機', {
+        withdrawnAt: '2026-09-13T00:00:00.000Z',
+      }),
+      inquiries: [],
+    },
   ],
   transportJobs: [{ job, applications: [] }],
   sentInquiries: [
@@ -166,6 +172,13 @@ describe('AccountOverviewView', () => {
     const mine = screen.getByRole('region', { name: '自分の出品' })
     expect(within(mine).getByText('公開中のトラクター')).toBeInTheDocument()
     expect(within(mine).getByText('審査待ち')).toBeInTheDocument()
+    expect(within(mine).getByText('取り下げ中')).toBeInTheDocument()
+    expect(
+      within(mine).getAllByRole('button', { name: '取り下げる' }),
+    ).toHaveLength(2)
+    expect(
+      within(mine).getByRole('button', { name: '再掲載する' }),
+    ).toBeInTheDocument()
     expect(within(mine).getByText('借りたい')).toBeInTheDocument()
     expect(within(mine).getByText('山田')).toBeInTheDocument()
     expect(

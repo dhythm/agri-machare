@@ -9,6 +9,7 @@ import type { AccountOverview } from '@/lib/server/account'
 import type { Submission } from '@/lib/server/store/types'
 import { CompleteJobButton } from './complete-job-button'
 import { RentalActions } from './rental-actions'
+import { ListingStatusButton } from '@/components/listings/listing-status-button'
 import { ReviewForm } from '@/components/reviews/review-form'
 import { StarRating } from '@/components/reviews/star-rating'
 import type { Review } from '@/lib/server/store/types'
@@ -227,9 +228,14 @@ export function AccountOverviewView({
                       {listing.name}
                     </Link>
                     <ModerationBadge status={listing.moderationStatus} />
+                    {listing.withdrawnAt && <Badge>取り下げ中</Badge>}
                   </div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="flex items-center gap-3 text-sm text-muted-foreground">
                     問い合わせ {inquiries.length}件
+                    <ListingStatusButton
+                      listingId={listing.id}
+                      withdrawn={listing.withdrawnAt !== undefined}
+                    />
                   </span>
                 </div>
                 {listing.moderationNote && (
