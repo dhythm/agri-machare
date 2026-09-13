@@ -20,7 +20,34 @@ export type AuthenticatedUser = {
   role: UserRole
 }
 
-type Account = AuthenticatedUser & { password: string }
+/** `password` is unset when the account exists but cannot sign in. */
+type Account = AuthenticatedUser & { password?: string }
+
+type Persona = { id: string; name: string }
+
+/**
+ * Cast of the sample data: the sellers behind the seeded listings, plus
+ * buyers and carriers who trade with them. They sign in with one shared
+ * password (`DEMO_PERSONA_PASSWORD`, `dev-persona` outside production).
+ */
+const personas: Persona[] = [
+  { id: 'nakamura-farm', name: '中村ファーム' },
+  { id: 'sato-noki', name: '佐藤農機' },
+  { id: 'tamura', name: '田村さん' },
+  { id: 'kobayashi-engei', name: '小林園芸' },
+  { id: 'sky-agri', name: 'スカイアグリ' },
+  { id: 'tokachi-agri', name: '十勝アグリ' },
+  { id: 'takahashi', name: '高橋さん' },
+  { id: 'yamada-nosan', name: '山田農産' },
+  { id: 'midori-kikai', name: 'みどり機械' },
+  { id: 'watanabe', name: '渡辺さん' },
+  { id: 'suzuki', name: '鈴木さん' },
+  { id: 'ito-farm', name: '伊藤農園' },
+  { id: 'kato', name: '加藤さん' },
+  { id: 'hokuriku-unso', name: '北陸運送' },
+  { id: 'yamamoto-transport', name: '山本トランスポート' },
+  { id: 'okada', name: '岡田さん' },
+]
 
 type AccountSource = {
   id: string
@@ -93,10 +120,31 @@ function readAccount(source: AccountSource): Account | undefined {
   }
 }
 
+function personaPassword(): string | undefined {
+  const configured = process.env.DEMO_PERSONA_PASSWORD?.trim()
+  if (configured) return configured
+  return process.env.NODE_ENV === 'production' ? undefined : 'dev-persona'
+}
+
+function personaAccounts(): Account[] {
+  const password = personaPassword()
+  return personas.map(({ id, name }) => ({
+    id,
+    name,
+    role: 'user',
+    email: `${id}@example.com`,
+    password,
+  }))
+}
+
+/** Environment accounts first, then the personas. */
 export function configuredAccounts(): Account[] {
-  return accountSources
-    .map(readAccount)
-    .filter((account): account is Account => account !== undefined)
+  return [
+    ...accountSources
+      .map(readAccount)
+      .filter((account): account is Account => account !== undefined),
+    ...personaAccounts(),
+  ]
 }
 
 function matchesSecret(provided: string, expected: string): boolean {
@@ -114,7 +162,8 @@ export function authenticate(
   const account = configuredAccounts().find(
     (candidate) => candidate.email === target,
   )
-  if (!account || !matchesSecret(password, account.password)) return undefined
+  if (!account?.password || !matchesSecret(password, account.password))
+    return undefined
   return {
     id: account.id,
     email: account.email,

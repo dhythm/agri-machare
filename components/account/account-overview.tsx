@@ -517,9 +517,11 @@ export function AccountOverviewView({
                       {deal.role}・相手: {deal.counterpart}・
                       {formatYen(deal.amount)}
                     </span>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {new Date(deal.updatedAt).toLocaleString('ja-JP')}
-                    </span>
+                    {deal.updatedAt && (
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {new Date(deal.updatedAt).toLocaleString('ja-JP')}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -14,6 +14,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Services are tested against the bare sample listings and jobs.
+    env: { DEMO_ACTIVITY: 'off' },
     setupFiles: ['./test/setup.ts'],
     clearMocks: true,
     testTimeout: usesPglite ? 20_000 : 5_000,

@@ -181,18 +181,28 @@ const locations: [string, string][] = [
   ['鹿児島県', '鹿屋市'],
 ]
 
-const sellers: Listing['seller'][] = [
-  { name: '中村ファーム', kind: '農業法人', rating: 4.8, reviews: 34 },
-  { name: '佐藤農機', kind: '販売店', rating: 4.6, reviews: 58 },
-  { name: '田村さん', kind: '個人農家', rating: 4.9, reviews: 21 },
-  { name: '小林園芸', kind: '法人', rating: 4.7, reviews: 12 },
-  { name: 'スカイアグリ', kind: '法人', rating: 4.5, reviews: 27 },
-  { name: '十勝アグリ', kind: '農業法人', rating: 4.4, reviews: 41 },
-  { name: '高橋さん', kind: '個人農家', rating: 4.3, reviews: 9 },
-  { name: '山田農産', kind: '農業法人', rating: 4.7, reviews: 63 },
-  { name: 'みどり機械', kind: '販売店', rating: 4.5, reviews: 88 },
-  { name: '渡辺さん', kind: '個人農家', rating: 5.0, reviews: 4 },
-]
+type SeededSeller = { seller: Listing['seller']; ownerUserId: string }
+
+const sellers: SeededSeller[] = [
+  ['nakamura-farm', '中村ファーム', '農業法人', 4.8, 34],
+  ['sato-noki', '佐藤農機', '販売店', 4.6, 58],
+  ['tamura', '田村さん', '個人農家', 4.9, 21],
+  ['kobayashi-engei', '小林園芸', '法人', 4.7, 12],
+  ['sky-agri', 'スカイアグリ', '法人', 4.5, 27],
+  ['tokachi-agri', '十勝アグリ', '農業法人', 4.4, 41],
+  ['takahashi', '高橋さん', '個人農家', 4.3, 9],
+  ['yamada-nosan', '山田農産', '農業法人', 4.7, 63],
+  ['midori-kikai', 'みどり機械', '販売店', 4.5, 88],
+  ['watanabe', '渡辺さん', '個人農家', 5.0, 4],
+].map(([ownerUserId, name, kind, rating, reviews]) => ({
+  ownerUserId: ownerUserId as string,
+  seller: {
+    name: name as string,
+    kind: kind as Listing['seller']['kind'],
+    rating: rating as number,
+    reviews: reviews as number,
+  },
+}))
 
 const conditions: Listing['condition'][] = [
   '未使用に近い',
@@ -265,7 +275,7 @@ export function generateListings(count: number, startId: number): Listing[] {
       salePrice,
       rentPerDay,
       ...rentToOwnTerms(deals.length === 2 && next() < 0.6, salePrice),
-      seller: pick(sellers),
+      ...pick(sellers),
       tags,
     }
   })

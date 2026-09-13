@@ -26,6 +26,7 @@ export type {
  * - `memory` (default): volatile in-process store, for `pnpm dev` and mocks.
  * - `pglite`: embedded PostgreSQL at `PGLITE_DATA_DIR` (default
  *   `.data/pglite`, `memory://` for a volatile database).
+ * `DEMO_ACTIVITY=off` seeds only the listings and jobs, without activity.
  */
 function resolveStoreKind(): StoreKind {
   const value = process.env.DATA_STORE?.trim() || 'memory'
@@ -35,14 +36,21 @@ function resolveStoreKind(): StoreKind {
   )
 }
 
+/** Sample activity is on unless `DEMO_ACTIVITY=off` (the test suite turns it off). */
+function demoActivityEnabled(): boolean {
+  return process.env.DEMO_ACTIVITY?.trim() !== 'off'
+}
+
 function createStore(): Store {
+  const demoActivity = demoActivityEnabled()
   switch (resolveStoreKind()) {
     case 'pglite':
       return createPgliteStore({
         dataDir: process.env.PGLITE_DATA_DIR?.trim() || defaultPgliteDataDir,
+        demoActivity,
       })
     case 'memory':
-      return createMemoryStore()
+      return createMemoryStore({ demoActivity })
   }
 }
 
