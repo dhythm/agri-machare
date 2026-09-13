@@ -4,6 +4,7 @@ import {
   invalidInput,
   optionalText,
   readDate,
+  readInteger,
   requireChoice,
   requireEmail,
   requireText,
@@ -89,6 +90,42 @@ export function validateTransportApplication(
       true,
     ) as string,
     message: optionalText(errors, source, 'message', 'メッセージ', 1000),
+  }
+  return finish(errors, value)
+}
+
+export type TransportJobInput = {
+  item: string
+  from: string
+  to: string
+  distanceKm: number
+  weight: string
+  desiredDate: string
+  reward: number
+  contactEmail: string
+}
+
+export function validateTransportJob(
+  input: unknown,
+): ValidationResult<TransportJobInput> {
+  const source = asRecord(input)
+  if (!source) return invalidInput
+  const errors: FieldErrors = {}
+  const value: TransportJobInput = {
+    item: requireText(errors, source, 'item', '運ぶもの', 80),
+    from: requireText(errors, source, 'from', '出発地', 60),
+    to: requireText(errors, source, 'to', '届け先', 60),
+    distanceKm: readInteger(errors, source, 'distanceKm', '距離', {
+      min: 1,
+      max: 3000,
+    }) as number,
+    weight: requireText(errors, source, 'weight', '重量', 30),
+    desiredDate: requireText(errors, source, 'desiredDate', '希望日', 30),
+    reward: readInteger(errors, source, 'reward', '報酬', {
+      min: 1,
+      max: 10_000_000,
+    }) as number,
+    contactEmail: requireEmail(errors, source, 'contactEmail'),
   }
   return finish(errors, value)
 }

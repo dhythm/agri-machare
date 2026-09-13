@@ -23,6 +23,8 @@ export const listingConditions = [
   '要整備',
 ] as const
 
+export const sellerKinds = ['個人農家', '法人', '農業法人', '販売店'] as const
+
 const listingDeals = ['sale', 'rent'] as const
 
 export type ListingSubmission = {
@@ -39,6 +41,8 @@ export type ListingSubmission = {
   rentPerDay?: number
   rentToOwn: boolean
   summary: string
+  sellerName: string
+  sellerKind: (typeof sellerKinds)[number]
   contactEmail: string
 }
 
@@ -113,6 +117,14 @@ export function validateListingSubmission(
     ),
     rentToOwn,
     summary: requireText(errors, source, 'summary', '説明', 1000),
+    sellerName: requireText(errors, source, 'sellerName', '出品者名', 60),
+    sellerKind: requireChoice(
+      errors,
+      source,
+      'sellerKind',
+      '出品者の区分',
+      sellerKinds,
+    ) as ListingSubmission['sellerKind'],
     contactEmail: requireEmail(errors, source, 'contactEmail'),
   }
   if (!canSell) value.salePrice = undefined

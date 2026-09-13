@@ -23,6 +23,8 @@ export type Listing = {
     reviews: number
   }
   tags: string[]
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type TransportJob = {
@@ -35,6 +37,8 @@ export type TransportJob = {
   desiredDate: string
   reward: number
   status: '募集中' | '調整中'
+  createdAt?: string
+  updatedAt?: string
 }
 
 export const categories = [

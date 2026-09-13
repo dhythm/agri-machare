@@ -15,6 +15,8 @@ const valid = {
   rentPerDay: '12000',
   rentToOwn: true,
   summary: 'キャビン付き。まず借りて試せます。',
+  sellerName: '中村ファーム',
+  sellerKind: '農業法人',
   contactEmail: 'seller@example.com',
 }
 
@@ -59,6 +61,8 @@ describe('validateListingSubmission', () => {
       category: '不明',
       year: '1800',
       deals: [],
+      sellerName: '',
+      sellerKind: '団体',
       contactEmail: 'not-an-email',
     })
     expect(result.ok).toBe(false)
@@ -68,6 +72,8 @@ describe('validateListingSubmission', () => {
       'contactEmail',
       'deals',
       'name',
+      'sellerKind',
+      'sellerName',
       'year',
     ])
   })
