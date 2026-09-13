@@ -12,7 +12,7 @@ export default async function AdminDealsPage() {
     <AdminSection title="取引管理" tabs={dealTabs}>
       <AdminQueue
         kind="listing"
-        initialQueue={await getModerationQueue('pending')}
+        initialQueue={await getModerationQueue('all')}
       />
     </AdminSection>
   )

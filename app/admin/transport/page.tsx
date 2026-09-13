@@ -12,7 +12,7 @@ export default async function AdminTransportPage() {
     <AdminSection title="運搬管理" tabs={transportTabs}>
       <AdminQueue
         kind="transportJob"
-        initialQueue={await getModerationQueue('pending')}
+        initialQueue={await getModerationQueue('all')}
       />
     </AdminSection>
   )
