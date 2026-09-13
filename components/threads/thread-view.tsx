@@ -15,6 +15,9 @@ import {
 } from '@/lib/data'
 import type { Thread } from '@/lib/server/threads'
 import { validateMessage } from '@/lib/validation/thread'
+import { ReviewForm } from '@/components/reviews/review-form'
+import { StarRating } from '@/components/reviews/star-rating'
+import type { Review } from '@/lib/server/store/types'
 import { cn } from '@/lib/utils'
 
 const inquiryModeLabels: Record<string, string> = {
@@ -116,9 +119,14 @@ function OpeningMessage({ thread }: { thread: Thread }) {
 export function ThreadView({
   thread,
   currentUserId,
+  canReview = false,
+  review,
 }: {
   thread: Thread
   currentUserId: string
+  /** The sender may review once the inquiry is agreed. */
+  canReview?: boolean
+  review?: Review
 }) {
   const router = useRouter()
   const [body, setBody] = useState('')
@@ -219,6 +227,19 @@ export function ThreadView({
             運搬を依頼する
           </Link>
         )}
+      {review && (
+        <div className="rounded-xl bg-muted/60 p-3 text-sm">
+          <StarRating rating={review.rating} />
+          {review.comment && (
+            <p className="mt-1 text-foreground">{review.comment}</p>
+          )}
+        </div>
+      )}
+      {canReview && !review && (
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <ReviewForm sourceKind="thread" sourceId={thread.submission.id} />
+        </div>
+      )}
       <FormAlert error={error} />
       <OpeningMessage thread={thread} />
       <ol className="flex flex-col gap-3">

@@ -128,6 +128,19 @@ describe('ThreadView', () => {
     ).toHaveAttribute('href', '/transport/new?listingId=trc-001')
   })
 
+  it('shows the review form to the sender of an agreed inquiry', () => {
+    render(
+      <ThreadView
+        thread={{ ...thread, status: 'agreed' }}
+        currentUserId="demo-user"
+        canReview
+      />,
+    )
+    expect(
+      screen.getByRole('button', { name: 'レビューを送る' }),
+    ).toBeInTheDocument()
+  })
+
   it('hides the reply form from admins', () => {
     render(
       <ThreadView

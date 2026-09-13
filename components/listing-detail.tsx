@@ -23,6 +23,8 @@ import { ListingCard } from '@/components/listing-card'
 import { RentToOwnSimulator } from '@/components/rent-to-own/rent-to-own-simulator'
 import { RentalRequestForm } from '@/components/rent-to-own/rental-request-form'
 import { TransportEstimate } from '@/components/transport/transport-estimate'
+import { StarRating } from '@/components/reviews/star-rating'
+import type { Review } from '@/lib/server/store/types'
 import type { DateRange, RentToOwnTerms } from '@/lib/rent-to-own'
 import {
   type Listing,
@@ -39,6 +41,7 @@ export function ListingDetail({
   rentToOwnTerms,
   booked,
   viewer,
+  sellerReviews = [],
 }: {
   listing: Listing
   modes: ListingModeConfig[]
@@ -46,6 +49,7 @@ export function ListingDetail({
   rentToOwnTerms?: RentToOwnTerms
   booked: DateRange[]
   viewer: { signedIn: boolean; isOwner: boolean }
+  sellerReviews?: Review[]
 }) {
   const [mode, setMode] = useState<ListingMode>(modes[0].id)
   const active = modes.find((m) => m.id === mode) ?? modes[0]
@@ -180,6 +184,31 @@ export function ListingDetail({
               )}
             </div>
           </div>
+          {sellerReviews.length > 0 && (
+            <section className="mt-6">
+              <h2 className="font-display text-lg font-bold text-foreground">
+                出品者へのレビュー
+              </h2>
+              <ul className="mt-3 flex flex-col gap-3">
+                {sellerReviews.map((review) => (
+                  <li
+                    key={review.id}
+                    className="rounded-2xl border border-border bg-card p-4 text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <StarRating rating={review.rating} />
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(review.createdAt).toLocaleDateString('ja-JP')}
+                      </span>
+                    </div>
+                    {review.comment && (
+                      <p className="mt-1 text-foreground">{review.comment}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
 
         {/* Action panel */}

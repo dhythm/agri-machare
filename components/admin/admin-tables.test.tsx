@@ -5,6 +5,7 @@ import {
   AccountTable,
   CarrierTable,
   RentalTable,
+  ReviewTable,
   ThreadTable,
 } from './admin-tables'
 
@@ -70,6 +71,32 @@ describe('admin tables', () => {
     )
     expect(screen.getByText('対応中')).toBeInTheDocument()
     expect(screen.getByText('3')).toBeInTheDocument()
+  })
+
+  it('renders reviews', () => {
+    render(
+      <ReviewTable
+        items={[
+          {
+            review: {
+              id: 'rv-1',
+              listingId: 'trc-001',
+              sellerUserId: 'demo-seller',
+              reviewerUserId: 'demo-user',
+              sourceKind: 'rental',
+              sourceId: 'r-1',
+              rating: 5,
+              comment: '最高',
+              createdAt: '2026-09-13T00:00:00.000Z',
+            },
+            listingName: 'クボタ 45馬力',
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByText('クボタ 45馬力')).toBeInTheDocument()
+    expect(screen.getByText('最高')).toBeInTheDocument()
+    expect(screen.getByLabelText('評価 5')).toBeInTheDocument()
   })
 
   it('renders carriers and accounts, and empty states', () => {

@@ -6,7 +6,7 @@ import {
   listRentalsForRenter,
   type RentalWithListing,
 } from './rentals'
-import { getStore, type Submission } from './store'
+import { getStore, type Review, type Submission } from './store'
 
 export type AccountOverview = {
   listings: { listing: Listing; inquiries: Submission[] }[]
@@ -16,6 +16,8 @@ export type AccountOverview = {
   /** Number of replies per thread id, for threads that have any. */
   replyCounts: Record<string, number>
   rentals: { asRenter: RentalWithListing[]; asOwner: RentalWithListing[] }
+  /** Reviews the user wrote, keyed by `kind:sourceId`. */
+  reviewedSources: Record<string, Review>
 }
 
 /**
@@ -33,7 +35,7 @@ export async function getAccountOverview(
   userId: string,
 ): Promise<AccountOverview> {
   const store = getStore()
-  const [listings, jobs, submissions, messages, asRenter, asOwner] =
+  const [listings, jobs, submissions, messages, asRenter, asOwner, reviews] =
     await Promise.all([
       store.listings.list(),
       store.transportJobs.list(),
@@ -41,7 +43,12 @@ export async function getAccountOverview(
       store.messages.list(),
       listRentalsForRenter(userId),
       listRentalsForOwner(userId),
+      store.reviews.list(),
     ])
+  const reviewedSources: Record<string, Review> = {}
+  for (const review of reviews)
+    if (review.reviewerUserId === userId)
+      reviewedSources[`${review.sourceKind}:${review.sourceId}`] = review
   const listingById = new Map(listings.map((listing) => [listing.id, listing]))
   const jobById = new Map(jobs.map((job) => [job.id, job]))
   const sent = submissions.filter((submission) => submission.userId === userId)
@@ -86,6 +93,7 @@ export async function getAccountOverview(
   return {
     replyCounts,
     rentals: { asRenter, asOwner },
+    reviewedSources,
     listings: ownedListings,
     transportJobs: ownedJobs,
     sentInquiries: sent

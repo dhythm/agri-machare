@@ -29,6 +29,7 @@ export const dealTabs = [
   { href: '/admin/deals', label: '出品' },
   { href: '/admin/deals/rentals', label: 'レンタル' },
   { href: '/admin/deals/inquiries', label: '問い合わせ' },
+  { href: '/admin/deals/reviews', label: 'レビュー' },
 ]
 
 export const transportTabs = [

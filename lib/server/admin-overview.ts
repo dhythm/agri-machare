@@ -4,7 +4,7 @@ import type { Listing, ThreadStatus, TransportJob } from '@/lib/data'
 import { configuredAccounts, type UserRole } from './auth/accounts'
 import type { AccountStatus } from './store'
 import type { RentalWithListing } from './rentals'
-import { getStore, type Submission } from './store'
+import { getStore, type Review, type Submission } from './store'
 
 export type AdminCounts = {
   pendingListings: number
@@ -162,5 +162,22 @@ export async function listAccountSummaries(): Promise<AccountSummary[]> {
       .length,
     transportJobCount: jobs.filter((job) => job.ownerUserId === id).length,
     rentalCount: rentals.filter((rental) => rental.renterUserId === id).length,
+  }))
+}
+
+export async function listAllReviews(): Promise<
+  { review: Review; listingName: string }[]
+> {
+  const store = getStore()
+  const [reviews, listings] = await Promise.all([
+    store.reviews.list(),
+    store.listings.list(),
+  ])
+  const nameById = new Map(
+    listings.map((listing) => [listing.id, listing.name]),
+  )
+  return reviews.map((review) => ({
+    review,
+    listingName: nameById.get(review.listingId) ?? '（削除済み）',
   }))
 }

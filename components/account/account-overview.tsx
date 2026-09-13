@@ -9,6 +9,9 @@ import type { AccountOverview } from '@/lib/server/account'
 import type { Submission } from '@/lib/server/store/types'
 import { CompleteJobButton } from './complete-job-button'
 import { RentalActions } from './rental-actions'
+import { ReviewForm } from '@/components/reviews/review-form'
+import { StarRating } from '@/components/reviews/star-rating'
+import type { Review } from '@/lib/server/store/types'
 import { rentalStatusLabels } from '@/lib/rent-to-own'
 import type { RentalWithListing } from '@/lib/server/rentals'
 
@@ -108,12 +111,25 @@ function IncomingList({
   )
 }
 
+function WrittenReview({ review }: { review: Review }) {
+  return (
+    <div className="mt-2 rounded-xl bg-muted/60 p-3 text-sm">
+      <StarRating rating={review.rating} />
+      {review.comment && (
+        <p className="mt-1 text-foreground">{review.comment}</p>
+      )}
+    </div>
+  )
+}
+
 function RentalList({
   items,
   party,
+  reviewedSources,
 }: {
   items: RentalWithListing[]
   party: 'owner' | 'renter'
+  reviewedSources: Record<string, Review>
 }) {
   if (items.length === 0) return <Empty label="まだありません" />
   return (
@@ -168,6 +184,15 @@ function RentalList({
               }
             />
           </div>
+          {party === 'renter' &&
+            (rental.status === 'completed' || rental.status === 'converted') &&
+            (reviewedSources[`rental:${rental.id}`] ? (
+              <WrittenReview review={reviewedSources[`rental:${rental.id}`]} />
+            ) : (
+              <div className="mt-3 border-t border-border pt-3">
+                <ReviewForm sourceKind="rental" sourceId={rental.id} />
+              </div>
+            ))}
         </li>
       ))}
     </ul>
@@ -306,11 +331,19 @@ export function AccountOverviewView({
       </Section>
 
       <Section title="借りている農機具">
-        <RentalList items={overview.rentals.asRenter} party="renter" />
+        <RentalList
+          items={overview.rentals.asRenter}
+          party="renter"
+          reviewedSources={overview.reviewedSources}
+        />
       </Section>
 
       <Section title="貸している農機具">
-        <RentalList items={overview.rentals.asOwner} party="owner" />
+        <RentalList
+          items={overview.rentals.asOwner}
+          party="owner"
+          reviewedSources={overview.reviewedSources}
+        />
       </Section>
 
       <Section title="送った問い合わせ">

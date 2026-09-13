@@ -121,6 +121,7 @@ describe('getAccountOverview', () => {
       sentApplications: [],
       replyCounts: {},
       rentals: { asRenter: [], asOwner: [] },
+      reviewedSources: {},
     })
   })
 })
