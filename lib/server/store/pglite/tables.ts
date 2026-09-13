@@ -1,6 +1,7 @@
 import type { Listing, TransportJob } from '@/lib/data'
 import type {
   AccountStatus,
+  CarrierProfile,
   Message,
   Notification,
   Rental,
@@ -384,4 +385,42 @@ export const threadReadTable: TableSpec<ThreadRead> = {
     userId: row.user_id as string,
     readAt: isoString(row.read_at) as string,
   }),
+}
+
+export const carrierProfileTable: TableSpec<CarrierProfile> = {
+  table: 'carrier_profiles',
+  columns: [
+    'id',
+    'name',
+    'kind',
+    'prefecture',
+    'vehicles',
+    'service_areas',
+    'note',
+    'created_at',
+    'updated_at',
+  ],
+  toRow: (profile) => [
+    profile.id,
+    profile.name,
+    profile.kind,
+    profile.prefecture,
+    profile.vehicles,
+    profile.serviceAreas,
+    nullable(profile.note),
+    profile.createdAt,
+    profile.updatedAt,
+  ],
+  fromRow: (row: Row) =>
+    compact({
+      id: row.id as string,
+      name: row.name as string,
+      kind: row.kind as CarrierProfile['kind'],
+      prefecture: row.prefecture as string,
+      vehicles: row.vehicles as string[],
+      serviceAreas: row.service_areas as string[],
+      note: (row.note as string | null) ?? undefined,
+      createdAt: isoString(row.created_at) as string,
+      updatedAt: isoString(row.updated_at) as string,
+    }),
 }
