@@ -8,7 +8,7 @@ export function SignOutButton({ className }: { className?: string }) {
     <Button
       type="button"
       variant="ghost"
-      className={className ?? 'h-9 px-3'}
+      className={className ?? 'h-9 whitespace-nowrap px-2.5'}
       onClick={() => void signOut({ redirectTo: '/' })}
     >
       ログアウト
