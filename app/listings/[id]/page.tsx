@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { PageShell } from '@/components/page-shell'
 import { ListingDetail } from '@/components/listing-detail'
-import { canView, getCurrentUser } from '@/lib/server/auth/session'
+import { canManage, canView, getCurrentUser } from '@/lib/server/auth/session'
 import { getListing, getRelatedListings } from '@/lib/server/listings'
 import { buildModes } from '@/lib/server/listing-detail'
 import { listBookedRanges } from '@/lib/server/rentals'
@@ -56,6 +56,7 @@ export default async function ListingPage({
         viewer={{
           signedIn: user !== undefined,
           isOwner: user !== undefined && listing.ownerUserId === user.id,
+          canEdit: canManage(user, listing),
         }}
       />
     </PageShell>
