@@ -14,12 +14,13 @@ import {
   ShoppingCart,
   Truck,
   MessageSquare,
-  ChevronLeft,
   CircleCheckBig,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { Badge } from '@/components/badge'
+import { BackLink } from '@/components/back-link'
+import { ListingCard } from '@/components/listing-card'
 import {
   type Listing,
   type ListingMode,
@@ -33,23 +34,19 @@ export function ListingDetail({
   listing,
   modes,
   transportEstimate,
+  related,
 }: {
   listing: Listing
   modes: ListingModeConfig[]
   transportEstimate: number
+  related: Listing[]
 }) {
   const [mode, setMode] = useState<ListingMode>(modes[0].id)
   const active = modes.find((m) => m.id === mode) ?? modes[0]
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <Link
-        href="/#marketplace"
-        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ChevronLeft className="size-4" />
-        一覧にもどる
-      </Link>
+      <BackLink href="/listings" label="一覧にもどる" />
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
         <div>
@@ -198,11 +195,19 @@ export function ListingDetail({
             )}
 
             <div className="mt-5 flex flex-col gap-2">
-              <Button className="h-11">{active.cta}</Button>
-              <Button variant="outline" className="h-11">
+              <Link
+                href={`/listings/${listing.id}/inquiry?mode=${active.id}`}
+                className={cn(buttonVariants(), 'h-11')}
+              >
+                {active.cta}
+              </Link>
+              <Link
+                href={`/listings/${listing.id}/inquiry?mode=question`}
+                className={cn(buttonVariants({ variant: 'outline' }), 'h-11')}
+              >
                 <MessageSquare className="size-4" />
                 出品者に質問する
-              </Button>
+              </Link>
             </div>
 
             <div className="mt-5 flex items-start gap-2 border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
@@ -223,6 +228,27 @@ export function ListingDetail({
           </div>
         </div>
       </div>
+
+      {related.length > 0 && (
+        <section className="mt-16">
+          <div className="flex items-end justify-between gap-4">
+            <h2 className="font-display text-xl font-bold text-foreground">
+              同じカテゴリの農機具
+            </h2>
+            <Link
+              href={`/listings?category=${encodeURIComponent(listing.category)}`}
+              className="text-sm font-medium text-primary"
+            >
+              {listing.category}をすべて見る
+            </Link>
+          </div>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map((item) => (
+              <ListingCard key={item.id} listing={item} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
