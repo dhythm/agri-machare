@@ -64,7 +64,7 @@ Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サー
 - 出品の写真は外部ストレージを使わず、ブラウザ側で縮小した JPEG のデータ URL として保存します（`lib/images.ts`）。`Listing.images`（長辺 1200px、最大 5 枚）は詳細ページだけが返し、一覧系は先頭画像のサムネイル（長辺 400px）の `Listing.image` だけを持ちます。写真が無い出品はカテゴリの見本画像です。
 - テストでは `test/mock-auth.ts` で `@/auth` を差し替え、`signInAs()` でログイン状態を切り替えます。
 - 運営審査（`/admin`、`/api/admin/queue`）は「ログイン済みかつ `role === 'admin'`」で許可します。未ログインは 401（ページはログインへリダイレクト）、権限なしは 403 です。
-- `/admin` 以下は `app/admin/layout.tsx` の管理者画面レイアウト（`components/admin/admin-shell.tsx`。サイドバーの運営メニューと上部バー）で描画し、利用者向けのヘッダー・フッターは使いません。認証ゲートはこのレイアウトで行い、配下のページは運営であることを前提にデータ取得だけ行います。メニューはダッシュボード / アカウント管理 / 取引管理 / 運搬管理（`components/admin/admin-nav.tsx`）で、各管理画面は上部タブ（`components/admin/admin-section.tsx`）で内容を切り替えます。一覧データは `lib/server/admin-overview.ts` から取得します。
+- `/admin` 以下は `app/admin/layout.tsx` の管理者画面レイアウト（`components/admin/admin-shell.tsx`。サイドバーの運営メニューと上部バー）で描画し、利用者向けのヘッダー・フッターは使いません。認証ゲートはこのレイアウトで行い、配下のページは運営であることを前提にデータ取得だけ行います。メニューはダッシュボード / アカウント管理 / 取引管理 / 運搬管理（`components/admin/admin-nav.tsx`）で、各管理画面は上部タブ（`components/admin/admin-section.tsx`）で内容を切り替えます。一覧データは `lib/server/admin-overview.ts` から取得します。ダッシュボードには承諾待ちの注文・申込中のレンタル・運搬中の案件などの件数に加え、`deal_events` を新しい順に並べた「直近の取引の動き」（各行から取引の履歴ページへ移動）と「直近のレビュー」を表示します。
 - アカウントの停止は `account_statuses` テーブル（行が無ければ有効）に記録します（`lib/server/auth/account-status.ts`）。停止中はログインが `code=suspended` で拒否され、既存セッションも `getCurrentUser()` が未ログイン扱いにします。資格情報は引き続き環境変数で、ユーザー登録を作るときは `users` テーブルに統合します。
 - ヘッダーのログイン / ログアウトはクライアント側で `useSession()` を使い、ページの静的レンダリングを壊しません。
 

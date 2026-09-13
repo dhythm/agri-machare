@@ -11,7 +11,13 @@ import {
   Users,
 } from 'lucide-react'
 import { AdminSection } from '@/components/admin/admin-section'
-import { getAdminCounts } from '@/lib/server/admin-overview'
+import {
+  getAdminCounts,
+  listRecentActivity,
+  listRecentReviews,
+} from '@/lib/server/admin-overview'
+import { StarRating } from '@/components/reviews/star-rating'
+import { Badge } from '@/components/badge'
 
 export const metadata: Metadata = {
   title: 'ダッシュボード | Agri Machare 運営',
@@ -25,6 +31,7 @@ const workspaces = [
     icon: Handshake,
     links: [
       { label: '出品の審査', href: '/admin/deals' },
+      { label: '注文', href: '/admin/deals/orders' },
       { label: 'レンタル', href: '/admin/deals/rentals' },
       { label: '問い合わせ', href: '/admin/deals/inquiries' },
       { label: 'レビュー', href: '/admin/deals/reviews' },
@@ -36,6 +43,7 @@ const workspaces = [
     links: [
       { label: '運搬依頼の審査', href: '/admin/transport' },
       { label: '運搬への応募', href: '/admin/transport/applications' },
+      { label: '案件への質問', href: '/admin/transport/inquiries' },
       { label: '運搬者', href: '/admin/transport/carriers' },
     ],
   },
@@ -47,14 +55,30 @@ const workspaces = [
 ]
 
 export default async function AdminDashboardPage() {
-  const counts = await getAdminCounts()
+  const [counts, activity, reviews] = await Promise.all([
+    getAdminCounts(),
+    listRecentActivity(8),
+    listRecentReviews(5),
+  ])
   const pendingCount = counts.pendingListings + counts.pendingTransportJobs
   const metrics = [
+    {
+      label: '承諾待ちの注文',
+      value: counts.requestedOrders,
+      icon: Handshake,
+      links: [{ label: '注文一覧', href: '/admin/deals/orders' }],
+    },
     {
       label: '申込中のレンタル',
       value: counts.requestedRentals,
       icon: CalendarDays,
       links: [{ label: '申込一覧', href: '/admin/deals/rentals' }],
+    },
+    {
+      label: '運搬中の案件',
+      value: counts.haulingJobs,
+      icon: Truck,
+      links: [{ label: '運搬依頼', href: '/admin/transport' }],
     },
     {
       label: '未対応のやり取り',
@@ -178,6 +202,100 @@ export default async function AdminDashboardPage() {
           </li>
         ))}
       </ul>
+
+      <div className="mt-10 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <section aria-labelledby="recent-activity">
+          <div className="mb-5 flex items-center gap-3">
+            <h2
+              id="recent-activity"
+              className="font-display text-lg font-bold text-foreground"
+            >
+              直近の取引の動き
+            </h2>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          {activity.length === 0 ? (
+            <p className="text-sm text-muted-foreground">まだありません</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-card">
+              {activity.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm"
+                >
+                  <Badge variant="outline">
+                    {item.kind === 'order'
+                      ? '注文'
+                      : item.kind === 'rental'
+                        ? 'レンタル'
+                        : '運搬'}
+                  </Badge>
+                  <Link
+                    href={item.href}
+                    className="font-medium text-foreground hover:text-primary hover:underline"
+                  >
+                    {item.title}
+                  </Link>
+                  <Badge variant="muted">{item.statusLabel}</Badge>
+                  {item.actorName && (
+                    <span className="text-muted-foreground">
+                      {item.actorName}
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {new Date(item.createdAt).toLocaleString('ja-JP')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        <section aria-labelledby="recent-reviews">
+          <div className="mb-5 flex items-center gap-3">
+            <h2
+              id="recent-reviews"
+              className="font-display text-lg font-bold text-foreground"
+            >
+              直近のレビュー
+            </h2>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          {reviews.length === 0 ? (
+            <p className="text-sm text-muted-foreground">まだありません</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {reviews.map(({ review, listingName }) => (
+                <li
+                  key={review.id}
+                  className="rounded-2xl border border-border bg-card p-4 text-sm"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StarRating rating={review.rating} />
+                    <span className="font-medium text-foreground">
+                      {listingName}
+                    </span>
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {new Date(review.createdAt).toLocaleDateString('ja-JP')}
+                    </span>
+                  </div>
+                  {review.comment && (
+                    <p className="mt-1 text-muted-foreground">
+                      {review.comment}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link
+            href="/admin/deals/reviews"
+            className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            レビュー一覧
+            <ArrowUpRight className="size-3.5" aria-hidden="true" />
+          </Link>
+        </section>
+      </div>
 
       <section className="mt-10">
         <div className="mb-5 flex items-center gap-3">
