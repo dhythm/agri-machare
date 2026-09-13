@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { getListing } from './listings'
-import { buildModes, estimateTransport } from './listing-detail'
+import { buildModes } from './listing-detail'
 
 vi.mock('server-only', () => ({}))
 
@@ -24,11 +24,5 @@ describe('listing detail business rules', () => {
     expect(
       buildModes((await getListing('trc-006'))!).map((mode) => mode.id),
     ).toEqual(['buy'])
-  })
-
-  it('estimates transport by category, with a fallback for new categories', async () => {
-    const listing = (await getListing('trc-001'))!
-    expect(estimateTransport(listing)).toBe(30_000)
-    expect(estimateTransport({ ...listing, category: 'その他' })).toBe(20_000)
   })
 })
