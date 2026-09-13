@@ -3,12 +3,14 @@ import 'server-only'
 import { auth } from '@/auth'
 import { isApproved, type ModerationStatus } from '@/lib/data'
 import { forbidden, unauthorized } from '@/lib/server/api'
+import { isSuspended } from './account-status'
 import type { AuthenticatedUser } from './accounts'
 
 export async function getCurrentUser(): Promise<AuthenticatedUser | undefined> {
   const session = await auth()
   const user = session?.user
   if (!user?.id || !user.email || !user.role) return undefined
+  if (await isSuspended(user.id)) return undefined
   return {
     id: user.id,
     email: user.email,

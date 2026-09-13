@@ -5,6 +5,7 @@ import type { Store } from '../types'
 import { migrate } from './migrate'
 import { createSqlRepository } from './sql-repository'
 import {
+  accountStatusTable,
   listingTable,
   messageTable,
   rentalTable,
@@ -60,10 +61,11 @@ export function createPgliteStore(options: PgliteStoreOptions): Store {
     submissions: createSqlRepository(submissionTable, connect),
     messages: createSqlRepository(messageTable, connect),
     rentals: createSqlRepository(rentalTable, connect),
+    accountStatuses: createSqlRepository(accountStatusTable, connect),
     async reset() {
       const db = await ready
       await db.exec(
-        `truncate listings, transport_jobs, submissions, messages, rentals restart identity`,
+        `truncate listings, transport_jobs, submissions, messages, rentals, account_statuses restart identity`,
       )
       await seed(db)
     },

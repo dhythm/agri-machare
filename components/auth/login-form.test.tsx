@@ -55,6 +55,21 @@ describe('LoginForm', () => {
     expect(signIn).not.toHaveBeenCalled()
   })
 
+  it('explains a suspended account', async () => {
+    signIn.mockResolvedValue({
+      ok: false,
+      error: 'CredentialsSignin',
+      code: 'suspended',
+    })
+    render(<LoginForm callbackUrl="/" />)
+    const user = userEvent.setup()
+    await fill(user)
+    await user.click(screen.getByRole('button', { name: 'ログイン' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'このアカウントは停止されています。',
+    )
+  })
+
   it('shows an error when the credentials are rejected', async () => {
     signIn.mockResolvedValue({ ok: false, error: 'CredentialsSignin' })
     render(<LoginForm callbackUrl="/" />)

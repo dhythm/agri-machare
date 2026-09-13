@@ -51,7 +51,8 @@ Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サー
 - レンタル購入は出品ごとの条件（`rentToOwnCreditRate` %、任意の `rentToOwnCreditCap` 円）で計算します（`lib/rent-to-own.ts`）。詳細ページのシミュレーターで日数から充当額と購入価格を確認でき、期間を指定してレンタルを申し込めます（`lib/server/rentals.ts`、`rentals` テーブル）。申込 → 所有者が承認（レンタル中）または辞退 → 申込者が購入に切り替え（申込時の条件で購入価格を確定）または所有者が返却を確認。申込中・レンタル中の期間は予約済みとして重複申込を 409 で拒否します。運営は閲覧のみです。
 - テストでは `test/mock-auth.ts` で `@/auth` を差し替え、`signInAs()` でログイン状態を切り替えます。
 - 運営審査（`/admin`、`/api/admin/queue`）は「ログイン済みかつ `role === 'admin'`」で許可します。未ログインは 401（ページはログインへリダイレクト）、権限なしは 403 です。
-- `/admin` 以下は `app/admin/layout.tsx` の管理者画面レイアウト（`components/admin/admin-shell.tsx`。サイドバーの運営メニューと上部バー）で描画し、利用者向けのヘッダー・フッターは使いません。認証ゲートはこのレイアウトで行い、配下のページは運営であることを前提にデータ取得だけ行います。メニューはダッシュボード / アカウント管理 / 取引管理 / 運搬管理（`components/admin/admin-nav.tsx`）で、各管理画面は上部タブ（`components/admin/admin-section.tsx`）で内容を切り替えます。一覧データは `lib/server/admin-overview.ts` から取得します。アカウント管理はいま環境変数のアカウント一覧で、停止などの操作はユーザーテーブルを作る次のタスクです。
+- `/admin` 以下は `app/admin/layout.tsx` の管理者画面レイアウト（`components/admin/admin-shell.tsx`。サイドバーの運営メニューと上部バー）で描画し、利用者向けのヘッダー・フッターは使いません。認証ゲートはこのレイアウトで行い、配下のページは運営であることを前提にデータ取得だけ行います。メニューはダッシュボード / アカウント管理 / 取引管理 / 運搬管理（`components/admin/admin-nav.tsx`）で、各管理画面は上部タブ（`components/admin/admin-section.tsx`）で内容を切り替えます。一覧データは `lib/server/admin-overview.ts` から取得します。
+- アカウントの停止は `account_statuses` テーブル（行が無ければ有効）に記録します（`lib/server/auth/account-status.ts`）。停止中はログインが `code=suspended` で拒否され、既存セッションも `getCurrentUser()` が未ログイン扱いにします。資格情報は引き続き環境変数で、ユーザー登録を作るときは `users` テーブルに統合します。
 - ヘッダーのログイン / ログアウトはクライアント側で `useSession()` を使い、ページの静的レンダリングを壊しません。
 
 ### PGlite の操作
@@ -135,6 +136,7 @@ CRUD の API は次のとおりです。成功時は作成が HTTP 201、取得�
 | `POST /api/contact`                           | お問い合わせを保存                                                                                                         |
 | `GET / POST /api/auth/*`                      | Auth.js のエンドポイント（ログイン・ログアウト・セッション）                                                               |
 | `GET / POST /api/admin/queue`                 | 審査キュー（運営ロールのみ）。`status=pending\|approved\|rejected\|all`。判定は `{ kind, id, status, note? }`              |
+| `PATCH /api/admin/accounts/[id]`              | アカウントの停止 / 解除 `{ status: 'active' \| 'suspended', note? }`（運営のみ。自分自身は 409）                           |
 
 TanStack Query の初期データとキャッシュの構成は [公式 SSR ガイド](https://tanstack.com/query/latest/docs/framework/react/guides/ssr) を参照してください。
 

@@ -9,6 +9,7 @@ import { validateLogin } from '@/lib/validation/auth'
 
 const rejectedMessage = 'メールアドレスまたはパスワードが違います。'
 const failedMessage = 'ログインできませんでした。'
+const suspendedMessage = 'このアカウントは停止されています。'
 
 export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
   const router = useRouter()
@@ -34,7 +35,13 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
         redirect: false,
       })
       if (!result || result.error) {
-        setError(result?.error ? rejectedMessage : failedMessage)
+        setError(
+          result?.code === 'suspended'
+            ? suspendedMessage
+            : result?.error
+              ? rejectedMessage
+              : failedMessage,
+        )
         return
       }
       router.push(callbackUrl)

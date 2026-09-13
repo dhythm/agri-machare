@@ -50,6 +50,14 @@ export type Rental = {
   updatedAt: string
 }
 
+/** Suspension state of an account; `id` is the user id. No row means active. */
+export type AccountStatus = {
+  id: string
+  status: 'active' | 'suspended'
+  note?: string
+  updatedAt: string
+}
+
 export type StoreKind = 'memory' | 'pglite'
 
 export type Store = {
@@ -59,6 +67,7 @@ export type Store = {
   submissions: Repository<Submission>
   messages: Repository<Message>
   rentals: Repository<Rental>
+  accountStatuses: Repository<AccountStatus>
   /** Drop every row and load the sample data again. */
   reset(): Promise<void>
   /** Release resources; the store must not be used afterwards. */

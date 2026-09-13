@@ -2,6 +2,7 @@ import 'server-only'
 
 import type { Listing, ThreadStatus, TransportJob } from '@/lib/data'
 import { configuredAccounts, type UserRole } from './auth/accounts'
+import type { AccountStatus } from './store'
 import type { RentalWithListing } from './rentals'
 import { getStore, type Submission } from './store'
 
@@ -33,6 +34,8 @@ export type AccountSummary = {
   listingCount: number
   transportJobCount: number
   rentalCount: number
+  status: AccountStatus['status']
+  note?: string
 }
 
 function text(value: unknown): string {
@@ -141,16 +144,20 @@ export async function listCarriers(): Promise<Submission[]> {
 /** Accounts come from the environment; passwords never leave accounts.ts. */
 export async function listAccountSummaries(): Promise<AccountSummary[]> {
   const store = getStore()
-  const [listings, jobs, rentals] = await Promise.all([
+  const [listings, jobs, rentals, statuses] = await Promise.all([
     store.listings.list(),
     store.transportJobs.list(),
     store.rentals.list(),
+    store.accountStatuses.list(),
   ])
+  const statusById = new Map(statuses.map((row) => [row.id, row]))
   return configuredAccounts().map(({ id, name, email, role }) => ({
     id,
     name,
     email,
     role,
+    status: statusById.get(id)?.status ?? 'active',
+    note: statusById.get(id)?.note,
     listingCount: listings.filter((listing) => listing.ownerUserId === id)
       .length,
     transportJobCount: jobs.filter((job) => job.ownerUserId === id).length,

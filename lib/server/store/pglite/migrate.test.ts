@@ -20,6 +20,7 @@ describe('migrate', { timeout: 20_000 }, () => {
       `select table_name from information_schema.tables where table_schema = 'public' order by table_name`,
     )
     expect(tables.rows.map((row) => row.table_name)).toEqual([
+      'account_statuses',
       'listings',
       'messages',
       'rentals',
