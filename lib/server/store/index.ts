@@ -4,7 +4,7 @@ import { createMemoryStore } from './memory'
 import { createPgliteStore, defaultPgliteDataDir } from './pglite'
 import type { Store, StoreKind } from './types'
 
-export type { Store, Submission, SubmissionKind } from './types'
+export type { Message, Store, Submission, SubmissionKind } from './types'
 
 /**
  * `DATA_STORE` selects the implementation:

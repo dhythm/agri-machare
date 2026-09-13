@@ -1,4 +1,4 @@
-import type { Listing, TransportJob } from '@/lib/data'
+import type { Listing, ThreadStatus, TransportJob } from '@/lib/data'
 import type { Repository } from './repository'
 
 export type SubmissionKind =
@@ -16,6 +16,17 @@ export type Submission = {
   userId?: string
   receivedAt: string
   payload: Record<string, unknown>
+  status?: ThreadStatus
+}
+
+/** A reply inside an inquiry or application thread. */
+export type Message = {
+  id: string
+  /** Id of the submission that opened the thread. */
+  threadId: string
+  senderUserId: string
+  body: string
+  createdAt: string
 }
 
 export type StoreKind = 'memory' | 'pglite'
@@ -25,6 +36,7 @@ export type Store = {
   listings: Repository<Listing>
   transportJobs: Repository<TransportJob>
   submissions: Repository<Submission>
+  messages: Repository<Message>
   /** Drop every row and load the sample data again. */
   reset(): Promise<void>
   /** Release resources; the store must not be used afterwards. */
