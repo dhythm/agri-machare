@@ -6,6 +6,7 @@ export type SubmissionKind =
   | 'listingInquiry'
   | 'transportRegistration'
   | 'transportApplication'
+  | 'transportInquiry'
   | 'contact'
 
 export type Submission = {

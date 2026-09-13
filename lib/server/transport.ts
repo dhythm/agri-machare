@@ -3,6 +3,9 @@ import 'server-only'
 import { randomUUID } from 'node:crypto'
 import { isApproved, type TransportJob } from '@/lib/data'
 import type { TransportJobInput } from '@/lib/validation/transport'
+import type { AuthenticatedUser } from './auth/accounts'
+import { canManage } from './auth/access'
+import { notify } from './notifications'
 import { getStore } from './store'
 import { deleteSubmissionsFor } from './submissions'
 
@@ -60,13 +63,58 @@ export function updateTransportJob(
   })
 }
 
-export async function completeTransportJob(
+export type JobStatusResult =
+  | { ok: true; value: TransportJob }
+  | { ok: false; reason: 'not_found' | 'forbidden' | 'transition' }
+
+/** The applicant whose application the owner agreed to, if any. */
+async function agreedCarrierOf(jobId: string): Promise<string | undefined> {
+  const submissions = await getStore().submissions.list()
+  return submissions.find(
+    (submission) =>
+      submission.kind === 'transportApplication' &&
+      submission.targetId === jobId &&
+      submission.status === 'agreed',
+  )?.userId
+}
+
+const jobTransitions: Record<string, TransportJob['status'][]> = {
+  募集中: ['完了'],
+  調整中: ['運搬中', '完了'],
+  運搬中: ['完了'],
+  完了: [],
+}
+
+/** The agreed carrier starts the haul; the owner (or an admin) finishes it. */
+export async function updateTransportJobStatus(
   id: string,
-): Promise<TransportJob | undefined> {
-  return getStore().transportJobs.update(id, {
-    status: '完了',
+  user: AuthenticatedUser,
+  status: '運搬中' | '完了',
+): Promise<JobStatusResult> {
+  const store = getStore()
+  const job = await store.transportJobs.get(id)
+  if (!job) return { ok: false, reason: 'not_found' }
+  const carrier = await agreedCarrierOf(id)
+  const manages = canManage(user, job)
+  const allowed = status === '運搬中' ? manages || carrier === user.id : manages
+  if (!allowed) return { ok: false, reason: 'forbidden' }
+  if (!jobTransitions[job.status]?.includes(status))
+    return { ok: false, reason: 'transition' }
+  const updated = await store.transportJobs.update(id, {
+    status,
     updatedAt: new Date().toISOString(),
   })
+  if (!updated) return { ok: false, reason: 'not_found' }
+  const recipient = status === '運搬中' ? job.ownerUserId : carrier
+  if (recipient && recipient !== user.id)
+    await notify({
+      userId: recipient,
+      kind: 'application',
+      title: status === '運搬中' ? '運搬が始まりました' : '運搬が完了しました',
+      body: job.item,
+      href: `/transport/${id}`,
+    })
+  return { ok: true, value: updated }
 }
 
 export async function deleteTransportJob(id: string): Promise<boolean> {

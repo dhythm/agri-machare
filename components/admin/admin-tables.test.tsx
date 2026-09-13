@@ -41,6 +41,7 @@ describe('admin tables', () => {
     expect(screen.getByText('demo-user')).toBeInTheDocument()
     expect(screen.getByText('申込中')).toBeInTheDocument()
     expect(screen.getByText('¥154,000')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '取り消す' })).toBeInTheDocument()
   })
 
   it('renders threads with a link and reply count', () => {
@@ -69,6 +70,7 @@ describe('admin tables', () => {
       'href',
       '/account/threads/t-1',
     )
+    expect(screen.getByRole('button', { name: '終了する' })).toBeInTheDocument()
     expect(screen.getByText('対応中')).toBeInTheDocument()
     expect(screen.getByText('3')).toBeInTheDocument()
   })

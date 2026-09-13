@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
+import { isThreadKind, threadKindLabels } from '@/lib/data'
 import { BackLink } from '@/components/back-link'
 import { PageShell } from '@/components/page-shell'
 import { ThreadView } from '@/components/threads/thread-view'
@@ -26,8 +27,9 @@ export default async function ThreadPage({
   const result = await getThread(id, user)
   if (!result.ok) notFound()
   if (result.value.role !== 'admin') await markThreadRead(id, user.id)
-  const isInquiry = result.value.submission.kind === 'listingInquiry'
-  const title = isInquiry ? '問い合わせ' : '応募'
+  const kind = result.value.submission.kind
+  const isInquiry = kind === 'listingInquiry'
+  const title = isThreadKind(kind) ? threadKindLabels[kind] : 'やり取り'
   const canReview =
     isInquiry &&
     result.value.role === 'sender' &&

@@ -148,6 +148,17 @@ export default async function TransportJobPage({
               {manages ? '運搬依頼の管理' : 'この案件に応募する'}
             </h2>
             <div className="mt-6">
+              {job.status !== '完了' && !manages && (
+                <Link
+                  href={`/transport/${job.id}/inquiry`}
+                  className={cn(
+                    buttonVariants({ variant: 'outline' }),
+                    'mb-5 h-9',
+                  )}
+                >
+                  依頼者に質問する
+                </Link>
+              )}
               {job.status !== '募集中' ? (
                 <p className="rounded-xl bg-muted p-4 text-sm leading-7 text-muted-foreground">
                   この案件は{job.status}のため、応募を受け付けていません。

@@ -108,6 +108,8 @@ describe('PATCH /api/threads/[id]', () => {
     expect(response.status).toBe(200)
     expect((await response.json()).status).toBe('agreed')
     expect((await getTransportJob('tj-01'))?.status).toBe('調整中')
+    signInAs(demoAdmin)
+    expect((await patch(id, { status: 'declined' })).status).toBe(200)
     signInAs(null)
     expect((await patch(id, { status: 'agreed' })).status).toBe(401)
   })

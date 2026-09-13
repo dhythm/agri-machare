@@ -68,7 +68,7 @@ export type TransportJob = {
   weight: string
   desiredDate: string
   reward: number
-  status: '募集中' | '調整中' | '完了'
+  status: '募集中' | '調整中' | '運搬中' | '完了'
   ownerUserId?: string
   createdAt?: string
   updatedAt?: string
@@ -140,6 +140,25 @@ export const threadStatuses = [
 
 /** Progress of an inquiry or application thread; unset means `new`. */
 export type ThreadStatus = (typeof threadStatuses)[number]
+
+const threadKinds = [
+  'listingInquiry',
+  'transportApplication',
+  'transportInquiry',
+] as const
+
+/** Submission kinds that open a conversation between sender and target owner. */
+export type ThreadKind = (typeof threadKinds)[number]
+
+export const threadKindLabels: Record<ThreadKind, string> = {
+  listingInquiry: '問い合わせ',
+  transportApplication: '応募',
+  transportInquiry: '質問',
+}
+
+export function isThreadKind(kind: string): kind is ThreadKind {
+  return (threadKinds as readonly string[]).includes(kind)
+}
 
 export const threadStatusLabels: Record<ThreadStatus, string> = {
   new: '未対応',

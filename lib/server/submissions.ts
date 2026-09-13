@@ -51,13 +51,17 @@ async function notifyTargetOwner(submission: Submission): Promise<void> {
       body: listing.name,
       href: `/account/threads/${submission.id}`,
     })
-  } else if (submission.kind === 'transportApplication') {
+  } else if (
+    submission.kind === 'transportApplication' ||
+    submission.kind === 'transportInquiry'
+  ) {
     const job = await store.transportJobs.get(submission.targetId)
     if (!job?.ownerUserId) return
+    const isApplication = submission.kind === 'transportApplication'
     await notify({
       userId: job.ownerUserId,
-      kind: 'application',
-      title: '応募が届きました',
+      kind: isApplication ? 'application' : 'inquiry',
+      title: isApplication ? '応募が届きました' : '案件への質問が届きました',
       body: job.item,
       href: `/account/threads/${submission.id}`,
     })

@@ -77,7 +77,7 @@ const overview: AccountOverview = {
       inquiries: [],
     },
   ],
-  transportJobs: [{ job, applications: [] }],
+  transportJobs: [{ job, applications: [], inquiries: [] }],
   sentInquiries: [
     {
       submission: {
@@ -91,7 +91,33 @@ const overview: AccountOverview = {
       listing: listing('trc-001', 'クボタ 45馬力'),
     },
   ],
-  sentApplications: [],
+  sentApplications: [
+    {
+      submission: {
+        id: 'a-1',
+        kind: 'transportApplication',
+        targetId: 'tj-09',
+        userId: 'me',
+        receivedAt: '2026-09-13T03:00:00.000Z',
+        payload: { vehicle: '2tトラック', availableDate: '2026-10-03' },
+        status: 'agreed',
+      },
+      job: { ...job, id: 'tj-09', item: '受託した田植機', status: '調整中' },
+    },
+  ],
+  sentJobInquiries: [
+    {
+      submission: {
+        id: 'q-1',
+        kind: 'transportInquiry',
+        targetId: 'tj-01',
+        userId: 'me',
+        receivedAt: '2026-09-13T04:00:00.000Z',
+        payload: { message: '積載方法は？' },
+      },
+      job,
+    },
+  ],
   replyCounts: { 'i-1': 2 },
   reviewedSources: {},
   unreadThreadIds: ['i-1'],
@@ -281,11 +307,13 @@ describe('AccountOverviewView', () => {
     expect(
       within(sent).getByRole('link', { name: 'やり取りを開く' }),
     ).toHaveAttribute('href', '/account/threads/i-2')
+    const applications = screen.getByRole('region', { name: '送った応募' })
+    expect(within(applications).getByText('受託した田植機')).toBeInTheDocument()
     expect(
-      within(screen.getByRole('region', { name: '送った応募' })).getByText(
-        'まだありません',
-      ),
+      within(applications).getByRole('button', { name: '運搬を開始' }),
     ).toBeInTheDocument()
+    const questions = screen.getByRole('region', { name: '送った質問' })
+    expect(within(questions).getByText('積載方法は？')).toBeInTheDocument()
     const renting = screen.getByRole('region', { name: '借りている農機具' })
     expect(within(renting).getByText('購入に切替')).toBeInTheDocument()
     expect(

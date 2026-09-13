@@ -2,6 +2,8 @@ import 'server-only'
 
 import { randomUUID } from 'node:crypto'
 import {
+  isThreadKind,
+  threadKindLabels,
   threadStatusLabels,
   type Listing,
   type ThreadStatus,
@@ -32,11 +34,8 @@ export type ThreadResult<T> =
 const notFound = { ok: false, reason: 'not_found' } as const
 const forbidden = { ok: false, reason: 'forbidden' } as const
 
-function isThreadKind(submission: Submission): boolean {
-  return (
-    submission.kind === 'listingInquiry' ||
-    submission.kind === 'transportApplication'
-  )
+function isThread(submission: Submission): boolean {
+  return isThreadKind(submission.kind)
 }
 
 async function loadTarget(
@@ -65,7 +64,9 @@ function targetLabel(target: ThreadTarget | undefined): string | undefined {
 }
 
 function kindLabel(submission: Submission): string {
-  return submission.kind === 'listingInquiry' ? '問い合わせ' : '応募'
+  return isThreadKind(submission.kind)
+    ? threadKindLabels[submission.kind]
+    : 'やり取り'
 }
 
 function roleFor(
@@ -99,7 +100,7 @@ async function resolve(
   }>
 > {
   const submission = await getStore().submissions.get(threadId)
-  if (!submission || !isThreadKind(submission)) return notFound
+  if (!submission || !isThread(submission)) return notFound
   const target = await loadTarget(submission)
   const role = roleFor(user, submission, target)
   if (!role) return forbidden
@@ -154,7 +155,7 @@ export async function addMessage(
   return { ok: true, value: message }
 }
 
-/** The target's owner drives the status; accepting an application books the job. */
+/** The target's owner (or an admin) drives the status; accepting an application books the job. */
 export async function updateThreadStatus(
   threadId: string,
   user: AuthenticatedUser,
@@ -163,7 +164,7 @@ export async function updateThreadStatus(
   const resolved = await resolve(threadId, user)
   if (!resolved.ok) return resolved
   const { submission, target, role } = resolved.value
-  if (role !== 'owner') return forbidden
+  if (role === 'sender') return forbidden
   const store = getStore()
   const updated = await store.submissions.update(threadId, { status })
   if (!updated) return notFound
