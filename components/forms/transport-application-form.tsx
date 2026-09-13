@@ -14,9 +14,11 @@ import { SubmitButton } from './submit-button'
 export function TransportApplicationForm({
   job,
   contact,
+  defaultVehicle,
 }: {
   job: TransportJob
   contact?: FormContact
+  defaultVehicle?: string
 }) {
   const form = useSubmissionForm({
     url: `/api/transport/jobs/${job.id}/applications`,
@@ -24,7 +26,7 @@ export function TransportApplicationForm({
     initialValues: {
       name: contact?.name ?? '',
       email: contact?.email ?? '',
-      vehicle: '',
+      vehicle: defaultVehicle ?? '',
       availableDate: '',
       message: '',
     },

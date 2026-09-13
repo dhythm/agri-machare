@@ -5,13 +5,9 @@ import { formatYen, threadStatusLabels } from '@/lib/data'
 import { rentalStatusLabels } from '@/lib/rent-to-own'
 import type { AccountSummary, ThreadSummary } from '@/lib/server/admin-overview'
 import type { RentalWithListing } from '@/lib/server/rentals'
-import type { Review, Submission } from '@/lib/server/store/types'
+import type { CarrierProfile, Review } from '@/lib/server/store/types'
 import { StarRating } from '@/components/reviews/star-rating'
 import { AccountStatusButton } from './account-status-button'
-
-function text(value: unknown): string {
-  return typeof value === 'string' ? value : ''
-}
 
 function when(iso: string): string {
   return new Date(iso).toLocaleString('ja-JP')
@@ -134,18 +130,22 @@ export function ThreadTable({ items }: { items: ThreadSummary[] }) {
   )
 }
 
-export function CarrierTable({ items }: { items: Submission[] }) {
+export function CarrierTable({ items }: { items: CarrierProfile[] }) {
   return (
     <Table
-      headers={['名前', '区分', '拠点', '車両', '登録日']}
+      headers={['ID', '名前', '区分', '拠点', '車両', '対応地域', '更新日']}
       rows={items.map((carrier) => ({
         key: carrier.id,
         cells: [
-          text(carrier.payload.name),
-          text(carrier.payload.kind),
-          text(carrier.payload.prefecture),
-          text(carrier.payload.vehicle),
-          when(carrier.receivedAt),
+          <code key="id" className="text-xs">
+            {carrier.id}
+          </code>,
+          carrier.name,
+          carrier.kind,
+          carrier.prefecture,
+          carrier.vehicles.join('・'),
+          carrier.serviceAreas.join('・'),
+          when(carrier.updatedAt),
         ],
       }))}
     />

@@ -4,7 +4,12 @@ import type { Listing, ThreadStatus, TransportJob } from '@/lib/data'
 import { configuredAccounts, type UserRole } from './auth/accounts'
 import type { AccountStatus } from './store'
 import type { RentalWithListing } from './rentals'
-import { getStore, type Review, type Submission } from './store'
+import {
+  getStore,
+  type CarrierProfile,
+  type Review,
+  type Submission,
+} from './store'
 
 export type AdminCounts = {
   pendingListings: number
@@ -48,11 +53,12 @@ function isPending(entity: { moderationStatus?: string }): boolean {
 
 export async function getAdminCounts(): Promise<AdminCounts> {
   const store = getStore()
-  const [listings, jobs, rentals, submissions] = await Promise.all([
+  const [listings, jobs, rentals, submissions, carriers] = await Promise.all([
     store.listings.list(),
     store.transportJobs.list(),
     store.rentals.list(),
     store.submissions.list(),
+    store.carrierProfiles.list(),
   ])
   return {
     pendingListings: listings.filter(isPending).length,
@@ -65,9 +71,7 @@ export async function getAdminCounts(): Promise<AdminCounts> {
           submission.kind === 'transportApplication') &&
         (submission.status ?? 'new') === 'new',
     ).length,
-    carriers: submissions.filter(
-      (submission) => submission.kind === 'transportRegistration',
-    ).length,
+    carriers: carriers.length,
   }
 }
 
@@ -134,11 +138,8 @@ export function listTransportApplications(): Promise<ThreadSummary[]> {
   return listThreadSummaries('transportApplication')
 }
 
-export async function listCarriers(): Promise<Submission[]> {
-  const submissions = await getStore().submissions.list()
-  return submissions.filter(
-    (submission) => submission.kind === 'transportRegistration',
-  )
+export function listCarriers(): Promise<CarrierProfile[]> {
+  return getStore().carrierProfiles.list()
 }
 
 /** Accounts come from the environment; passwords never leave accounts.ts. */

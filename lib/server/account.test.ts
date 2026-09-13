@@ -132,6 +132,7 @@ describe('getAccountOverview', () => {
       rentals: { asRenter: [], asOwner: [] },
       reviewedSources: {},
       unreadThreadIds: [],
+      carrier: undefined,
       summary: {
         unreadThreads: 0,
         openInquiries: 0,

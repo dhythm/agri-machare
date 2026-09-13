@@ -95,6 +95,19 @@ const overview: AccountOverview = {
   replyCounts: { 'i-1': 2 },
   reviewedSources: {},
   unreadThreadIds: ['i-1'],
+  carrier: {
+    profile: {
+      id: 'me',
+      name: '高橋運送',
+      kind: '法人',
+      prefecture: '秋田県',
+      vehicles: ['2tトラック'],
+      serviceAreas: ['秋田県', '山形県'],
+      createdAt: '2026-09-13T00:00:00.000Z',
+      updatedAt: '2026-09-13T00:00:00.000Z',
+    },
+    matchingJobs: [job],
+  },
   summary: {
     unreadThreads: 1,
     openInquiries: 2,
@@ -200,6 +213,14 @@ describe('AccountOverviewView', () => {
     ).toBeInTheDocument()
     expect(within(summary).getAllByText('1件')).toHaveLength(3)
     expect(within(summary).getByText('2件')).toBeInTheDocument()
+    const carrier = screen.getByRole('region', { name: '運搬者プロフィール' })
+    expect(within(carrier).getByText('高橋運送')).toBeInTheDocument()
+    expect(
+      within(carrier).getByRole('link', { name: 'プロフィールを編集' }),
+    ).toHaveAttribute('href', '/transport/register')
+    expect(
+      within(carrier).getByRole('link', { name: 'コンバイン' }),
+    ).toHaveAttribute('href', '/transport/tj-01')
     expect(within(mine).getByText('未対応')).toBeInTheDocument()
     const jobs = screen.getByRole('region', { name: '自分の運搬依頼' })
     expect(within(jobs).getByText('コンバイン')).toBeInTheDocument()

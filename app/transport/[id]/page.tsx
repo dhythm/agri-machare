@@ -9,6 +9,9 @@ import { TransportApplicationForm } from '@/components/forms/transport-applicati
 import { formatYen } from '@/lib/data'
 import { canView, getCurrentUser } from '@/lib/server/auth/session'
 import { getTransportJob } from '@/lib/server/transport'
+import { canManage } from '@/lib/server/auth/access'
+import { getCarrierProfile, matchCarriersForJob } from '@/lib/server/carriers'
+import { CarrierMatches } from '@/components/carriers/carrier-matches'
 
 export const metadata: Metadata = { title: '運搬案件 | ノウキシェア' }
 
@@ -23,6 +26,10 @@ export default async function TransportJobPage({
   const job = await getTransportJob(id)
   const user = await getCurrentUser()
   if (!job || !canView(user, job)) notFound()
+  const manages = canManage(user, job)
+  const matches = manages ? await matchCarriersForJob(job) : []
+  const profile =
+    user && !manages ? await getCarrierProfile(user.id) : undefined
 
   return (
     <PageShell>
@@ -86,10 +93,23 @@ export default async function TransportJobPage({
                 <p className="text-sm text-muted-foreground">
                   この案件は{job.status}のため、応募を受け付けていません。
                 </p>
+              ) : manages ? (
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">
+                    この案件に合う運搬者
+                  </h3>
+                  <div className="mt-3">
+                    <CarrierMatches matches={matches} />
+                  </div>
+                </div>
               ) : user ? (
                 <TransportApplicationForm
                   job={job}
-                  contact={{ name: user.name, email: user.email }}
+                  contact={{
+                    name: profile?.name ?? user.name,
+                    email: user.email,
+                  }}
+                  defaultVehicle={profile?.vehicles[0]}
                 />
               ) : (
                 <LoginPrompt
