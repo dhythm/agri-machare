@@ -73,6 +73,22 @@ export type Notification = {
   readAt?: string
 }
 
+export type ReviewSourceKind = 'rental' | 'thread'
+
+/** A buyer's or renter's rating of the seller after one finished deal. */
+export type Review = {
+  id: string
+  listingId: string
+  sellerUserId: string
+  reviewerUserId: string
+  sourceKind: ReviewSourceKind
+  /** Rental id or thread (submission) id the review is about. */
+  sourceId: string
+  rating: number
+  comment?: string
+  createdAt: string
+}
+
 export type StoreKind = 'memory' | 'pglite'
 
 export type Store = {
@@ -84,6 +100,7 @@ export type Store = {
   rentals: Repository<Rental>
   accountStatuses: Repository<AccountStatus>
   notifications: Repository<Notification>
+  reviews: Repository<Review>
   /** Drop every row and load the sample data again. */
   reset(): Promise<void>
   /** Release resources; the store must not be used afterwards. */

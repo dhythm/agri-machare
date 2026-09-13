@@ -4,6 +4,7 @@ import type {
   Message,
   Notification,
   Rental,
+  Review,
   Submission,
 } from '../types'
 import {
@@ -328,5 +329,43 @@ export const notificationTable: TableSpec<Notification> = {
       href: row.href as string,
       createdAt: isoString(row.created_at) as string,
       readAt: isoString(row.read_at),
+    }),
+}
+
+export const reviewTable: TableSpec<Review> = {
+  table: 'reviews',
+  columns: [
+    'id',
+    'listing_id',
+    'seller_user_id',
+    'reviewer_user_id',
+    'source_kind',
+    'source_id',
+    'rating',
+    'comment',
+    'created_at',
+  ],
+  toRow: (review) => [
+    review.id,
+    review.listingId,
+    review.sellerUserId,
+    review.reviewerUserId,
+    review.sourceKind,
+    review.sourceId,
+    review.rating,
+    nullable(review.comment),
+    review.createdAt,
+  ],
+  fromRow: (row: Row) =>
+    compact({
+      id: row.id as string,
+      listingId: row.listing_id as string,
+      sellerUserId: row.seller_user_id as string,
+      reviewerUserId: row.reviewer_user_id as string,
+      sourceKind: row.source_kind as Review['sourceKind'],
+      sourceId: row.source_id as string,
+      rating: row.rating as number,
+      comment: (row.comment as string | null) ?? undefined,
+      createdAt: isoString(row.created_at) as string,
     }),
 }

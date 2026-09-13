@@ -52,6 +52,8 @@ Auth.js（next-auth v5）の Credentials プロバイダを使い、外部サー
 - 問い合わせと応募はスレッドになります（`lib/server/threads.ts`）。参加者は送信者と対象の所有者で、運営は閲覧のみです。両参加者が返信でき（`messages` テーブル）、対象の所有者が状態（未対応 / 対応中 / 成約 / 見送り）を変えます。応募を成約にすると案件は「調整中」になり、所有者はマイページから「完了」にできます。応募を受け付けるのは「募集中」の案件だけで、「完了」の案件は公開ボードに出ません。
 - レンタル購入は出品ごとの条件（`rentToOwnCreditRate` %、任意の `rentToOwnCreditCap` 円）で計算します（`lib/rent-to-own.ts`）。詳細ページのシミュレーターで日数から充当額と購入価格を確認でき、期間を指定してレンタルを申し込めます（`lib/server/rentals.ts`、`rentals` テーブル）。申込 → 所有者が承認（レンタル中）または辞退 → 申込者が購入に切り替え（申込時の条件で購入価格を確定）または所有者が返却を確認。申込中・レンタル中の期間は予約済みとして重複申込を 409 で拒否します。運営は閲覧のみです。
 - アプリ内通知（`lib/server/notifications.ts`、`notifications` テーブル）: 問い合わせ / 応募の受信、返信、スレッドの状態変更、レンタルの申込と状態変更、審査結果を相手側のユーザーに通知します。各サービスが `notify()` を呼ぶだけで、メール送信はしません。ヘッダーのベルが未読数を 60 秒ごとに取得し、`/account/notifications` で一覧・既読化できます。
+- レビュー（`lib/server/reviews.ts`、`reviews` テーブル）: 完了または購入に切り替えたレンタルの申込者、成約した問い合わせの送信者が出品者を 1〜5 で評価できます（取引ごとに 1 件）。投稿すると出品者が所有する全出品の `seller.rating` / `seller.reviews` を加重平均で更新し、詳細ページに出品者へのレビューを表示します。運営は取引管理 > レビューで一覧できます。
+- 出品の写真は外部ストレージを使わず、ブラウザ側で縮小した JPEG のデータ URL として保存します（`lib/images.ts`）。`Listing.images`（長辺 1200px、最大 5 枚）は詳細ページだけが返し、一覧系は先頭画像のサムネイル（長辺 400px）の `Listing.image` だけを持ちます。写真が無い出品はカテゴリの見本画像です。
 - テストでは `test/mock-auth.ts` で `@/auth` を差し替え、`signInAs()` でログイン状態を切り替えます。
 - 運営審査（`/admin`、`/api/admin/queue`）は「ログイン済みかつ `role === 'admin'`」で許可します。未ログインは 401（ページはログインへリダイレクト）、権限なしは 403 です。
 - `/admin` 以下は `app/admin/layout.tsx` の管理者画面レイアウト（`components/admin/admin-shell.tsx`。サイドバーの運営メニューと上部バー）で描画し、利用者向けのヘッダー・フッターは使いません。認証ゲートはこのレイアウトで行い、配下のページは運営であることを前提にデータ取得だけ行います。メニューはダッシュボード / アカウント管理 / 取引管理 / 運搬管理（`components/admin/admin-nav.tsx`）で、各管理画面は上部タブ（`components/admin/admin-section.tsx`）で内容を切り替えます。一覧データは `lib/server/admin-overview.ts` から取得します。
@@ -130,6 +132,7 @@ CRUD の API は次のとおりです。成功時は作成が HTTP 201、取得�
 | `GET / POST /api/listings/[id]/rentals`                              | 予約済み期間の取得（公開）と申込 `{ startDate, endDate }`（要ログイン。重複・貸出不可は 409）                              |
 | `PATCH /api/rentals/[id]`                                            | レンタルの状態変更 `{ status }`（所有者: active / cancelled / completed、申込者: cancelled / converted。不正な遷移は 409） |
 | `GET /api/notifications`                                             | 自分の通知（新しい順）と `unreadCount`                                                                                     |
+| `POST /api/reviews`                                                  | レビュー `{ sourceKind: 'rental' \| 'thread', sourceId, rating, comment? }`（要ログイン。権限外 403、未完了・重複 409）    |
 | `PATCH /api/notifications/[id]` / `POST /api/notifications/read-all` | 既読にする（本人のみ）/ すべて既読                                                                                         |
 | `POST /api/listings/[id]/inquiries`                                  | 出品者への連絡を保存（要ログイン）。`{ id, receivedAt }`                                                                   |
 | `GET / POST /api/transport/jobs`                                     | 公開一覧は承認済みのみ。作成は要ログインで審査待ち `{ id, receivedAt, job }`                                               |

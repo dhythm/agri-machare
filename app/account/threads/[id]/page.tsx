@@ -4,6 +4,7 @@ import { BackLink } from '@/components/back-link'
 import { PageShell } from '@/components/page-shell'
 import { ThreadView } from '@/components/threads/thread-view'
 import { getCurrentUser } from '@/lib/server/auth/session'
+import { findReviewForSource } from '@/lib/server/reviews'
 import { getThread } from '@/lib/server/threads'
 
 export const metadata: Metadata = { title: 'やり取り | ノウキシェア' }
@@ -23,8 +24,16 @@ export default async function ThreadPage({
     )
   const result = await getThread(id, user)
   if (!result.ok) notFound()
-  const title =
-    result.value.submission.kind === 'listingInquiry' ? '問い合わせ' : '応募'
+  const isInquiry = result.value.submission.kind === 'listingInquiry'
+  const title = isInquiry ? '問い合わせ' : '応募'
+  const canReview =
+    isInquiry &&
+    result.value.role === 'sender' &&
+    result.value.status === 'agreed'
+  const review =
+    isInquiry && result.value.status === 'agreed'
+      ? await findReviewForSource('thread', id)
+      : undefined
 
   return (
     <PageShell>
@@ -34,7 +43,12 @@ export default async function ThreadPage({
           {title}のやり取り
         </h1>
         <div className="mt-6">
-          <ThreadView thread={result.value} currentUserId={user.id} />
+          <ThreadView
+            thread={result.value}
+            currentUserId={user.id}
+            canReview={canReview}
+            review={review}
+          />
         </div>
       </div>
     </PageShell>

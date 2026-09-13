@@ -7,6 +7,7 @@ import type {
   Message,
   Notification,
   Rental,
+  Review,
   Store,
   Submission,
 } from './types'
@@ -20,6 +21,7 @@ export function createMemoryStore(): Store {
     rentals: createMemoryRepository<Rental>([]),
     accountStatuses: createMemoryRepository<AccountStatus>([]),
     notifications: createMemoryRepository<Notification>([]),
+    reviews: createMemoryRepository<Review>([]),
   }
   const proxy = <T extends { id: string }>(
     pick: () => Repository<T>,
@@ -39,6 +41,7 @@ export function createMemoryStore(): Store {
     rentals: proxy<Rental>(() => store.rentals),
     accountStatuses: proxy<AccountStatus>(() => store.accountStatuses),
     notifications: proxy<Notification>(() => store.notifications),
+    reviews: proxy<Review>(() => store.reviews),
     async reset() {
       store = {
         listings: createMemoryRepository(listings),
@@ -48,6 +51,7 @@ export function createMemoryStore(): Store {
         rentals: createMemoryRepository<Rental>([]),
         accountStatuses: createMemoryRepository<AccountStatus>([]),
         notifications: createMemoryRepository<Notification>([]),
+        reviews: createMemoryRepository<Review>([]),
       }
     },
     async close() {},

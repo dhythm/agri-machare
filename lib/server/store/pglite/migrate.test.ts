@@ -25,6 +25,7 @@ describe('migrate', { timeout: 20_000 }, () => {
       'messages',
       'notifications',
       'rentals',
+      'reviews',
       'schema_migrations',
       'submissions',
       'transport_jobs',

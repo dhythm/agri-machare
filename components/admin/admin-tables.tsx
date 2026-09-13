@@ -5,7 +5,8 @@ import { formatYen, threadStatusLabels } from '@/lib/data'
 import { rentalStatusLabels } from '@/lib/rent-to-own'
 import type { AccountSummary, ThreadSummary } from '@/lib/server/admin-overview'
 import type { RentalWithListing } from '@/lib/server/rentals'
-import type { Submission } from '@/lib/server/store/types'
+import type { Review, Submission } from '@/lib/server/store/types'
+import { StarRating } from '@/components/reviews/star-rating'
 import { AccountStatusButton } from './account-status-button'
 
 function text(value: unknown): string {
@@ -208,6 +209,31 @@ export function AccountTable({
             status={account.status}
             self={account.id === currentUserId}
           />,
+        ],
+      }))}
+    />
+  )
+}
+
+export type ReviewRow = { review: Review; listingName: string }
+
+export function ReviewTable({ items }: { items: ReviewRow[] }) {
+  return (
+    <Table
+      headers={['農機具', '出品者', 'レビュー者', '評価', 'コメント', '日時']}
+      rows={items.map(({ review, listingName }) => ({
+        key: review.id,
+        cells: [
+          listingName,
+          <code key="seller" className="text-xs">
+            {review.sellerUserId}
+          </code>,
+          <code key="reviewer" className="text-xs">
+            {review.reviewerUserId}
+          </code>,
+          <StarRating key="rating" rating={review.rating} />,
+          review.comment ?? '—',
+          when(review.createdAt),
         ],
       }))}
     />

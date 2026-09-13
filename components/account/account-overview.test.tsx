@@ -87,6 +87,7 @@ const overview: AccountOverview = {
   ],
   sentApplications: [],
   replyCounts: { 'i-1': 2 },
+  reviewedSources: {},
   rentals: {
     asRenter: [
       {
@@ -131,6 +132,35 @@ const overview: AccountOverview = {
 }
 
 describe('AccountOverviewView', () => {
+  it('shows the written review instead of the form', () => {
+    render(
+      <AccountOverviewView
+        overview={{
+          ...overview,
+          reviewedSources: {
+            'rental:r-1': {
+              id: 'rv-1',
+              listingId: 'trc-001',
+              sellerUserId: 'demo-seller',
+              reviewerUserId: 'me',
+              sourceKind: 'rental',
+              sourceId: 'r-1',
+              rating: 4,
+              comment: '助かりました',
+              createdAt: '2026-09-13T00:00:00.000Z',
+            },
+          },
+        }}
+      />,
+    )
+    const renting = screen.getByRole('region', { name: '借りている農機具' })
+    expect(
+      within(renting).queryByRole('button', { name: 'レビューを送る' }),
+    ).toBeNull()
+    expect(within(renting).getByText('助かりました')).toBeInTheDocument()
+    expect(within(renting).getByLabelText('評価 4')).toBeInTheDocument()
+  })
+
   it('lists owned rows with status and what came in', () => {
     render(<AccountOverviewView overview={overview} />)
     const mine = screen.getByRole('region', { name: '自分の出品' })
@@ -167,6 +197,9 @@ describe('AccountOverviewView', () => {
     expect(
       within(renting).getByRole('link', { name: '運搬を依頼する' }),
     ).toHaveAttribute('href', '/transport/new?listingId=trc-001')
+    expect(
+      within(renting).getByRole('button', { name: 'レビューを送る' }),
+    ).toBeInTheDocument()
     expect(
       within(renting).getByText('2026-10-01 〜 2026-10-07・7日間・¥154,000'),
     ).toBeInTheDocument()

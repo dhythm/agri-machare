@@ -5,6 +5,7 @@ import { canView, getCurrentUser } from '@/lib/server/auth/session'
 import { getListing, getRelatedListings } from '@/lib/server/listings'
 import { buildModes } from '@/lib/server/listing-detail'
 import { listBookedRanges } from '@/lib/server/rentals'
+import { listReviewsForSeller } from '@/lib/server/reviews'
 import type { RentToOwnTerms } from '@/lib/rent-to-own'
 import type { Listing } from '@/lib/data'
 
@@ -47,6 +48,11 @@ export default async function ListingPage({
         related={await getRelatedListings(listing, 3)}
         rentToOwnTerms={rentToOwnTerms(listing)}
         booked={await listBookedRanges(listing.id)}
+        sellerReviews={
+          listing.ownerUserId
+            ? (await listReviewsForSeller(listing.ownerUserId)).slice(0, 10)
+            : []
+        }
         viewer={{
           signedIn: user !== undefined,
           isOwner: user !== undefined && listing.ownerUserId === user.id,
