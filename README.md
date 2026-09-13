@@ -11,16 +11,36 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-http://localhost:3000 で確認できます。データはサーバープロセス内のインメモリストアに保持し、起動時にサンプル（農機具 48 件・運搬案件 10 件を `lib/server/` で決定的に生成）を投入します。環境変数やデータベースの設定は不要です。出品と運搬依頼は作成・更新・削除が一覧に即時反映され、問い合わせ・応募・運搬者登録・お問い合わせも保存されます。プロセスを再起動すると初期状態に戻ります。決済と認証は未実装です。
+http://localhost:3000 で確認できます。起動時にサンプル（農機具 48 件・運搬案件 10 件を `lib/server/` で決定的に生成）を投入します。出品と運搬依頼は作成・更新・削除が一覧に即時反映され、問い合わせ・応募・運搬者登録・お問い合わせも保存されます。決済と認証は未実装です。
 
 ## データストア
 
+`DATA_STORE` 環境変数でストアを切り替えます。Docker やデータベースサーバーは不要です。
+
+| コマンド         | ストア                      | 用途                                                                                          |
+| ---------------- | --------------------------- | --------------------------------------------------------------------------------------------- |
+| `pnpm dev`       | インメモリ（既定）          | 通常の開発・Vercel などでのモック表示。プロセス再起動で初期状態に戻る。将来 PostgreSQL へ移行 |
+| `pnpm dev:mock`  | インメモリ                  | `pnpm dev` と同じ。意図を明示したいとき                                                       |
+| `pnpm dev:agent` | PGlite（組み込み Postgres） | エージェント環境・CI で DB を操作しながら実装する。データは `.data/pglite/` に永続化          |
+
 - `lib/server/store/repository.ts` がコレクションごとの契約（`list` / `get` / `create` / `update` / `delete`、すべて非同期）です。
-- `lib/server/store/memory-repository.ts` が唯一の実装で、揮発性のインメモリストアです。格納・返却時にコピーを取り、呼び出し側の変更がストアに漏れません。新規作成は先頭に並びます。
-- `lib/server/store/index.ts` が `listings` / `transportJobs` / `submissions` の 3 コレクションを `globalThis` 上のシングルトンとして提供します（開発時の HMR で消えません）。テストでは `resetStore()` で初期化します。
-- サービス（`lib/server/listings.ts` / `transport.ts` / `submissions.ts`）はストア経由でのみデータに触れます。DB に移行する際は `Repository<T>` を実装した別のストアを `index.ts` で差し替えます。
-- 連絡先メールアドレスは公開エンティティに保存せず、受付（submissions）にも農機具・案件の公開フィールドにも含めません。
-- 更新・削除の API は認証がなく誰でも実行できます。DB 導入時に認証と合わせて制限します。
+- `lib/server/store/memory.ts` が揮発性のインメモリ実装、`lib/server/store/pglite/` が PGlite 実装です。どちらも `lib/server/store/repository-contract.test.ts` の同じ契約テストを通ります。
+- PGlite のスキーマは `db/migrations/*.sql`（PostgreSQL 向けの DDL）で管理し、起動時に未適用分を `schema_migrations` に記録しながら適用します。`listings` が空ならサンプルを投入します。PostgreSQL に移す際は `lib/server/store/pglite/sql-repository.ts` の接続先を差し替えるだけで、SQL とテーブル定義は共通です。
+- `lib/server/store/index.ts` が `listings` / `transportJobs` / `submissions` を `globalThis` 上のシングルトンとして提供します（開発時の HMR で消えません）。テストでは `resetStore()` で初期化します。
+- サービス（`lib/server/listings.ts` / `transport.ts` / `submissions.ts`）はストア経由でのみデータに触れます。
+- 連絡先メールアドレスは公開エンティティに保存せず、農機具・案件の公開フィールドにも含めません。
+- 更新・削除の API は認証がなく誰でも実行できます。本番実装時に認証と合わせて制限します。
+
+### PGlite の操作
+
+| コマンド                   | 内容                                                      |
+| -------------------------- | --------------------------------------------------------- |
+| `pnpm db:migrate`          | 未適用のマイグレーションを適用（空ならサンプル投入）      |
+| `pnpm db:reset`            | データディレクトリを削除して作り直す                      |
+| `pnpm db:sql "select ..."` | SQL を 1 文実行して結果を表示（`dev:agent` 稼働中でも可） |
+| `pnpm test:pglite`         | テスト全体を PGlite（`memory://`）上で実行                |
+
+データディレクトリは `PGLITE_DATA_DIR` で変更できます（既定 `.data/pglite`、`memory://` で揮発）。新しいマイグレーションは `db/migrations/0002_xxx.sql` のように連番で追加します。
 
 ## ページ構成
 
@@ -85,6 +105,6 @@ TanStack Query の初期データとキャッシュの構成は [公式 SSR ガ�
 
 ## CI
 
-GitHub Actions は PR と `main` への push で動作します。lint / format / typecheck / knip / test:coverage / build の 6 ジョブを並列実行し、ひとつが失敗しても他の結果を収集します。同じブランチの古い実行はキャンセルします。
+GitHub Actions は PR と `main` への push で動作します。lint / format / typecheck / knip / test:coverage / test:pglite / build の 7 ジョブを並列実行し、ひとつが失敗しても他の結果を収集します。同じブランチの古い実行はキャンセルします。
 
 各ジョブは `pnpm install --frozen-lockfile` で依存を固定し、テストのカバレッジを artifact に保存します。Dependabot が npm と GitHub Actions の更新 PR を作成します。
