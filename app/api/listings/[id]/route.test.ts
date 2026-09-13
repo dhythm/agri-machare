@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DELETE, GET, PUT } from './route'
 import { POST as createInquiry } from './inquiries/route'
+import { POST as createListing } from '../route'
 import { listSubmissions } from '@/lib/server/submissions'
 import { resetStore } from '@/lib/server/store'
 
@@ -36,6 +37,36 @@ describe('GET /api/listings/[id]', () => {
     expect((await found.json()).id).toBe('trc-001')
     expect(
       (await GET(new Request('http://localhost'), context('missing'))).status,
+    ).toBe(404)
+  })
+
+  it('hides a pending listing from the public API', async () => {
+    const created = await createListing(
+      new Request('http://localhost/api/listings', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: '審査中トラクター',
+          category: 'トラクター',
+          maker: 'クボタ',
+          year: '2018',
+          hours: '500',
+          condition: '目立った傷なし',
+          prefecture: '新潟県',
+          city: '長岡市',
+          deals: ['sale'],
+          salePrice: '1000000',
+          rentPerDay: '',
+          rentToOwn: false,
+          summary: '審査中。',
+          sellerName: '審査農園',
+          sellerKind: '農業法人',
+          contactEmail: 'seller@example.com',
+        }),
+      }),
+    )
+    const { id } = (await created.json()) as { id: string }
+    expect(
+      (await GET(new Request('http://localhost'), context(id))).status,
     ).toBe(404)
   })
 })

@@ -16,6 +16,10 @@ export function notFound(error: string): Response {
   return Response.json({ error }, { status: 404 })
 }
 
+export function unauthorized(error = '認証が必要です。'): Response {
+  return Response.json({ error }, { status: 401 })
+}
+
 async function readJson(request: Request): Promise<unknown> {
   try {
     return await request.json()

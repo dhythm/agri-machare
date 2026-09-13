@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-http://localhost:3000 で確認できます。起動時にサンプル（農機具 48 件・運搬案件 10 件を `lib/server/` で決定的に生成）を投入します。出品と運搬依頼は作成・更新・削除が一覧に即時反映され、問い合わせ・応募・運搬者登録・お問い合わせも保存されます。決済と認証は未実装です。
+http://localhost:3000 で確認できます。起動時にサンプル（農機具 48 件・運搬案件 10 件を `lib/server/` で決定的に生成）を投入します。出品と運搬依頼は作成後に審査待ちとなり、運営が承認すると公開されます。問い合わせ・応募・運搬者登録・お問い合わせも保存されます。決済と本格的な認証は未実装です。
 
 ## データストア
 
@@ -30,6 +30,7 @@ http://localhost:3000 で確認できます。起動時にサンプル（農機�
 - サービス（`lib/server/listings.ts` / `transport.ts` / `submissions.ts`）はストア経由でのみデータに触れます。
 - 連絡先メールアドレスは公開エンティティに保存せず、農機具・案件の公開フィールドにも含めません。
 - 更新・削除の API は認証がなく誰でも実行できます。本番実装時に認証と合わせて制限します。
+- 運営審査は暫定の共有キー（`ADMIN_SECRET`。未設定かつ非本番では `dev-admin`）です。本番の認証（Clerk 等）に置き換えてください。本番で `ADMIN_SECRET` が未設定のときは審査 API を拒否します。
 
 ### PGlite の操作
 
@@ -56,6 +57,7 @@ http://localhost:3000 で確認できます。起動時にサンプル（農機�
 | `/transport/register`          | 運搬者登録フォーム                                           |
 | `/transport/pricing`           | 運搬料金のめやす                                             |
 | `/guide` / `/faq` / `/contact` | はじめての方へ / よくある質問 / お問い合わせフォーム         |
+| `/admin`                       | 運営審査。出品と運搬依頼の承認・却下（暫定の共有キー）       |
 
 ## 品質チェック
 
@@ -90,16 +92,18 @@ http://localhost:3000 で確認できます。起動時にサンプル（農機�
 
 CRUD の API は次のとおりです。成功時は作成が HTTP 201、取得・更新が 200、削除が 204、検証エラーは 400 で `{ error, errors }`、対象がない場合は 404 を返します。
 
-| メソッドとパス                                | 内容                                                                         |
-| --------------------------------------------- | ---------------------------------------------------------------------------- |
-| `POST /api/listings`                          | 農機具を作成。`{ id, receivedAt, listing }`                                  |
-| `GET / PUT / DELETE /api/listings/[id]`       | 農機具の取得・全置換更新（出品フォームと同じ検証）・削除（問い合わせも削除） |
-| `POST /api/listings/[id]/inquiries`           | 出品者への連絡を保存。`{ id, receivedAt }`                                   |
-| `GET / POST /api/transport/jobs`              | 運搬案件の一覧・作成。作成は `{ id, receivedAt, job }`                       |
-| `GET / PUT / DELETE /api/transport/jobs/[id]` | 運搬案件の取得・更新・削除（応募も削除）                                     |
-| `POST /api/transport/jobs/[id]/applications`  | 案件への応募を保存                                                           |
-| `POST /api/transport/registrations`           | 運搬者登録を保存                                                             |
-| `POST /api/contact`                           | お問い合わせを保存                                                           |
+| メソッドとパス                                | 内容                                                                                        |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `POST /api/listings`                          | 農機具を作成（`moderationStatus: pending`）。`{ id, receivedAt, listing }`                  |
+| `GET / PUT / DELETE /api/listings/[id]`       | 公開取得は承認済みのみ。更新・削除（問い合わせも削除）                                      |
+| `POST /api/listings/[id]/inquiries`           | 出品者への連絡を保存。`{ id, receivedAt }`                                                  |
+| `GET / POST /api/transport/jobs`              | 公開一覧は承認済みのみ。作成は審査待ち `{ id, receivedAt, job }`                            |
+| `GET / PUT / DELETE /api/transport/jobs/[id]` | 公開取得は承認済みのみ。更新・削除（応募も削除）                                            |
+| `POST /api/transport/jobs/[id]/applications`  | 案件への応募を保存                                                                          |
+| `POST /api/transport/registrations`           | 運搬者登録を保存                                                                            |
+| `POST /api/contact`                           | お問い合わせを保存                                                                          |
+| `GET / POST / DELETE /api/admin/session`      | 運営キーの確認・入室（Cookie）・退室                                                        |
+| `GET / POST /api/admin/queue`                 | 審査キュー。`status=pending\|approved\|rejected\|all`。判定は `{ kind, id, status, note? }` |
 
 TanStack Query の初期データとキャッシュの構成は [公式 SSR ガイド](https://tanstack.com/query/latest/docs/framework/react/guides/ssr) を参照してください。
 

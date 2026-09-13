@@ -28,7 +28,7 @@ describe('TransportJobForm', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('posts the job and links to it', async () => {
+  it('posts the job and returns to the board', async () => {
     const fetchMock = vi.fn(async () =>
       Response.json(
         { id: 'job-1', receivedAt: '2026-09-13T00:00:00.000Z' },
@@ -52,10 +52,9 @@ describe('TransportJobForm', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(
       '受け付けました',
     )
-    expect(screen.getByRole('link', { name: '案件を見る' })).toHaveAttribute(
-      'href',
-      '/transport/job-1',
-    )
+    expect(
+      screen.getByRole('link', { name: '案件ボードにもどる' }),
+    ).toHaveAttribute('href', '/transport')
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/transport/jobs',
       expect.objectContaining({ method: 'POST' }),

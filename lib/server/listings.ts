@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { randomUUID } from 'node:crypto'
+import { isApproved } from '@/lib/data'
 import type {
   Listing,
   ListingFilter,
@@ -65,7 +66,9 @@ export async function searchListings(
 ): Promise<Listing[]> {
   const terms = keywordTerms(filter.keyword)
   const listings = await getStore().listings.list()
-  return listings.filter((listing) => matches(listing, filter, terms))
+  return listings.filter(
+    (listing) => isApproved(listing) && matches(listing, filter, terms),
+  )
 }
 
 export async function paginateListings(
@@ -86,7 +89,7 @@ export async function paginateListings(
 }
 
 export async function getFeaturedListings(limit: number): Promise<Listing[]> {
-  return (await getStore().listings.list()).slice(0, limit)
+  return (await getStore().listings.list()).filter(isApproved).slice(0, limit)
 }
 
 export function getListing(id: string): Promise<Listing | undefined> {
@@ -101,13 +104,17 @@ export async function getRelatedListings(
   return listings
     .filter(
       (candidate) =>
-        candidate.id !== listing.id && candidate.category === listing.category,
+        candidate.id !== listing.id &&
+        candidate.category === listing.category &&
+        isApproved(candidate),
     )
     .slice(0, limit)
 }
 
 export async function getListingIds(): Promise<string[]> {
-  return (await getStore().listings.list()).map((listing) => listing.id)
+  return (await getStore().listings.list())
+    .filter(isApproved)
+    .map((listing) => listing.id)
 }
 
 /** Public listing fields derived from a submission; contact details stay out. */
@@ -144,6 +151,7 @@ export function createListing(submission: ListingSubmission): Promise<Listing> {
     },
     createdAt: now,
     updatedAt: now,
+    moderationStatus: 'pending',
   })
 }
 

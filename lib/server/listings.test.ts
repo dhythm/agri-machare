@@ -9,6 +9,7 @@ import {
   searchListings,
   updateListing,
 } from './listings'
+import { applyModeration } from './moderation'
 import { resetStore } from './store'
 import type { ListingSubmission } from '@/lib/validation/listing-submission'
 
@@ -186,17 +187,34 @@ describe('featured listings', () => {
 })
 
 describe('listing CRUD', () => {
-  it('creates a listing from a submission and lists it first', async () => {
+  it('creates a listing as pending so it stays off the public list', async () => {
     const created = await createListing(submission)
     expect(created.id).toMatch(/^[0-9a-f-]{36}$/)
     expect(created).toMatchObject({
       name: submission.name,
       image: '/equipment/tractor.png',
+      moderationStatus: 'pending',
       seller: { name: 'テスト農園', kind: '農業法人', rating: 0, reviews: 0 },
       createdAt: expect.any(String),
     })
-    expect((await getFeaturedListings(1))[0].id).toBe(created.id)
     expect((await getListing(created.id))?.name).toBe(submission.name)
+    expect((await getFeaturedListings(1))[0].id).toBe('trc-001')
+    expect(
+      await searchListings({
+        category: 'すべて',
+        deal: 'all',
+        keyword: 'テスト農園',
+      }),
+    ).toEqual([])
+    expect(await getListingIds()).not.toContain(created.id)
+  })
+
+  it('publishes a listing after approval and hides a rejected one', async () => {
+    const created = await createListing(submission)
+    const approved = await applyModeration('listing', created.id, {
+      status: 'approved',
+    })
+    expect(approved?.moderationStatus).toBe('approved')
     expect(
       (
         await searchListings({
@@ -206,6 +224,20 @@ describe('listing CRUD', () => {
         })
       ).map((listing) => listing.id),
     ).toEqual([created.id])
+    expect((await getFeaturedListings(1))[0].id).toBe(created.id)
+
+    await applyModeration('listing', created.id, {
+      status: 'rejected',
+      note: '写真が不足',
+    })
+    expect((await getListing(created.id))?.moderationNote).toBe('写真が不足')
+    expect(
+      await searchListings({
+        category: 'すべて',
+        deal: 'all',
+        keyword: 'テスト農園',
+      }),
+    ).toEqual([])
   })
 
   it('does not store the contact email on the public listing', async () => {

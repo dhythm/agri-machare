@@ -61,8 +61,8 @@ describe('ListingForm', () => {
       '受け付けました',
     )
     expect(
-      screen.getByRole('link', { name: '出品した農機具を見る' }),
-    ).toHaveAttribute('href', '/listings/r1')
+      screen.getByRole('link', { name: '出品中の農機具を見る' }),
+    ).toHaveAttribute('href', '/listings')
     const body = JSON.parse(
       (fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1]
         .body as string,

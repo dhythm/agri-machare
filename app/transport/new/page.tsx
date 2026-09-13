@@ -10,7 +10,7 @@ export default function NewTransportJobPage() {
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <PageIntro
           title="運搬を依頼する"
-          description="運びたい農機具と区間、希望日、報酬を登録すると案件ボードに掲載されます。"
+          description="運びたい農機具と区間、希望日、報酬を登録します。"
         />
         <div className="mt-8">
           <TransportJobForm />

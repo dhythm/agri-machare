@@ -5,7 +5,7 @@ import { PageShell } from '@/components/page-shell'
 import { BackLink } from '@/components/back-link'
 import { Badge } from '@/components/badge'
 import { TransportApplicationForm } from '@/components/forms/transport-application-form'
-import { formatYen } from '@/lib/data'
+import { formatYen, isApproved } from '@/lib/data'
 import { getTransportJob } from '@/lib/server/transport'
 
 export const metadata: Metadata = { title: '運搬案件 | ノウキシェア' }
@@ -19,7 +19,7 @@ export default async function TransportJobPage({
 }) {
   const { id } = await params
   const job = await getTransportJob(id)
-  if (!job) notFound()
+  if (!job || !isApproved(job)) notFound()
 
   return (
     <PageShell>

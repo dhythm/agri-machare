@@ -33,6 +33,9 @@ export const listingTable: TableSpec<Listing> = {
     'tags',
     'created_at',
     'updated_at',
+    'moderation_status',
+    'moderation_note',
+    'moderated_at',
   ],
   toRow: (listing) => [
     listing.id,
@@ -57,6 +60,9 @@ export const listingTable: TableSpec<Listing> = {
     listing.tags,
     nullable(listing.createdAt),
     nullable(listing.updatedAt),
+    nullable(listing.moderationStatus),
+    nullable(listing.moderationNote),
+    nullable(listing.moderatedAt),
   ],
   fromRow: (row: Row) =>
     compact({
@@ -84,6 +90,11 @@ export const listingTable: TableSpec<Listing> = {
       tags: row.tags as string[],
       createdAt: isoString(row.created_at),
       updatedAt: isoString(row.updated_at),
+      moderationStatus:
+        (row.moderation_status as Listing['moderationStatus'] | null) ??
+        undefined,
+      moderationNote: (row.moderation_note as string | null) ?? undefined,
+      moderatedAt: isoString(row.moderated_at),
     }),
 }
 
@@ -101,6 +112,9 @@ export const transportJobTable: TableSpec<TransportJob> = {
     'status',
     'created_at',
     'updated_at',
+    'moderation_status',
+    'moderation_note',
+    'moderated_at',
   ],
   toRow: (job) => [
     job.id,
@@ -114,6 +128,9 @@ export const transportJobTable: TableSpec<TransportJob> = {
     job.status,
     nullable(job.createdAt),
     nullable(job.updatedAt),
+    nullable(job.moderationStatus),
+    nullable(job.moderationNote),
+    nullable(job.moderatedAt),
   ],
   fromRow: (row: Row) =>
     compact({
@@ -128,6 +145,11 @@ export const transportJobTable: TableSpec<TransportJob> = {
       status: row.status as TransportJob['status'],
       createdAt: isoString(row.created_at),
       updatedAt: isoString(row.updated_at),
+      moderationStatus:
+        (row.moderation_status as TransportJob['moderationStatus'] | null) ??
+        undefined,
+      moderationNote: (row.moderation_note as string | null) ?? undefined,
+      moderatedAt: isoString(row.moderated_at),
     }),
 }
 

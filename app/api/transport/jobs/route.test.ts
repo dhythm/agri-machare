@@ -32,7 +32,7 @@ describe('/api/transport/jobs', () => {
     expect((await response.json()).length).toBeGreaterThanOrEqual(10)
   })
 
-  it('creates a job and lists it first', async () => {
+  it('creates a pending job that is omitted from the public list', async () => {
     const response = await post(input)
     expect(response.status).toBe(201)
     const body = await response.json()
@@ -40,9 +40,12 @@ describe('/api/transport/jobs', () => {
       id: body.id,
       item: input.item,
       status: '募集中',
+      moderationStatus: 'pending',
     })
     expect(JSON.stringify(body)).not.toContain('owner@example.com')
-    expect((await (await GET()).json())[0].id).toBe(body.id)
+    const listed = await (await GET()).json()
+    expect(listed[0].id).toBe('tj-01')
+    expect(listed.map((job: { id: string }) => job.id)).not.toContain(body.id)
   })
 
   it('validates input', async () => {

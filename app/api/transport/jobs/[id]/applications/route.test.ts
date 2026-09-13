@@ -1,7 +1,11 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { POST } from './route'
+import { POST as createJob } from '../../route'
+import { resetStore } from '@/lib/server/store'
 
 vi.mock('server-only', () => ({}))
+
+beforeEach(() => resetStore())
 
 const application = {
   name: '高橋 健',
@@ -27,6 +31,26 @@ describe('POST /api/transport/jobs/[id]/applications', () => {
 
   it('rejects an unknown job', async () => {
     expect((await post('missing', application)).status).toBe(404)
+  })
+
+  it('rejects an application for a pending job', async () => {
+    const created = await createJob(
+      new Request('http://localhost/api/transport/jobs', {
+        method: 'POST',
+        body: JSON.stringify({
+          item: '審査中トラクター',
+          from: '長野県 松本市',
+          to: '長野県 諏訪市',
+          distanceKm: '40',
+          weight: '約1.2t',
+          desiredDate: '相談',
+          reward: '14000',
+          contactEmail: 'owner@example.com',
+        }),
+      }),
+    )
+    const { id } = (await created.json()) as { id: string }
+    expect((await post(id, application)).status).toBe(404)
   })
 
   it('returns field errors', async () => {

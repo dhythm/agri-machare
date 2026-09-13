@@ -122,6 +122,24 @@ describe.each(stores)('$name store', ({ store }) => {
     ).rejects.toThrow()
   })
 
+  it('round-trips moderation fields', async () => {
+    const created = await store.listings.create({
+      ...listing('mod-1', '審査'),
+      moderationStatus: 'pending',
+    })
+    expect(created.moderationStatus).toBe('pending')
+    const decided = await store.listings.update('mod-1', {
+      moderationStatus: 'rejected',
+      moderationNote: '写真が不足',
+      moderatedAt: '2026-09-13T02:00:00.000Z',
+    })
+    expect(decided).toMatchObject({
+      moderationStatus: 'rejected',
+      moderationNote: '写真が不足',
+      moderatedAt: '2026-09-13T02:00:00.000Z',
+    })
+  })
+
   it('round-trips transport jobs and submissions', async () => {
     expect(await store.transportJobs.create(job('job-1'))).toEqual(job('job-1'))
     expect(
