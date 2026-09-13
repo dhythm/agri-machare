@@ -1,5 +1,5 @@
-import { isAdminRequest } from '@/lib/server/admin'
-import { badRequest, parseBody, unauthorized } from '@/lib/server/api'
+import { badRequest, parseBody } from '@/lib/server/api'
+import { requireAdmin } from '@/lib/server/auth/session'
 import { applyModeration, getModerationQueue } from '@/lib/server/moderation'
 import {
   readModerationQueueFilter,
@@ -7,7 +7,8 @@ import {
 } from '@/lib/validation/moderation'
 
 export async function GET(request: Request) {
-  if (!isAdminRequest(request)) return unauthorized()
+  const denied = await requireAdmin()
+  if (denied) return denied
   const status = readModerationQueueFilter(
     new URL(request.url).searchParams.get('status') ?? undefined,
   )
@@ -16,7 +17,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!isAdminRequest(request)) return unauthorized()
+  const denied = await requireAdmin()
+  if (denied) return denied
   const parsed = await parseBody(request, validateModerationInput)
   if (!parsed.ok) return parsed.response
   const entity = await applyModeration(parsed.value.kind, parsed.value.id, {
