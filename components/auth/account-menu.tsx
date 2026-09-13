@@ -22,7 +22,7 @@ export function AccountMenu() {
     <div className="flex items-center gap-2">
       {session.user.role === 'admin' && (
         <Link href="/admin" className={linkClass}>
-          運営審査
+          運営画面
         </Link>
       )}
       <Link href="/account" className={linkClass}>

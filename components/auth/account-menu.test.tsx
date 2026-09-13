@@ -38,7 +38,7 @@ describe('AccountMenu', () => {
       data: { user: { name: '運営デモ', role: 'admin' } },
     })
     render(<AccountMenu />)
-    expect(screen.getByRole('link', { name: '運営審査' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '運営画面' })).toHaveAttribute(
       'href',
       '/admin',
     )
@@ -59,6 +59,6 @@ describe('AccountMenu', () => {
       data: { user: { name: '利用者デモ', role: 'user' } },
     })
     render(<AccountMenu />)
-    expect(screen.queryByRole('link', { name: '運営審査' })).toBeNull()
+    expect(screen.queryByRole('link', { name: '運営画面' })).toBeNull()
   })
 })

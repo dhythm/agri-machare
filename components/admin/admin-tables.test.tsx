@@ -1,0 +1,111 @@
+// @vitest-environment jsdom
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+import {
+  AccountTable,
+  CarrierTable,
+  RentalTable,
+  ThreadTable,
+} from './admin-tables'
+
+describe('admin tables', () => {
+  it('renders rentals with listing, renter, and status', () => {
+    render(
+      <RentalTable
+        items={[
+          {
+            rental: {
+              id: 'r-1',
+              listingId: 'trc-001',
+              renterUserId: 'demo-user',
+              startDate: '2026-10-01',
+              endDate: '2026-10-07',
+              days: 7,
+              rentPerDay: 22_000,
+              rentTotal: 154_000,
+              status: 'requested',
+              createdAt: '2026-09-13T00:00:00.000Z',
+              updatedAt: '2026-09-13T00:00:00.000Z',
+            },
+            listing: undefined,
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByText('（削除済み）')).toBeInTheDocument()
+    expect(screen.getByText('demo-user')).toBeInTheDocument()
+    expect(screen.getByText('申込中')).toBeInTheDocument()
+    expect(screen.getByText('¥154,000')).toBeInTheDocument()
+  })
+
+  it('renders threads with a link and reply count', () => {
+    render(
+      <ThreadTable
+        items={[
+          {
+            id: 't-1',
+            kind: 'listingInquiry',
+            targetId: 'trc-001',
+            targetName: 'クボタ 45馬力',
+            senderName: '利用者デモ',
+            status: 'in_progress',
+            replyCount: 3,
+            receivedAt: '2026-09-13T00:00:00.000Z',
+            payload: {},
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByRole('link', { name: 'クボタ 45馬力' })).toHaveAttribute(
+      'href',
+      '/listings/trc-001',
+    )
+    expect(screen.getByRole('link', { name: '開く' })).toHaveAttribute(
+      'href',
+      '/account/threads/t-1',
+    )
+    expect(screen.getByText('対応中')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
+  })
+
+  it('renders carriers and accounts, and empty states', () => {
+    render(
+      <CarrierTable
+        items={[
+          {
+            id: 'c-1',
+            kind: 'transportRegistration',
+            receivedAt: '2026-09-13T00:00:00.000Z',
+            payload: {
+              name: '高橋運送',
+              kind: '法人',
+              prefecture: '秋田県',
+              vehicle: '4tトラック',
+            },
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByText('高橋運送')).toBeInTheDocument()
+    expect(screen.getByText('4tトラック')).toBeInTheDocument()
+    render(
+      <AccountTable
+        items={[
+          {
+            id: 'demo-seller',
+            name: '出品者デモ',
+            email: 'seller@example.com',
+            role: 'user',
+            listingCount: 6,
+            transportJobCount: 2,
+            rentalCount: 0,
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByText('出品者デモ')).toBeInTheDocument()
+    expect(screen.getByText('一般')).toBeInTheDocument()
+    render(<RentalTable items={[]} />)
+    expect(screen.getByText('該当なし')).toBeInTheDocument()
+  })
+})

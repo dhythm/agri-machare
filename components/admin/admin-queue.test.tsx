@@ -38,10 +38,11 @@ const job: TransportJob = {
   moderationStatus: 'pending',
 }
 
-function setup() {
+function setup(kind: 'listing' | 'transportJob') {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <AdminQueue
+        kind={kind}
         initialQueue={{ listings: [listing], transportJobs: [job] }}
       />
     </QueryClientProvider>,
@@ -54,6 +55,12 @@ afterEach(() => {
 })
 
 describe('AdminQueue', () => {
+  it('renders only the requested kind', () => {
+    setup('listing')
+    expect(screen.getByText('審査中トラクター')).toBeInTheDocument()
+    expect(screen.queryByText('審査中コンバイン')).toBeNull()
+  })
+
   it('approves a listing with an optional note', async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (init?.method === 'POST') {
@@ -62,7 +69,7 @@ describe('AdminQueue', () => {
       return Response.json({ listings: [], transportJobs: [job] })
     })
     vi.stubGlobal('fetch', fetchMock)
-    const user = setup()
+    const user = setup('listing')
     const listingCard = screen.getByText('審査中トラクター').closest('li')
     if (!listingCard) throw new Error('listing card')
     await user.type(within(listingCard).getByLabelText('メモ'), '掲載可')
@@ -88,7 +95,6 @@ describe('AdminQueue', () => {
     })
     expect(await screen.findByText('該当なし')).toBeInTheDocument()
     expect(screen.queryByText('審査中トラクター')).not.toBeInTheDocument()
-    expect(screen.getByText('審査中コンバイン')).toBeInTheDocument()
   })
 
   it('rejects a transport job', async () => {
@@ -99,7 +105,7 @@ describe('AdminQueue', () => {
       return Response.json({ listings: [listing], transportJobs: [] })
     })
     vi.stubGlobal('fetch', fetchMock)
-    const user = setup()
+    const user = setup('transportJob')
     const jobCard = screen.getByText('審査中コンバイン').closest('li')
     if (!jobCard) throw new Error('job card')
     await user.click(within(jobCard).getByRole('button', { name: '却下' }))
