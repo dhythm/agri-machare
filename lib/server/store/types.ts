@@ -58,16 +58,8 @@ export type AccountStatus = {
   updatedAt: string
 }
 
-const notificationKinds = [
-  'inquiry',
-  'application',
-  'reply',
-  'threadStatus',
-  'rental',
-  'moderation',
-] as const
-
-export type NotificationKind = (typeof notificationKinds)[number]
+export type NotificationKind =
+  'inquiry' | 'application' | 'reply' | 'threadStatus' | 'rental' | 'moderation'
 
 /** In-app notification for one user; `readAt` is set when opened. */
 export type Notification = {
