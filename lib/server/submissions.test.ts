@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { acceptSubmission, listSubmissions } from './submissions'
+import {
+  acceptSubmission,
+  listSubmissions,
+  listSubmissionsByUser,
+} from './submissions'
 import { deleteListing } from './listings'
 import { resetStore } from './store'
 
@@ -21,9 +25,21 @@ describe('submissions', () => {
   })
 
   it('filters by kind and target', async () => {
-    await acceptSubmission('listingInquiry', { message: 'x' }, 'trc-001')
-    await acceptSubmission('listingInquiry', { message: 'y' }, 'trc-006')
-    await acceptSubmission('transportApplication', { message: 'z' }, 'tj-01')
+    await acceptSubmission(
+      'listingInquiry',
+      { message: 'x' },
+      { targetId: 'trc-001' },
+    )
+    await acceptSubmission(
+      'listingInquiry',
+      { message: 'y' },
+      { targetId: 'trc-006' },
+    )
+    await acceptSubmission(
+      'transportApplication',
+      { message: 'z' },
+      { targetId: 'tj-01' },
+    )
     expect(await listSubmissions('listingInquiry', 'trc-001')).toHaveLength(1)
     expect(await listSubmissions('listingInquiry')).toHaveLength(2)
     expect(await listSubmissions('transportApplication', 'tj-01')).toHaveLength(
@@ -31,9 +47,32 @@ describe('submissions', () => {
     )
   })
 
+  it('records the sender and lists submissions by user', async () => {
+    await acceptSubmission(
+      'listingInquiry',
+      { message: 'mine' },
+      { targetId: 'trc-001', userId: 'demo-user' },
+    )
+    await acceptSubmission('contact', { message: 'anonymous' })
+    const mine = await listSubmissionsByUser('demo-user')
+    expect(mine.map((submission) => submission.payload.message)).toEqual([
+      'mine',
+    ])
+    expect(mine[0].userId).toBe('demo-user')
+    expect(await listSubmissionsByUser('demo-seller')).toEqual([])
+  })
+
   it('removes inquiries when their listing is deleted', async () => {
-    await acceptSubmission('listingInquiry', { message: 'x' }, 'trc-001')
-    await acceptSubmission('listingInquiry', { message: 'y' }, 'trc-006')
+    await acceptSubmission(
+      'listingInquiry',
+      { message: 'x' },
+      { targetId: 'trc-001' },
+    )
+    await acceptSubmission(
+      'listingInquiry',
+      { message: 'y' },
+      { targetId: 'trc-006' },
+    )
     await deleteListing('trc-001')
     expect(await listSubmissions('listingInquiry')).toHaveLength(1)
   })

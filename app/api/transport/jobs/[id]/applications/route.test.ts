@@ -2,10 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { POST } from './route'
 import { POST as createJob } from '../../route'
 import { resetStore } from '@/lib/server/store'
+import { demoUser, signInAs } from '@/test/mock-auth'
 
 vi.mock('server-only', () => ({}))
+vi.mock('@/auth', () => import('@/test/mock-auth'))
 
-beforeEach(() => resetStore())
+beforeEach(() => {
+  signInAs(demoUser)
+  return resetStore()
+})
 
 const application = {
   name: '高橋 健',
@@ -27,6 +32,11 @@ function post(id: string, body: unknown) {
 describe('POST /api/transport/jobs/[id]/applications', () => {
   it('accepts an application for an open job', async () => {
     expect((await post('tj-01', application)).status).toBe(201)
+  })
+
+  it('requires login', async () => {
+    signInAs(null)
+    expect((await post('tj-01', application)).status).toBe(401)
   })
 
   it('rejects an unknown job', async () => {

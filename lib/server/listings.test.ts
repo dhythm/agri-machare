@@ -188,12 +188,13 @@ describe('featured listings', () => {
 
 describe('listing CRUD', () => {
   it('creates a listing as pending so it stays off the public list', async () => {
-    const created = await createListing(submission)
+    const created = await createListing(submission, 'demo-seller')
     expect(created.id).toMatch(/^[0-9a-f-]{36}$/)
     expect(created).toMatchObject({
       name: submission.name,
       image: '/equipment/tractor.png',
       moderationStatus: 'pending',
+      ownerUserId: 'demo-seller',
       seller: { name: 'テスト農園', kind: '農業法人', rating: 0, reviews: 0 },
       createdAt: expect.any(String),
     })
@@ -210,7 +211,7 @@ describe('listing CRUD', () => {
   })
 
   it('publishes a listing after approval and hides a rejected one', async () => {
-    const created = await createListing(submission)
+    const created = await createListing(submission, 'demo-seller')
     const approved = await applyModeration('listing', created.id, {
       status: 'approved',
     })
@@ -241,12 +242,12 @@ describe('listing CRUD', () => {
   })
 
   it('does not store the contact email on the public listing', async () => {
-    const created = await createListing(submission)
+    const created = await createListing(submission, 'demo-seller')
     expect(JSON.stringify(created)).not.toContain('seller@example.com')
   })
 
   it('updates an existing listing and keeps its id, seller rating, and history', async () => {
-    const created = await createListing(submission)
+    const created = await createListing(submission, 'demo-seller')
     const updated = await updateListing(created.id, {
       ...submission,
       name: '更新後の名前',

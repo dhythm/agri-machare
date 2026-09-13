@@ -2,10 +2,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { POST } from './route'
 import { POST as createListing } from '../../route'
 import { resetStore } from '@/lib/server/store'
+import { listSubmissions } from '@/lib/server/submissions'
+import { demoUser, signInAs } from '@/test/mock-auth'
 
 vi.mock('server-only', () => ({}))
+vi.mock('@/auth', () => import('@/test/mock-auth'))
 
-beforeEach(() => resetStore())
+beforeEach(() => {
+  signInAs(demoUser)
+  return resetStore()
+})
 
 const inquiry = {
   mode: 'rent',
@@ -26,10 +32,17 @@ function post(id: string, body: unknown) {
 }
 
 describe('POST /api/listings/[id]/inquiries', () => {
-  it('accepts an inquiry for an existing listing', async () => {
+  it('accepts an inquiry for an existing listing and records the sender', async () => {
     const response = await post('trc-001', inquiry)
     expect(response.status).toBe(201)
     expect(await response.json()).toHaveProperty('id')
+    const [stored] = await listSubmissions('listingInquiry', 'trc-001')
+    expect(stored.userId).toBe('demo-user')
+  })
+
+  it('requires login', async () => {
+    signInAs(null)
+    expect((await post('trc-001', inquiry)).status).toBe(401)
   })
 
   it('rejects an inquiry for an unknown listing', async () => {

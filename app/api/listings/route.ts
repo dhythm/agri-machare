@@ -1,5 +1,6 @@
 import { isCategory, isDealFilter } from '@/lib/data'
 import { badRequest, parseBody } from '@/lib/server/api'
+import { requireUser } from '@/lib/server/auth/session'
 import { createListing, paginateListings } from '@/lib/server/listings'
 import { validateListingSubmission } from '@/lib/validation/listing-submission'
 
@@ -77,9 +78,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const authorized = await requireUser()
+  if (!authorized.ok) return authorized.response
   const parsed = await parseBody(request, validateListingSubmission)
   if (!parsed.ok) return parsed.response
-  const listing = await createListing(parsed.value)
+  const listing = await createListing(parsed.value, authorized.user.id)
   return Response.json(
     { id: listing.id, receivedAt: listing.createdAt, listing },
     { status: 201 },
