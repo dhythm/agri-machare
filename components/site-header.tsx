@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Sprout, Search, Plus } from 'lucide-react'
+import { AccountMenu } from '@/components/auth/account-menu'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -72,6 +73,7 @@ export function SiteHeader() {
             <Plus className="size-4" />
             出品する
           </Link>
+          <AccountMenu />
         </div>
       </div>
     </header>
