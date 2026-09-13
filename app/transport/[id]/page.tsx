@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { CalendarClock, MapPin, Route, Scale } from 'lucide-react'
 import { LoginPrompt } from '@/components/auth/login-prompt'
 import { PageShell } from '@/components/page-shell'
@@ -95,7 +98,16 @@ export default async function TransportJobPage({
                 </p>
               ) : manages ? (
                 <div>
-                  <h3 className="text-sm font-medium text-foreground">
+                  <Link
+                    href={`/transport/${job.id}/edit`}
+                    className={cn(
+                      buttonVariants({ variant: 'outline' }),
+                      'h-9',
+                    )}
+                  >
+                    編集する
+                  </Link>
+                  <h3 className="mt-6 text-sm font-medium text-foreground">
                     この案件に合う運搬者
                   </h3>
                   <div className="mt-3">

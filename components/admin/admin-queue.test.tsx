@@ -42,13 +42,16 @@ const job: TransportJob = {
   moderationStatus: 'pending',
 }
 
-function setup(kind: 'listing' | 'transportJob') {
+function setup(
+  kind: 'listing' | 'transportJob',
+  queue: { listings: Listing[]; transportJobs: TransportJob[] } = {
+    listings: [listing],
+    transportJobs: [job],
+  },
+) {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <AdminQueue
-        kind={kind}
-        initialQueue={{ listings: [listing], transportJobs: [job] }}
-      />
+      <AdminQueue kind={kind} initialQueue={queue} />
     </QueryClientProvider>,
   )
   return userEvent.setup()
@@ -59,6 +62,31 @@ afterEach(() => {
 })
 
 describe('AdminQueue', () => {
+  it('offers only the opposite decision once reviewed', () => {
+    setup('listing', {
+      listings: [
+        {
+          ...listing,
+          id: 'ok',
+          name: '承認済み品',
+          moderationStatus: 'approved',
+        },
+        { ...listing, id: 'ng', name: '却下品', moderationStatus: 'rejected' },
+      ],
+      transportJobs: [],
+    })
+    const approved = screen.getByText('承認済み品').closest('li')!
+    expect(within(approved).queryByRole('button', { name: '承認' })).toBeNull()
+    expect(
+      within(approved).getByRole('button', { name: '却下' }),
+    ).toBeInTheDocument()
+    const rejected = screen.getByText('却下品').closest('li')!
+    expect(
+      within(rejected).getByRole('button', { name: '承認' }),
+    ).toBeInTheDocument()
+    expect(within(rejected).queryByRole('button', { name: '却下' })).toBeNull()
+  })
+
   it('renders only the requested kind', () => {
     setup('listing')
     expect(screen.getByText('審査中トラクター')).toBeInTheDocument()
