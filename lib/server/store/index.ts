@@ -5,6 +5,7 @@ import { createPgliteStore, defaultPgliteDataDir } from './pglite'
 import type { Store, StoreKind } from './types'
 
 export type {
+  AccountStatus,
   Message,
   Rental,
   Store,

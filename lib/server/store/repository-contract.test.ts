@@ -3,7 +3,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Listing, TransportJob } from '@/lib/data'
 import { createMemoryStore } from './memory'
 import { createPgliteStore } from './pglite'
-import type { Message, Rental, Store, Submission } from './types'
+import type { AccountStatus, Message, Rental, Store, Submission } from './types'
 
 vi.mock('server-only', () => ({}))
 
@@ -228,6 +228,22 @@ describe.each(stores)('$name store', { timeout: 20_000 }, ({ store }) => {
     expect(second?.creditCap).toBeUndefined()
     await store.reset()
     expect(await store.rentals.list()).toEqual([])
+  })
+
+  it('round-trips account statuses keyed by user id', async () => {
+    const status: AccountStatus = {
+      id: 'demo-user',
+      status: 'suspended',
+      note: '規約違反',
+      updatedAt: '2026-09-13T05:00:00.000Z',
+    }
+    expect(await store.accountStatuses.create(status)).toEqual(status)
+    expect(
+      (await store.accountStatuses.update('demo-user', { status: 'active' }))
+        ?.status,
+    ).toBe('active')
+    await store.reset()
+    expect(await store.accountStatuses.list()).toEqual([])
   })
 
   it('does not let callers mutate stored data through returned objects', async () => {

@@ -1,11 +1,24 @@
 import { describe, expect, it, vi } from 'vitest'
 import { canManage, getCurrentUser, requireAdmin, requireUser } from './session'
+import { setAccountStatus } from './account-status'
+import { resetStore } from '../store'
 
 const auth = vi.hoisted(() => vi.fn())
 
 vi.mock('@/auth', () => ({ auth }))
 
 describe('getCurrentUser', () => {
+  it('treats a suspended account as signed out', async () => {
+    await resetStore()
+    await setAccountStatus('demo-user', 'suspended')
+    auth.mockResolvedValue({
+      user: { id: 'demo-user', email: 'user@example.com', role: 'user' },
+    })
+    expect(await getCurrentUser()).toBeUndefined()
+    await setAccountStatus('demo-user', 'active')
+    expect((await getCurrentUser())?.id).toBe('demo-user')
+  })
+
   it('returns undefined without a session', async () => {
     auth.mockResolvedValue(null)
     expect(await getCurrentUser()).toBeUndefined()

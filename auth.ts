@@ -1,9 +1,15 @@
-import NextAuth from 'next-auth'
+import NextAuth, { CredentialsSignin } from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
+import { isSuspended } from '@/lib/server/auth/account-status'
 import { authenticate, isUserRole } from '@/lib/server/auth/accounts'
 import { validateLogin } from '@/lib/validation/auth'
 
 const devSecret = 'dev-auth-secret'
+
+/** Surfaces as `code=suspended` on the login page without leaking details. */
+class SuspendedAccount extends CredentialsSignin {
+  code = 'suspended'
+}
 
 /** `AUTH_SECRET` is required in production; other environments fall back. */
 function configuredSecret(): string | undefined {
@@ -20,10 +26,13 @@ export const { handlers, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: { email: {}, password: {} },
-      authorize(credentials) {
+      async authorize(credentials) {
         const parsed = validateLogin(credentials)
         if (!parsed.ok) return null
-        return authenticate(parsed.value.email, parsed.value.password) ?? null
+        const user = authenticate(parsed.value.email, parsed.value.password)
+        if (!user) return null
+        if (await isSuspended(user.id)) throw new SuspendedAccount()
+        return user
       },
     }),
   ],
