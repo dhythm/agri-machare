@@ -5,6 +5,11 @@
   "packageManager": "pnpm@12.3.4",
   "scripts": {
     "dev": "next dev",
+    "dev:mock": "DATA_STORE=memory next dev",
+    "dev:agent": "DATA_STORE=pglite next dev",
+    "db:migrate": "node --import tsx --conditions=react-server scripts/db.ts migrate",
+    "db:reset": "node --import tsx --conditions=react-server scripts/db.ts reset",
+    "db:sql": "node --import tsx --conditions=react-server scripts/db.ts sql",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
@@ -14,12 +19,14 @@
     "typecheck": "next typegen && tsc --noEmit",
     "knip": "knip",
     "test": "vitest run",
+    "test:pglite": "DATA_STORE=pglite PGLITE_DATA_DIR=memory:// vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm knip && pnpm test:coverage"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
+    "@electric-sql/pglite": "^0.5.8",
     "@tanstack/react-query": "^5.102.8",
     "@vercel/analytics": "1.6.1",
     "class-variance-authority": "^0.7.1",
@@ -51,6 +58,7 @@
     "postcss": "^8.5",
     "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
     "typescript": "5.7.3",
     "vitest": "^5.0.0"
   },

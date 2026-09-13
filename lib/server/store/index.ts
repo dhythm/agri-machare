@@ -1,41 +1,38 @@
 import 'server-only'
 
-import type { Listing, TransportJob } from '@/lib/data'
-import { listings, transportJobs } from '../data'
-import { createMemoryRepository } from './memory-repository'
-import type { Repository } from './repository'
+import { createMemoryStore } from './memory'
+import { createPgliteStore, defaultPgliteDataDir } from './pglite'
+import type { Store, StoreKind } from './types'
 
-export type SubmissionKind =
-  | 'listingInquiry'
-  | 'transportRegistration'
-  | 'transportApplication'
-  | 'contact'
+export type { Store, Submission, SubmissionKind } from './types'
 
-export type Submission = {
-  id: string
-  kind: SubmissionKind
-  /** Id of the listing or transport job the submission refers to, if any. */
-  targetId?: string
-  receivedAt: string
-  payload: Record<string, unknown>
-}
-
-export type Store = {
-  listings: Repository<Listing>
-  transportJobs: Repository<TransportJob>
-  submissions: Repository<Submission>
+/**
+ * `DATA_STORE` selects the implementation:
+ * - `memory` (default): volatile in-process store, for `pnpm dev` and mocks.
+ * - `pglite`: embedded PostgreSQL at `PGLITE_DATA_DIR` (default
+ *   `.data/pglite`, `memory://` for a volatile database).
+ */
+function resolveStoreKind(): StoreKind {
+  const value = process.env.DATA_STORE?.trim() || 'memory'
+  if (value === 'memory' || value === 'pglite') return value
+  throw new Error(
+    `DATA_STORE must be "memory" or "pglite" (received "${value}").`,
+  )
 }
 
 function createStore(): Store {
-  return {
-    listings: createMemoryRepository(listings),
-    transportJobs: createMemoryRepository(transportJobs),
-    submissions: createMemoryRepository<Submission>([]),
+  switch (resolveStoreKind()) {
+    case 'pglite':
+      return createPgliteStore({
+        dataDir: process.env.PGLITE_DATA_DIR?.trim() || defaultPgliteDataDir,
+      })
+    case 'memory':
+      return createMemoryStore()
   }
 }
 
-// Kept on globalThis so the data survives module re-evaluation during
-// development (HMR). Volatile by design: restarting the process resets it.
+// Kept on globalThis so the instance survives module re-evaluation during
+// development (HMR).
 const storeKey = Symbol.for('agri-machare.store')
 type StoreHolder = { [storeKey]?: Store }
 
@@ -45,6 +42,13 @@ export function getStore(): Store {
   return holder[storeKey]
 }
 
-export function resetStore(): void {
-  ;(globalThis as StoreHolder)[storeKey] = createStore()
+export function resetStore(): Promise<void> {
+  return getStore().reset()
+}
+
+export async function closeStore(): Promise<void> {
+  const holder = globalThis as StoreHolder
+  const store = holder[storeKey]
+  holder[storeKey] = undefined
+  await store?.close()
 }

@@ -1,23 +1,40 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getStore, resetStore } from './index'
+// @vitest-environment node
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { closeStore, getStore, resetStore } from './index'
 
 vi.mock('server-only', () => ({}))
 
-beforeEach(() => resetStore())
+afterEach(async () => {
+  await closeStore()
+  vi.unstubAllEnvs()
+})
 
-describe('store', () => {
-  it('is seeded with the sample data', async () => {
+describe('store selection', () => {
+  it('uses the memory store by default', async () => {
+    vi.stubEnv('DATA_STORE', '')
     const store = getStore()
+    expect(store.kind).toBe('memory')
     expect((await store.listings.list()).length).toBeGreaterThanOrEqual(48)
-    expect((await store.transportJobs.list()).length).toBeGreaterThanOrEqual(10)
-    expect(await store.submissions.list()).toEqual([])
   })
 
-  it('returns the same instance until reset', async () => {
+  it('uses PGlite when DATA_STORE=pglite', async () => {
+    vi.stubEnv('DATA_STORE', 'pglite')
+    vi.stubEnv('PGLITE_DATA_DIR', 'memory://')
     const store = getStore()
-    await store.listings.delete('trc-001')
+    expect(store.kind).toBe('pglite')
+    expect((await store.transportJobs.list()).length).toBeGreaterThanOrEqual(10)
+  })
+
+  it('rejects unknown store names', () => {
+    vi.stubEnv('DATA_STORE', 'mysql')
+    expect(() => getStore()).toThrow(/DATA_STORE/)
+  })
+
+  it('returns the same instance until reset, and reset reseeds', async () => {
+    vi.stubEnv('DATA_STORE', 'memory')
+    await getStore().listings.delete('trc-001')
     expect(await getStore().listings.get('trc-001')).toBeUndefined()
-    resetStore()
+    await resetStore()
     expect(await getStore().listings.get('trc-001')).toBeDefined()
   })
 })
