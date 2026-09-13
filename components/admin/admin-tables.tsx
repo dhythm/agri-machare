@@ -6,7 +6,13 @@ import type { AccountSummary, ThreadSummary } from '@/lib/server/admin-overview'
 import type { RentalWithListing } from '@/lib/server/rentals'
 import type { CarrierProfile, Review } from '@/lib/server/store/types'
 import { StarRating } from '@/components/reviews/star-rating'
-import { RentalCancelButton, ThreadCloseButton } from './admin-actions'
+import {
+  OrderCancelButton,
+  RentalCancelButton,
+  ThreadCloseButton,
+} from './admin-actions'
+import { orderStatusLabels } from '@/lib/data'
+import type { OrderWithListing } from '@/lib/server/orders'
 import { AccountStatusButton } from './account-status-button'
 import { AdminDataTable } from './admin-data-table'
 
@@ -233,6 +239,53 @@ export function ReviewTable({ items }: { items: ReviewRow[] }) {
             {review.comment ?? '—'}
           </span>,
           when(review.createdAt),
+        ],
+      }))}
+    />
+  )
+}
+
+export function OrderTable({ items }: { items: OrderWithListing[] }) {
+  return (
+    <AdminDataTable
+      title="注文"
+      headers={['農機具', '買い手', '出品者', '価格', '状態', '日時', '']}
+      rows={items.map(({ order, listing }) => ({
+        key: order.id,
+        searchText: `${order.id} ${listing?.name ?? '削除済み'} ${order.buyerUserId} ${order.sellerUserId} ${orderStatusLabels[order.status]}`,
+        cells: [
+          listing ? (
+            <Link
+              key="listing"
+              href={`/listings/${listing.id}`}
+              className="font-semibold text-foreground decoration-primary/40 underline-offset-4 hover:text-primary hover:underline"
+            >
+              {listing.name}
+            </Link>
+          ) : (
+            <span key="listing" className="text-muted-foreground">
+              （削除済み）
+            </span>
+          ),
+          <code key="buyer" className="text-xs">
+            {order.buyerUserId}
+          </code>,
+          <code key="seller" className="text-xs">
+            {order.sellerUserId}
+          </code>,
+          formatYen(order.price),
+          <Badge
+            key="status"
+            variant={order.status === 'requested' ? 'default' : 'muted'}
+          >
+            {orderStatusLabels[order.status]}
+          </Badge>,
+          new Date(order.createdAt).toLocaleString('ja-JP'),
+          order.status === 'completed' || order.status === 'cancelled' ? (
+            ''
+          ) : (
+            <OrderCancelButton key="cancel" orderId={order.id} />
+          ),
         ],
       }))}
     />

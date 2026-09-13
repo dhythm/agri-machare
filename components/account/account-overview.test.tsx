@@ -120,6 +120,39 @@ const overview: AccountOverview = {
   ],
   replyCounts: { 'i-1': 2 },
   reviewedSources: {},
+  orders: {
+    asBuyer: [
+      {
+        order: {
+          id: 'o-1',
+          listingId: 'trc-006',
+          buyerUserId: 'me',
+          sellerUserId: 'demo-seller',
+          price: 21_000_000,
+          status: 'delivered',
+          createdAt: '2026-09-13T00:00:00.000Z',
+          updatedAt: '2026-09-13T00:00:00.000Z',
+        },
+        listing: listing('trc-006', 'ジョンディア 90馬力'),
+      },
+    ],
+    asSeller: [
+      {
+        order: {
+          id: 'o-2',
+          listingId: 'l-1',
+          buyerUserId: 'demo-user',
+          sellerUserId: 'me',
+          price: 1_000_000,
+          status: 'requested',
+          message: '現金で',
+          createdAt: '2026-09-13T00:00:00.000Z',
+          updatedAt: '2026-09-13T00:00:00.000Z',
+        },
+        listing: listing('l-1', '公開中のトラクター'),
+      },
+    ],
+  },
   unreadThreadIds: ['i-1'],
   carrier: {
     profile: {
@@ -138,6 +171,7 @@ const overview: AccountOverview = {
     unreadThreads: 1,
     openInquiries: 2,
     requestedRentals: 1,
+    requestedOrders: 1,
     pendingListings: 1,
   },
   rentals: {
@@ -314,6 +348,20 @@ describe('AccountOverviewView', () => {
     ).toBeInTheDocument()
     const questions = screen.getByRole('region', { name: '送った質問' })
     expect(within(questions).getByText('積載方法は？')).toBeInTheDocument()
+    const bought = screen.getByRole('region', { name: '買った農機具' })
+    expect(within(bought).getByText('ジョンディア 90馬力')).toBeInTheDocument()
+    expect(within(bought).getByText('引き渡し済み')).toBeInTheDocument()
+    expect(
+      within(bought).getByRole('button', { name: '受け取りを確認' }),
+    ).toBeInTheDocument()
+    expect(
+      within(bought).getByRole('link', { name: '運搬を依頼する' }),
+    ).toHaveAttribute('href', '/transport/new?listingId=trc-006')
+    const sold = screen.getByRole('region', { name: '売った農機具' })
+    expect(within(sold).getByText('現金で')).toBeInTheDocument()
+    expect(
+      within(sold).getByRole('button', { name: '承諾する' }),
+    ).toBeInTheDocument()
     const renting = screen.getByRole('region', { name: '借りている農機具' })
     expect(within(renting).getByText('購入に切替')).toBeInTheDocument()
     expect(

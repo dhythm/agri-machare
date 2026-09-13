@@ -5,6 +5,7 @@ export type HomeStatusCounts = {
   unreadThreads: number
   openInquiries: number
   requestedRentals: number
+  requestedOrders: number
   pendingListings: number
   /** Only for users with a carrier profile. */
   matchingJobs?: number
@@ -28,6 +29,11 @@ export function HomeStatus({
     {
       label: '申込中のレンタル',
       value: status.requestedRentals,
+      href: '/account',
+    },
+    {
+      label: '承諾待ちの注文',
+      value: status.requestedOrders,
       href: '/account',
     },
     {

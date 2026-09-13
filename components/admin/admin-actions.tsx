@@ -67,3 +67,8 @@ export function RentalCancelButton({ rentalId }: { rentalId: string }) {
   const action = useAction(`/api/rentals/${rentalId}`, { status: 'cancelled' })
   return <ActionButton label="取り消す" action={action} />
 }
+
+export function OrderCancelButton({ orderId }: { orderId: string }) {
+  const action = useAction(`/api/orders/${orderId}`, { status: 'cancelled' })
+  return <ActionButton label="取り消す" action={action} />
+}
