@@ -149,6 +149,14 @@ function RentalList({
               購入価格 {formatYen(rental.purchasePrice)}（充当後）
             </p>
           )}
+          {rental.status === 'converted' && listing && party === 'renter' && (
+            <Link
+              href={`/transport/new?listingId=${listing.id}`}
+              className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
+            >
+              運搬を依頼する
+            </Link>
+          )}
           <div className="mt-2">
             <RentalActions
               rentalId={rental.id}

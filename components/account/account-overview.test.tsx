@@ -101,7 +101,8 @@ const overview: AccountOverview = {
           rentTotal: 154_000,
           salePrice: 18_800_000,
           creditRate: 50,
-          status: 'active',
+          status: 'converted',
+          purchasePrice: 18_723_000,
           createdAt: '2026-09-13T00:00:00.000Z',
           updatedAt: '2026-09-13T00:00:00.000Z',
         },
@@ -162,13 +163,16 @@ describe('AccountOverviewView', () => {
       ),
     ).toBeInTheDocument()
     const renting = screen.getByRole('region', { name: '借りている農機具' })
-    expect(within(renting).getByText('レンタル中')).toBeInTheDocument()
+    expect(within(renting).getByText('購入に切替')).toBeInTheDocument()
+    expect(
+      within(renting).getByRole('link', { name: '運搬を依頼する' }),
+    ).toHaveAttribute('href', '/transport/new?listingId=trc-001')
     expect(
       within(renting).getByText('2026-10-01 〜 2026-10-07・7日間・¥154,000'),
     ).toBeInTheDocument()
     expect(
-      within(renting).getByRole('button', { name: '購入に切り替える' }),
-    ).toBeInTheDocument()
+      within(renting).queryByRole('button', { name: '購入に切り替える' }),
+    ).toBeNull()
     const lending = screen.getByRole('region', { name: '貸している農機具' })
     expect(within(lending).getByText('申込中')).toBeInTheDocument()
     expect(
