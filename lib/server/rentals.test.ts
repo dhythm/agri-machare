@@ -8,6 +8,7 @@ import {
 } from './rentals'
 import { getListing } from './listings'
 import { resetStore } from './store'
+import { listNotifications } from './notifications'
 import { demoAdmin, demoSeller, demoUser } from '@/test/mock-auth'
 
 vi.mock('server-only', () => ({}))
@@ -111,6 +112,28 @@ describe('updateRentalStatus', () => {
     await updateRentalStatus(id, demoSeller, 'active')
     const result = await updateRentalStatus(id, demoUser, 'converted')
     expect(!result.ok && result.reason).toBe('transition')
+  })
+})
+
+describe('admin cancellation', () => {
+  it('lets an admin cancel a requested or active rental and notifies both sides', async () => {
+    const created = await request()
+    const id = created.ok ? created.value.id : ''
+    await updateRentalStatus(id, demoSeller, 'active')
+    expect((await updateRentalStatus(id, demoAdmin, 'completed')).ok).toBe(
+      false,
+    )
+    const cancelled = await updateRentalStatus(id, demoAdmin, 'cancelled')
+    expect(cancelled.ok && cancelled.value.status).toBe('cancelled')
+    expect(await listBookedRanges('trc-001')).toEqual([])
+    const titles = async (userId: string) =>
+      (await listNotifications(userId)).map((n) => n.title)
+    expect(await titles('demo-user')).toContain(
+      'レンタルが「キャンセル」になりました',
+    )
+    expect(await titles('demo-seller')).toContain(
+      'レンタルが「キャンセル」になりました',
+    )
   })
 })
 

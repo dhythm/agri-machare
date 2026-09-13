@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { isThreadKind } from '@/lib/data'
 import { getStore, type Submission } from './store'
 
 const readId = (threadId: string, userId: string) => `${threadId}:${userId}`
@@ -17,10 +18,7 @@ export async function markThreadRead(
 }
 
 function isThread(submission: Submission): boolean {
-  return (
-    submission.kind === 'listingInquiry' ||
-    submission.kind === 'transportApplication'
-  )
+  return isThreadKind(submission.kind)
 }
 
 /**

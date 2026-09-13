@@ -13,9 +13,15 @@ import type { CarrierProfile } from './store'
 
 export type AccountOverview = {
   listings: { listing: Listing; inquiries: Submission[] }[]
-  transportJobs: { job: TransportJob; applications: Submission[] }[]
+  transportJobs: {
+    job: TransportJob
+    applications: Submission[]
+    inquiries: Submission[]
+  }[]
   sentInquiries: { submission: Submission; listing?: Listing }[]
   sentApplications: { submission: Submission; job?: TransportJob }[]
+  /** Questions the user asked on other people's jobs. */
+  sentJobInquiries: { submission: Submission; job?: TransportJob }[]
   /** Number of replies per thread id, for threads that have any. */
   replyCounts: Record<string, number>
   rentals: { asRenter: RentalWithListing[]; asOwner: RentalWithListing[] }
@@ -108,11 +114,20 @@ export async function getAccountOverview(
             submission.targetId === job.id,
         ),
       ),
+      inquiries: oldestFirst(
+        submissions.filter(
+          (submission) =>
+            submission.kind === 'transportInquiry' &&
+            submission.targetId === job.id,
+        ),
+      ),
     }))
   for (const { inquiries } of ownedListings)
     for (const inquiry of inquiries) involved.add(inquiry.id)
-  for (const { applications } of ownedJobs)
+  for (const { applications, inquiries } of ownedJobs) {
     for (const application of applications) involved.add(application.id)
+    for (const inquiry of inquiries) involved.add(inquiry.id)
+  }
   for (const submission of sent) involved.add(submission.id)
 
   const replyCounts: Record<string, number> = {}
@@ -123,7 +138,7 @@ export async function getAccountOverview(
 
   const incoming = [
     ...ownedListings.flatMap((item) => item.inquiries),
-    ...ownedJobs.flatMap((item) => item.applications),
+    ...ownedJobs.flatMap((item) => [...item.applications, ...item.inquiries]),
   ]
 
   return {
@@ -156,6 +171,12 @@ export async function getAccountOverview(
       })),
     sentApplications: sent
       .filter((submission) => submission.kind === 'transportApplication')
+      .map((submission) => ({
+        submission,
+        job: submission.targetId ? jobById.get(submission.targetId) : undefined,
+      })),
+    sentJobInquiries: sent
+      .filter((submission) => submission.kind === 'transportInquiry')
       .map((submission) => ({
         submission,
         job: submission.targetId ? jobById.get(submission.targetId) : undefined,

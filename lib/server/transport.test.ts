@@ -1,13 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  completeTransportJob,
   createTransportJob,
   deleteTransportJob,
   getTransportJob,
   getTransportJobIds,
   getTransportJobs,
   updateTransportJob,
+  updateTransportJobStatus,
 } from './transport'
+import { listNotifications } from './notifications'
+import { acceptSubmission } from './submissions'
+import { updateThreadStatus } from './threads'
+import { demoAdmin, demoSeller, demoUser } from '@/test/mock-auth'
 import { applyModeration } from './moderation'
 import { resetStore } from './store'
 import type { TransportJobInput } from '@/lib/validation/transport'
@@ -71,15 +75,47 @@ describe('transport jobs', () => {
     )
   })
 
-  it('completes a job and drops it from the public board', async () => {
+  it('moves an agreed job through 運搬中 to 完了 with the right people', async () => {
+    const { id: threadId } = await acceptSubmission(
+      'transportApplication',
+      {
+        name: '利用者デモ',
+        vehicle: '2tトラック',
+        availableDate: '2026-10-03',
+      },
+      { targetId: 'tj-01', userId: 'demo-user' },
+    )
+    const early = await updateTransportJobStatus('tj-01', demoUser, '運搬中')
+    expect(!early.ok && early.reason).toBe('forbidden')
+    await updateThreadStatus(threadId, demoSeller, 'agreed')
+    expect((await getTransportJob('tj-01'))?.status).toBe('調整中')
+    const started = await updateTransportJobStatus('tj-01', demoUser, '運搬中')
+    expect(started.ok && started.value.status).toBe('運搬中')
+    expect(
+      (await listNotifications('demo-seller')).map((n) => n.title),
+    ).toContain('運搬が始まりました')
     expect((await getTransportJobs()).map((job) => job.id)).toContain('tj-01')
-    const completed = await completeTransportJob('tj-01')
-    expect(completed?.status).toBe('完了')
+    const notOwner = await updateTransportJobStatus('tj-01', demoUser, '完了')
+    expect(!notOwner.ok && notOwner.reason).toBe('forbidden')
+    const done = await updateTransportJobStatus('tj-01', demoSeller, '完了')
+    expect(done.ok && done.value.status).toBe('完了')
+    expect(
+      (await listNotifications('demo-user')).map((n) => n.title),
+    ).toContain('運搬が完了しました')
     expect((await getTransportJobs()).map((job) => job.id)).not.toContain(
       'tj-01',
     )
-    expect((await getTransportJob('tj-01'))?.status).toBe('完了')
-    expect(await completeTransportJob('missing')).toBeUndefined()
+    const again = await updateTransportJobStatus('tj-01', demoSeller, '運搬中')
+    expect(!again.ok && again.reason).toBe('transition')
+    const missing = await updateTransportJobStatus('missing', demoAdmin, '完了')
+    expect(!missing.ok && missing.reason).toBe('not_found')
+  })
+
+  it('lets the owner complete straight from 調整中 and refuses 運搬中 from 募集中', async () => {
+    const open = await updateTransportJobStatus('tj-02', demoSeller, '運搬中')
+    expect(!open.ok && open.reason).toBe('transition')
+    const done = await updateTransportJobStatus('tj-02', demoSeller, '完了')
+    expect(done.ok && done.value.status).toBe('完了')
   })
 
   it('updates and deletes a job', async () => {

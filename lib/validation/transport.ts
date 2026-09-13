@@ -28,6 +28,20 @@ export type TransportApplication = {
   message?: string
 }
 
+export type TransportInquiry = { message: string }
+
+export function validateTransportInquiry(
+  input: unknown,
+): ValidationResult<TransportInquiry> {
+  const source = asRecord(input)
+  if (!source) return invalidInput
+  const errors: FieldErrors = {}
+  const value: TransportInquiry = {
+    message: requireText(errors, source, 'message', '質問', 2000),
+  }
+  return finish(errors, value)
+}
+
 export function validateTransportApplication(
   input: unknown,
 ): ValidationResult<TransportApplication> {

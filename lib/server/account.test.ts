@@ -120,6 +120,16 @@ describe('getAccountOverview', () => {
     })
     expect(user.unreadThreadIds).toEqual([user.sentInquiries[0].submission.id])
     expect(user.summary.pendingListings).toBe(1)
+    await acceptSubmission(
+      'transportInquiry',
+      { name: '利用者デモ', message: '積載方法は？' },
+      { targetId: 'tj-01', userId: 'demo-user' },
+    )
+    const sellerAgain = await getAccountOverview('demo-seller')
+    expect(sellerAgain.transportJobs[0].inquiries).toHaveLength(1)
+    const userAgain = await getAccountOverview('demo-user')
+    expect(userAgain.sentJobInquiries).toHaveLength(1)
+    expect(userAgain.sentJobInquiries[0].job?.id).toBe('tj-01')
   })
 
   it('is empty for a user with no activity', async () => {
@@ -132,6 +142,7 @@ describe('getAccountOverview', () => {
       rentals: { asRenter: [], asOwner: [] },
       reviewedSources: {},
       unreadThreadIds: [],
+      sentJobInquiries: [],
       carrier: undefined,
       summary: {
         unreadThreads: 0,

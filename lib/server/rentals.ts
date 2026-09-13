@@ -87,7 +87,7 @@ export async function requestRental(
   return { ok: true, value: rental }
 }
 
-type Party = 'owner' | 'renter'
+type Party = 'owner' | 'renter' | 'admin'
 
 const transitions: Record<
   Party,
@@ -95,6 +95,7 @@ const transitions: Record<
 > = {
   owner: { requested: ['active', 'cancelled'], active: ['completed'] },
   renter: { requested: ['cancelled'], active: ['converted'] },
+  admin: { requested: ['cancelled'], active: ['cancelled'] },
 }
 
 async function partyOf(
@@ -103,7 +104,8 @@ async function partyOf(
 ): Promise<Party | undefined> {
   if (rental.renterUserId === user.id) return 'renter'
   const listing = await getStore().listings.get(rental.listingId)
-  return listing?.ownerUserId === user.id ? 'owner' : undefined
+  if (listing?.ownerUserId === user.id) return 'owner'
+  return user.role === 'admin' ? 'admin' : undefined
 }
 
 /** Owners approve, decline, and complete; renters cancel or convert to a purchase. */
@@ -136,16 +138,25 @@ export async function updateRentalStatus(
   const updated = await store.rentals.update(id, patch)
   if (!updated) return fail('not_found')
   const listing = await store.listings.get(rental.listingId)
-  const recipient =
-    party === 'owner' ? rental.renterUserId : listing?.ownerUserId
-  if (recipient)
-    await notify({
-      userId: recipient,
-      kind: 'rental',
-      title: `レンタルが「${rentalStatusLabels[status]}」になりました`,
-      body: listing?.name,
-      href: '/account',
-    })
+  const recipients =
+    party === 'admin'
+      ? [rental.renterUserId, listing?.ownerUserId]
+      : party === 'owner'
+        ? [rental.renterUserId]
+        : [listing?.ownerUserId]
+  await Promise.all(
+    recipients
+      .filter((userId): userId is string => userId !== undefined)
+      .map((userId) =>
+        notify({
+          userId,
+          kind: 'rental',
+          title: `レンタルが「${rentalStatusLabels[status]}」になりました`,
+          body: listing?.name,
+          href: '/account',
+        }),
+      ),
+  )
   return { ok: true, value: updated }
 }
 

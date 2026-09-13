@@ -1,6 +1,12 @@
 import 'server-only'
 
-import type { Listing, ThreadStatus, TransportJob } from '@/lib/data'
+import {
+  isThreadKind,
+  type Listing,
+  type ThreadKind,
+  type ThreadStatus,
+  type TransportJob,
+} from '@/lib/data'
 import { configuredAccounts, type UserRole } from './auth/accounts'
 import type { AccountStatus } from './store'
 import type { RentalWithListing } from './rentals'
@@ -21,7 +27,7 @@ export type AdminCounts = {
 
 export type ThreadSummary = {
   id: string
-  kind: 'listingInquiry' | 'transportApplication'
+  kind: ThreadKind
   targetId?: string
   targetName: string
   senderName: string
@@ -67,9 +73,7 @@ export async function getAdminCounts(): Promise<AdminCounts> {
       .length,
     openThreads: submissions.filter(
       (submission) =>
-        (submission.kind === 'listingInquiry' ||
-          submission.kind === 'transportApplication') &&
-        (submission.status ?? 'new') === 'new',
+        isThreadKind(submission.kind) && (submission.status ?? 'new') === 'new',
     ).length,
     carriers: carriers.length,
   }

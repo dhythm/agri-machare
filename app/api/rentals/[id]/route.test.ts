@@ -40,7 +40,7 @@ describe('PATCH /api/rentals/[id]', () => {
     expect(converted.status).toBe(200)
     expect((await converted.json()).purchasePrice).toBe(18_723_000)
     signInAs(demoAdmin)
-    expect((await patch(id, { status: 'completed' })).status).toBe(403)
+    expect((await patch(id, { status: 'completed' })).status).toBe(409)
     signInAs(null)
     expect((await patch(id, { status: 'completed' })).status).toBe(401)
     signInAs(demoSeller)

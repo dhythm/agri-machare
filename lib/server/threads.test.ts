@@ -9,6 +9,7 @@ import {
   listMessages,
   updateThreadStatus,
 } from './threads'
+import { listNotifications } from './notifications'
 import { demoAdmin, demoSeller, demoUser } from '@/test/mock-auth'
 
 vi.mock('server-only', () => ({}))
@@ -90,13 +91,39 @@ describe('addMessage', () => {
   })
 })
 
+describe('transport inquiries', () => {
+  it('opens a thread between the asker and the job owner and notifies the owner', async () => {
+    const { id } = await acceptSubmission(
+      'transportInquiry',
+      { name: '利用者デモ', message: '積載方法は？' },
+      { targetId: 'tj-01', userId: 'demo-user' },
+    )
+    const asOwner = await getThread(id, demoSeller)
+    expect(asOwner.ok && asOwner.value.role).toBe('owner')
+    expect(asOwner.ok && asOwner.value.target?.kind).toBe('transportJob')
+    const asSender = await getThread(id, demoUser)
+    expect(asSender.ok && asSender.value.role).toBe('sender')
+    expect(
+      (await listNotifications('demo-seller')).map((n) => n.title),
+    ).toEqual(['案件への質問が届きました'])
+  })
+})
+
 describe('updateThreadStatus', () => {
   it('only the owner changes the status', async () => {
     const id = await openInquiry()
     expect((await updateThreadStatus(id, demoUser, 'agreed')).ok).toBe(false)
-    expect((await updateThreadStatus(id, demoAdmin, 'agreed')).ok).toBe(false)
     const result = await updateThreadStatus(id, demoSeller, 'in_progress')
     expect(result.ok && result.value.status).toBe('in_progress')
+  })
+
+  it('lets an admin change the status and notifies the sender', async () => {
+    const id = await openInquiry()
+    const result = await updateThreadStatus(id, demoAdmin, 'declined')
+    expect(result.ok && result.value.status).toBe('declined')
+    expect((await listNotifications('demo-user')).map((n) => n.title)).toEqual([
+      '問い合わせが「見送り」になりました',
+    ])
   })
 
   it('accepting an application moves the job to 調整中', async () => {
